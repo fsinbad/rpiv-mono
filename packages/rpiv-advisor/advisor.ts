@@ -26,7 +26,7 @@ import {
 	type ExtensionAPI,
 	type ExtensionContext,
 	type SessionEntry,
-	serializeConversation,
+	type ToolInfo,
 } from "@mariozechner/pi-coding-agent";
 import type { SelectItem } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
@@ -137,6 +137,83 @@ export const ADVISOR_SYSTEM_PROMPT = readFileSync(
 ).trimEnd();
 
 // ---------------------------------------------------------------------------
+// Inventory state + serializer — stable tool-inventory Message for cache parity
+//
+// globalThis-keyed to survive module re-import on /new, /fork, /resume (mirrors
+// rpiv-btw/btw.ts:37, 87-98). Single-slot cache — the Pi tool registry is
+// process-scoped, so per-session keying would be redundant. Cache invalidates
+// only when the set of registered tool names changes.
+// ---------------------------------------------------------------------------
+
+const ADVISOR_STATE_KEY = Symbol.for("rpiv-advisor");
+
+interface AdvisorState {
+	inventorySignature?: string;
+	inventoryMessage?: Message;
+}
+
+function getAdvisorRuntimeState(): AdvisorState {
+	const g = globalThis as unknown as { [k: symbol]: AdvisorState | undefined };
+	let state = g[ADVISOR_STATE_KEY];
+	if (!state) {
+		state = {};
+		g[ADVISOR_STATE_KEY] = state;
+	}
+	return state;
+}
+
+// Recursive key-sorted JSON serializer — matches JSON.stringify semantics
+// (drops `undefined` in objects, emits `null` for `undefined` in arrays) but
+// guarantees stable key ordering across V8 insertion-order variation. Required
+// because nested TypeBox schemas may be authored in any order, and prompt
+// caching is byte-sensitive.
+function stableStringify(value: unknown): string {
+	if (value === null || typeof value !== "object") {
+		return JSON.stringify(value);
+	}
+	if (Array.isArray(value)) {
+		return `[${value.map((v) => (v === undefined ? "null" : stableStringify(v))).join(",")}]`;
+	}
+	const obj = value as Record<string, unknown>;
+	const entries: string[] = [];
+	for (const k of Object.keys(obj).sort()) {
+		const v = obj[k];
+		if (v === undefined) continue;
+		entries.push(`${JSON.stringify(k)}:${stableStringify(v)}`);
+	}
+	return `{${entries.join(",")}}`;
+}
+
+function buildInventoryBlock(tools: ToolInfo[]): string {
+	// Omit `sourceInfo` — its `path` field is install-location-dependent and
+	// would bust cache parity across machines/reinstalls.
+	return tools
+		.map((t) => `### ${t.name}\n${t.description}\n\nParameters: ${stableStringify(t.parameters)}`)
+		.join("\n\n---\n\n");
+}
+
+// Returns `undefined` when the registry is empty (no extensions loaded) so
+// callers can skip prepending an empty block that would still cost a cache unit.
+export function getInventoryMessage(tools: ToolInfo[]): Message | undefined {
+	if (tools.length === 0) return undefined;
+	const sorted = [...tools].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+	const signature = sorted.map((t) => t.name).join("|");
+	const state = getAdvisorRuntimeState();
+	if (state.inventorySignature === signature && state.inventoryMessage) {
+		return state.inventoryMessage;
+	}
+	const text = `## Available Executor Tools\n\n${buildInventoryBlock(sorted)}`;
+	const message: Message = {
+		role: "user",
+		content: [{ type: "text", text }],
+		timestamp: Date.now(),
+	};
+	state.inventorySignature = signature;
+	state.inventoryMessage = message;
+	return message;
+}
+
+// ---------------------------------------------------------------------------
 // Module state — in-memory, resets each session
 // ---------------------------------------------------------------------------
 
@@ -219,6 +296,7 @@ function buildErrorResult(
 
 async function executeAdvisor(
 	ctx: ExtensionContext,
+	pi: ExtensionAPI,
 	signal: AbortSignal | undefined,
 	onUpdate: AgentToolUpdateCallback<AdvisorDetails> | undefined,
 ): Promise<AgentToolResult<AdvisorDetails>> {
@@ -237,22 +315,17 @@ async function executeAdvisor(
 		return buildErrorResult(advisorLabel, errNoApiKey(advisorLabel), errNoApiKeyDetail(advisor.provider));
 	}
 
+	// Live-read every call — advisor runs mid-turn so any message_end snapshot
+	// is always one turn stale. convertToLlm is pass-through for user/assistant/
+	// toolResult (messages.js:111-114), so element refs are stable across calls
+	// via the session store — content-stable output without a snapshot layer.
 	const branch = ctx.sessionManager.getBranch();
 	const agentMessages = branch
 		.filter((e): e is SessionEntry & { type: "message" } => e.type === "message")
 		.map((e) => e.message);
-	const conversationText = serializeConversation(convertToLlm(agentMessages));
-
-	const userMessage: Message = {
-		role: "user",
-		content: [
-			{
-				type: "text",
-				text: `## Conversation So Far\n\n${conversationText}`,
-			},
-		],
-		timestamp: Date.now(),
-	};
+	const branchMessages = convertToLlm(agentMessages);
+	const inventoryMessage = getInventoryMessage(pi.getAllTools());
+	const messages: Message[] = inventoryMessage ? [inventoryMessage, ...branchMessages] : branchMessages;
 
 	onUpdate?.({
 		content: [{ type: "text", text: msgConsulting(advisorLabel, effort) }],
@@ -262,7 +335,9 @@ async function executeAdvisor(
 	try {
 		const response = await completeSimple(
 			advisor,
-			{ systemPrompt: ADVISOR_SYSTEM_PROMPT, messages: [userMessage] },
+			// `tools: []` reaffirms the "never calls tools" contract even when
+			// `messages` contains prior toolCall/toolResult blocks (btw.ts:235).
+			{ systemPrompt: ADVISOR_SYSTEM_PROMPT, messages, tools: [] },
 			{ apiKey: auth.apiKey, headers: auth.headers, signal, reasoning: effort },
 		);
 
@@ -362,7 +437,7 @@ export function registerAdvisorTool(pi: ExtensionAPI): void {
 		parameters: AdvisorParams,
 
 		async execute(_toolCallId, _params, signal, onUpdate, ctx) {
-			return executeAdvisor(ctx, signal, onUpdate);
+			return executeAdvisor(ctx, pi, signal, onUpdate);
 		},
 	});
 }
