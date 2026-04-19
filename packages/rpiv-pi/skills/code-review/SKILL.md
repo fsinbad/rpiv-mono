@@ -111,14 +111,26 @@ Spawn these agents in parallel using the Agent tool. Each receives the `## Disco
   [paste Discovery Map verbatim]
 
   Task: Grep each changed hunk for the following sink patterns and list every match with `file:line` + surrounding 3 lines. Cross-reference the Discovery Map's Auth-boundary crossings.
+  For each hit, additionally return `confidence: N/10` reflecting how certain you are that a user-controlled input can reach this sink under current deployment. Do NOT report hits with confidence < 8.
   - Command execution: `exec(`, `execSync(`, `execFile(`, `child_process`, `spawn(`
   - Dynamic evaluation: `eval(`, `new Function(`
   - SQL template-interpolation: multi-line `` `SELECT ... ${ ``, `` `INSERT ... ${ ``, `` `UPDATE ... ${ ``, `` `DELETE ... ${ ``
   - XSS sinks: `innerHTML =`, `dangerouslySetInnerHTML`, `document.write(`
   - Path traversal: string concatenation into `fs.readFile`, `fs.writeFile`, `path.join` with user input
-  - SSRF: `fetch(`, `http.request(`, `axios(`, `got(` with user-controlled origin
+  - SSRF: `fetch(`, `http.request(`, `axios(`, `got(` where HOST or PROTOCOL (not just path) is user-controlled
   - Secrets in diff: `api_key`, `secret`, `password`, `BEGIN PRIVATE KEY`, `.env` content literal
-  - Missing hardening: auth-boundary crossings without a guard upstream; rate-limit-free POST handlers
+  - Missing auth guard: auth-boundary crossings (from Discovery Map) reaching a traced sink without an upstream guard
+
+  Hard exclusions — do NOT report:
+  - DOS / resource exhaustion / rate limiting / memory or CPU exhaustion
+  - Missing hardening in isolation (no traced sink), lack of audit logs
+  - Theoretical race conditions / timing attacks without a concrete reproducer
+  - Log spoofing, prototype pollution, tabnabbing, open redirects, XS-Leaks, regex DOS, regex injection
+  - Client-side-only authn/authz gaps (server is the authority)
+  - XSS in React/Angular/tsx files unless via `dangerouslySetInnerHTML`, `bypassSecurityTrustHtml`, or equivalent
+  - Findings whose sole source is an environment variable, CLI flag, or UUID (trusted in our threat model)
+  - Findings in test-only files or `.ipynb` notebooks without a concrete untrusted-input path
+  - Outdated-dependency CVEs (handled by the dependencies/CVE lens)
 
   For each hit, name the pattern and quote the line. Return evidence only. No CVE lookups — that is a separate agent.
   ```
@@ -174,9 +186,9 @@ Spawn these agents in parallel using the Agent tool. Each receives the `## Disco
      - 🔵 Suggestion: pattern divergence with a concrete nearby template.
      - 💭 Discussion: composite-lesson architecture concerns.
    - Security evidence → classify:
-     - 🔴 sink hit with user-reachable exploitability (trace via Discovery Map auth-boundary crossings).
-     - 🟡 missing hardening (rate-limit, weak hash, non-constant-time compare).
-     - 🔵 pattern divergence from secure examples in the same file.
+     - 🔴 sink hit with a CONCRETE user-reachable source→sink path traced through Discovery Map auth-boundary crossings. Reject any hit lacking an explicit trace.
+     - 🟡 crypto-only concrete issues: weak hash in an auth/integrity role (MD5/SHA1), non-constant-time compare on secrets, hardcoded key material in diff. Do NOT use 🟡 for "missing hardening".
+     - 🔵 pattern divergence from a secure example in the SAME file (cite the nearby secure `file:line`).
      - 💭 architectural question.
    - Dependencies evidence → classify:
      - 🔴 Known-exploitable CVE in a touched dep (Critical/High per advisory DB) OR lockstep-contract violation (would trip `scripts/sync-versions.js`).
@@ -366,6 +378,7 @@ Ask follow-ups, or run `/skill:revise` to address the findings.
 - **Always use parallel Agent tool calls** in Phase-2 to maximise efficiency.
 - **Always read the full diff FIRST** (Step 1) before spawning any Phase-1 or Phase-2 agent.
 - **Always pass the Discovery Map inline** as `Known Context` to every Phase-2 agent — agents are `isolated: true` and cannot see sibling transcripts.
+- **Security-lens precision stance**: prefer false negatives over false positives. Security evidence must carry `confidence ≥ 8` and 🔴 requires an explicit source→sink trace. Missing hardening without a traced sink is NOT a finding. Keep the Security-lens exclusion list in sync with the reference FP-filter precedents.
 - **Critical ordering**: Follow the numbered steps exactly.
   - ALWAYS resolve scope and bail on empty diff (Step 1) before Phase-1.
   - ALWAYS wait for Phase-1 completion before Phase-2 dispatch.
