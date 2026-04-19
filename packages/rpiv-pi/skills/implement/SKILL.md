@@ -12,15 +12,16 @@ You are tasked with implementing an approved technical plan from `thoughts/share
 
 ## Getting Started
 
-When given a plan path:
+- Plan path: `$1` (empty/literal → ask user)
+- Phase scope: `${@:2}` (empty → all phases sequentially; else scope to this phase only)
+
+With a plan path in hand:
 - Read the plan completely and check for any existing checkmarks (- [x])
 - Read the original ticket and all files mentioned in the plan
 - **Read files fully** - never use limit/offset parameters, you need complete context
 - Think deeply about how the pieces fit together
 - Create a todo list to track your progress
 - Start implementing if you understand what needs to be done
-
-If no plan path provided, ask for one.
 
 ## Implementation Philosophy
 
