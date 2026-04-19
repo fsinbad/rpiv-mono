@@ -25,6 +25,7 @@ const THOUGHTS_DIRS = [
 	"thoughts/shared/designs",
 	"thoughts/shared/plans",
 	"thoughts/shared/handoffs",
+	"thoughts/shared/reviews",
 ] as const;
 
 const msgAgentsAdded = (n: number) => `Copied ${n} rpiv-pi agent(s) to .pi/agents/`;

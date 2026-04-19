@@ -1,184 +1,390 @@
 ---
 name: code-review
-description: Conduct comprehensive code reviews by analyzing changes in parallel. Produces review documents in thoughts/shared/reviews/. Use when changes are ready for review.
+description: Three-pass parallel reviewer (quality, security, dependencies) with conditional advisor adjudication. Produces review documents in thoughts/shared/reviews/. Use when changes are ready for review.
 argument-hint: [scope]
-allowed-tools: Read, Bash(git *), Glob, Grep, Agent
 ---
 
-# Code Review System
+## Scope Source
 
-You are tasked with conducting comprehensive code reviews by invoking parallel skills to analyze changes and synthesize their findings into actionable feedback.
+If the user has not specified what to review, ask them before proceeding. Scope is one of: `commit` (latest commit), `staged`, `working`, a commit hash or `A..B` range, or a PR branch name. Their input will appear as a follow-up paragraph after this skill body.
 
-## Initial Setup:
+# Code Review
 
-When this command is invoked, respond with:
+You are tasked with reviewing changes across three parallel lenses — **Quality**, **Security**, **Dependencies** — and synthesising their findings with optional stronger-model adjudication into an actionable `thoughts/shared/reviews/` artifact.
+
+**How it works**:
+- Resolve scope and assemble the diff (Step 1)
+- Phase-1 Discovery Map (Step 2 — one agent + orchestrator-side git work)
+- Phase-2 three-lens review + precedents + conditional CVE lookup (Step 3 — parallel agents)
+- Reconcile findings via advisor (if present) or inline dimension-sweep (Step 4)
+- Grounded-questions developer checkpoint (Step 5)
+- Write the review artifact (Step 6)
+- Present and handle follow-ups (Steps 7–8)
+
+## Step 1: Resolve Scope and Assemble the Diff
+
+1. **Parse the scope argument** (follow-up paragraph or the skill's argument):
+   - `commit` → `git diff HEAD~1 HEAD`
+   - `staged` → `git diff --cached`
+   - `working` → `git diff`
+   - Commit hash `abc1234` → `git show abc1234`
+   - Range `A..B` → `git diff A..B`
+   - PR branch name → `git diff $(git merge-base main HEAD)..HEAD` (or the branch vs its base)
+
+2. **Read the full diff FIRST** (orchestrator-side, before any agent dispatch):
+   - `git diff --name-only [scope]` → `ChangedFiles` list
+   - `git diff --stat [scope]` → size summary
+   - `git diff -U0 [scope]` → hunk ranges for Phase-2 prompts (inline, don't dump to user)
+   - `git log -1 --format="%s%n%n%b" [scope-ref]` → commit-message context when applicable
+
+3. **Bail-out**: if `ChangedFiles` is empty, print `No changes in scope [scope]. Exiting.` and STOP. Do not write an artifact.
+
+4. **Derive flags** (orchestrator-side, used in later steps):
+   - `ManifestChanged` = ChangedFiles intersects {`package.json`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`} OR a `peerDependencies` field was touched.
+   - `LockstepSelfReview` = repository root contains `scripts/sync-versions.js` AND every `packages/*/package.json` shares the same `version:` AND the diff touches `packages/*/package.json`.
+   - `ReviewType` = one of `commit | pr | staged | working`.
+
+## Step 2: Phase-1 Discovery Map (parallel agents)
+
+Spawn ONE agent in parallel with orchestrator-side work:
+
+**Agent — Integration map:**
+- subagent_type: `integration-scanner`
+- Prompt: "Map inbound references, outbound dependencies, and infrastructure wiring for the following changed files: [ChangedFiles, one per line]. Flag any auth-boundary crossings (middleware, guards, interceptors, authorize-style decorators) and config/DI/event registration touching these paths. Do NOT analyse code quality — connections only, in your standard output format."
+
+While the agent runs, the orchestrator produces the rest of the Discovery Map inline from Step 1's data:
+- `ChangedFiles`, `ManifestChanged`, `LockstepSelfReview`, `ReviewType`
+- Hunk ranges per file (from `git diff -U0`)
+- Commit-message context (if applicable)
+
+**Wait for ALL agents to complete** before proceeding.
+
+**Synthesize the Discovery Map** — a compact text block that Phase-2 agents receive verbatim as `Known Context`:
+
 ```
-I'm ready to perform a code review. Please specify what you'd like reviewed:
-- Latest commit(s)
-- Staged changes (git diff --cached)
-- Working directory changes (git diff)
-- Specific commit hash or range
-- Pull request (provide PR number or branch)
+## Discovery Map
 
-You can also specify focus areas or review depth.
+Review type: [ReviewType]
+Scope: [scope argument]
+Commit/range: [git ref]
+Changed files ([N]):
+  path/a.ts (+A -B)
+  path/b.ts (+A -B)
+Hunks:
+  path/a.ts: L10-23, L45-60
+  path/b.ts: L5-8
+Manifest changed: [yes|no]
+Lockstep self-review: [yes|no]
+Auth-boundary crossings: [from integration-scanner output, file:line]
+Inbound refs: [from integration-scanner output]
+Outbound deps: [from integration-scanner output]
+Wiring/config: [from integration-scanner output]
 ```
 
-Then wait for the user's review request.
+## Step 3: Phase-2 Three-Lens Review (parallel agents)
 
-## Steps to follow after receiving the review request:
+Spawn these agents in parallel using the Agent tool. Each receives the `## Discovery Map` block inline as `Known Context` above its task.
 
-1. **Read the changes to review:**
-   - Determine what needs reviewing based on user input
-   - Use appropriate git commands to get the diff:
-     - Latest commit: `git diff HEAD~1 HEAD`
-     - Staged: `git diff --cached`
-     - Working: `git diff`
-   - **IMPORTANT**: Read the full diff output FIRST before invoking any skills
-   - Get list of changed files and understand the scope
-   - Note commit messages for context
+**Always spawn:**
 
-2. **Analyze and decompose the review:**
-   - Break down the changes into reviewable areas
-   - Take time to ultrathink about patterns, security implications, and architectural impacts
-   - Identify which components are affected
-   - Create a review plan using the `todo` tool to track all aspects
-   - Consider which existing patterns and historical decisions are relevant
+**Quality lens:**
+- subagent_type: `codebase-analyzer`
+- Prompt:
+  ```
+  Known Context:
+  [paste Discovery Map verbatim]
 
-3. **Spawn parallel agents for comprehensive review:**
-   - Plan first then spawn multiple agents to review different aspects concurrently using the Agent tool. Those MUST be run simultaneously to boost efficiency.
-    **For codebase research:**
-   - Use the **codebase-locator** agent to find WHERE files and components live
-   - Use the **codebase-analyzer** agent to understand HOW specific code works
-   - Use the **codebase-pattern-finder** agent if you need examples of similar implementations
+  Task: Trace data flow through each changed hunk. For every hunk, enumerate `file:line` observations in these buckets — do NOT classify severity, the orchestrator does:
+  1. Logic-bug risks: missing validation, dropped error paths, off-by-one, null/undefined misses, incorrect branch ordering, forgotten return/await, state mutations without guards.
+  2. Pattern divergence: where the hunk deviates from the surrounding file's existing style/structure (cite the nearby line the hunk broke from).
+  3. Blast radius: any inbound reference in the Discovery Map that the hunk's behavior change could affect (`consumer.ext:line` + what changes for it).
+  4. Test coverage gaps: any risk-bearing behavior the hunk introduces that has no adjacent test reference.
 
-   **For thoughts directory:**
-   - Use the **thoughts-locator** agent to discover what documents exist about the topic
-   - Use the **thoughts-analyzer** agent to extract key insights from specific documents
+  Return evidence only. No recommendations.
+  ```
 
-   **For web research (only if user explicitly asks):**
-   - Use the **web-search-researcher** agent for external documentation and resources
-   - IF you use web-research agents, instruct them to return LINKS with their findings, and please INCLUDE those links in your final report
+**Security lens:**
+- subagent_type: `codebase-analyzer`
+- Prompt:
+  ```
+  Known Context:
+  [paste Discovery Map verbatim]
 
-   The key is to use these agents intelligently:
-   1. Start with locator agents to understand scope and find context
-   2. Then use analyzer agents on the most critical changes
-   - Run multiple agents in parallel when reviewing different aspects
-   - Each agent works in isolation — provide complete context in the prompt
+  Task: Grep each changed hunk for the following sink patterns and list every match with `file:line` + surrounding 3 lines. Cross-reference the Discovery Map's Auth-boundary crossings.
+  - Command execution: `exec(`, `execSync(`, `execFile(`, `child_process`, `spawn(`
+  - Dynamic evaluation: `eval(`, `new Function(`
+  - SQL template-interpolation: multi-line `` `SELECT ... ${ ``, `` `INSERT ... ${ ``, `` `UPDATE ... ${ ``, `` `DELETE ... ${ ``
+  - XSS sinks: `innerHTML =`, `dangerouslySetInnerHTML`, `document.write(`
+  - Path traversal: string concatenation into `fs.readFile`, `fs.writeFile`, `path.join` with user input
+  - SSRF: `fetch(`, `http.request(`, `axios(`, `got(` with user-controlled origin
+  - Secrets in diff: `api_key`, `secret`, `password`, `BEGIN PRIVATE KEY`, `.env` content literal
+  - Missing hardening: auth-boundary crossings without a guard upstream; rate-limit-free POST handlers
 
-4. **Wait for all agents to complete and synthesize findings:**
-   - IMPORTANT: Wait for ALL agent invocations to complete before proceeding
-   - Compile all findings from agents
-   - Classify issues by severity:
-     - 🔴 Critical: Security vulnerabilities, data loss, crashes
-     - 🟡 Important: Bugs, performance issues, pattern violations
-     - 🔵 Suggestions: Style improvements, minor optimizations
-     - 💭 Discussion: Architecture decisions, trade-offs
-   - Cross-reference patterns found by agents with actual changes
-   - Check if historical decisions are being respected
-   - Verify test coverage based on existing patterns
+  For each hit, name the pattern and quote the line. Return evidence only. No CVE lookups — that is a separate agent.
+  ```
 
-5. **Determine metadata and filename:**
-   - Filename format: `thoughts/shared/reviews/YYYY-MM-DD_HH-MM-SS_[scope].md`
-     - YYYY-MM-DD_HH-MM-SS: Current date and time (e.g., 2025-10-11_14-30-22)
-     - [scope]: Brief kebab-case description of what was reviewed
-   - Repository name: from git root basename, or current directory basename if not a git repo
-   - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly); falls back to "no-branch" / "no-commit" if not a git repo
-   - Reviewer: use the User from the git context injected at the start of the session (fallback: "unknown")
-   - If metadata unavailable: use "unknown" for commit/branch
+**Dependencies lens:**
+- subagent_type: `codebase-analyzer`
+- Prompt (only when `ManifestChanged` is true; otherwise SKIP and set `dependency_issues: 0`, `passes: [quality, security]`):
+  ```
+  Known Context:
+  [paste Discovery Map verbatim]
+  Lockstep self-review: [LockstepSelfReview yes|no]
 
-6. **Generate review document:**
-   - Use the metadata gathered in step 5
-   - Structure the document with YAML frontmatter followed by content:
-     ```markdown
-     ---
-     date: [Current date and time with timezone]
-     reviewer: [Reviewer name]
-     repository: [Repository name]
-     branch: [Current branch]
-     commit: [Commit hash]
-     review_type: [commit|pr|staged|working]
-     scope: "[What was reviewed]"
-     files_changed: [Number]
-     critical_issues: [Count]
-     important_issues: [Count]
-     suggestions: [Count]
-     status: [approved|needs_changes|requesting_changes]
-     tags: [code-review, relevant-components]
-     last_updated: [Current date in YYYY-MM-DD format]
-     last_updated_by: [Reviewer name]
-     ---
+  Task: Parse the diff of `package.json` / `package-lock.json` / `pnpm-lock.yaml` / `yarn.lock`. List:
+  1. Added dependencies: `name@version` with `file:line`.
+  2. Bumped dependencies: `name: old -> new` with `file:line`.
+  3. Removed dependencies.
+  4. `peerDependencies` changes.
+  5. License field changes or additions in the lockfile.
+  6. When Lockstep self-review is `yes`: flag only intra-monorepo version drift where a sibling pin diverges from the lockstep `version:` in `packages/*/package.json`. Treat `"*"` peer pins as intentional.
+  7. When Lockstep self-review is `no`: flag any version-conflict between direct dep and lockfile resolution.
 
-     # Code Review: [Scope Description]
+  Return evidence only. No CVE lookups — that is a separate agent.
+  ```
 
-     **Date**: [Current date and time]
-     **Reviewer**: [Reviewer name]
-     **Repository**: [Repository]
-     **Branch**: [Branch name]
-     **Commit**: [Commit hash]
+**Precedents lens:**
+- subagent_type: `precedent-locator`
+- Prompt:
+  ```
+  Planned change: code review of [scope]. Changed files: [ChangedFiles].
+  Find the most similar past changes that touched these files or files nearby. For each precedent, report the commit hash, blast radius, any follow-up fixes within 30 days, and the one-sentence takeaway. Distil composite lessons across all precedents.
+  ```
 
-     ## Review Summary
-     [Overall assessment of the changes]
+**Conditional spawn** (only when `ManifestChanged` is true):
 
-     ## Issues Found
+**CVE/advisory lens:**
+- subagent_type: `web-search-researcher`
+- Prompt:
+  ```
+  For each of the following dependency changes, look up known CVEs / GitHub Advisories / OSS Index entries in the target version. Return LINKS alongside findings. If a vulnerability exists, summarize severity (Critical / High / Moderate / Low), affected version range, and whether the bumped-to version is fixed.
 
-     ### Critical Issues (Must Fix)
-     [None | List of critical issues with file:line references and suggested fixes]
+  Dependencies to check:
+  [name@version, one per line — extracted by orchestrator from the diff]
+  ```
 
-     ### Important Issues (Should Fix)
-     [List of important issues with evidence from skills]
+**Wait for ALL agents to complete** before proceeding.
 
-     ### Suggestions
-     [Minor improvements and optimizations]
+## Step 4: Reconcile Findings
 
-     ## Pattern Analysis
-     [How changes align with existing patterns found by pattern-finder]
+1. **Compile evidence** from every lens:
+   - Quality evidence → classify each `file:line` observation into severity:
+     - 🔴 Critical: traced flow contradiction (dropped error path, missing validation on a known sink, null-deref).
+     - 🟡 Important: blast-radius × complexity-delta (hot path + new allocation, visible ABI change without migration).
+     - 🔵 Suggestion: pattern divergence with a concrete nearby template.
+     - 💭 Discussion: composite-lesson architecture concerns.
+   - Security evidence → classify:
+     - 🔴 sink hit with user-reachable exploitability (trace via Discovery Map auth-boundary crossings).
+     - 🟡 missing hardening (rate-limit, weak hash, non-constant-time compare).
+     - 🔵 pattern divergence from secure examples in the same file.
+     - 💭 architectural question.
+   - Dependencies evidence → classify:
+     - 🔴 Known-exploitable CVE in a touched dep (Critical/High per advisory DB) OR lockstep-contract violation (would trip `scripts/sync-versions.js`).
+     - 🟡 Moderate CVE, outdated major with a migration path, license incompatibility with the project license.
+     - 🔵 Minor/transitive drift.
+     - 💭 Architectural dep question.
+   - Precedents → compile into a separate `## Precedents & Lessons` section orthogonal to per-lens findings. Composite lessons go at the bottom of that section.
 
-     ## Impact Assessment
-     [Files and tests affected based on locator findings]
+2. **Probe advisor availability** — attempt a probe by checking whether `advisor` is in the active tool set (main-thread visibility). If yes, proceed to advisor path; otherwise take the inline path.
 
-     ## Historical Context
-     [Relevant decisions and past issues from thoughts/]
+3. **Advisor path** (when advisor is active):
+   - Print a main-thread `## Pre-Adjudication Findings` block containing the compiled evidence and tentative severity map. This ensures the findings are persisted into `getBranch()` before the advisor call.
+   - Call `advisor()` (zero-param). Wait for the response.
+   - On success: paste the advisor's prose verbatim into the artifact's `## Advisor Adjudication` section (Step 6) and note `advisor_used: true` + `advisor_model: [model-id]` in frontmatter.
+   - On `"aborted"` or empty text: set `advisor_used: false`, skip the adjudication section, fall through to the inline path.
+   - On `"error"`: note the error inline in the adjudication section as `advisor error: <message>`; continue with inline reconciliation alongside.
 
-     ## Recommendation
-     [Clear verdict: Approved / Needs Changes / Requesting Changes]
-     ```
+4. **Inline path** (advisor unavailable or errored):
+   - Run a dimension-sweep modeled on `skills/design/SKILL.md:83-116`: Data model / API surface / Integration / Scope / Verification / Performance.
+   - For every finding, ask: does another finding contradict this severity given the Discovery Map? If yes, note the tension.
+   - Produce a short `## Reconciliation Notes` block inside the artifact capturing any severity moves and the rationale.
 
-7. **Present findings:**
-   - Present a concise summary to the user
-   - Include the most critical issues first
-   - Provide concrete examples from the codebase
-   - Ask if they need clarification on any findings
+5. **Emit the reconciled severity map** — authoritative severity per finding, carrying the advisor's guidance when present. Keep the per-pass grouping (do NOT tag each finding with its originating lens in prose; the H2 it sits under is the tag).
 
-8. **Handle follow-up questions:**
-   - If the user has follow-up questions, append to the same review document
-   - Update the frontmatter fields `last_updated` and `last_updated_by`
-   - Add a new section: `## Follow-up [timestamp]`
-   - Spawn new agents as needed for deeper investigation
-   - Continue updating the document and syncing
+## Step 5: Developer Checkpoint
 
-## Important notes:
-- Always use parallel Agent tool calls to maximize efficiency
-- Always read the diff FULLY before spawning agents
-- Focus on finding concrete issues with evidence from agents
-- Review documents should be actionable with specific fixes
-- Each agent prompt should be focused on specific analysis
-- Consider patterns, security, performance, and maintainability
-- Include historical context when relevant
-- Keep the main agent focused on synthesis, not deep analysis
-- Encourage agents to find examples and patterns, not make judgments
-- **Critical ordering**: Follow the numbered steps exactly
-  - ALWAYS read diff first before spawning agents (step 1)
-  - ALWAYS wait for all agents to complete before synthesizing (step 4)
-  - ALWAYS gather metadata before writing the document (step 5 before step 6)
-- **Agent roles:**
-  - **codebase-locator**: WHERE code lives (find files)
-  - **codebase-analyzer**: HOW code works (implementation details)
-  - **codebase-pattern-finder**: Examples of similar code
-  - **thoughts-locator**: Find historical documentation
-  - **thoughts-analyzer**: Extract insights from documents
-  - **web-search-researcher**: External sources (sparingly)
+Use the grounded-questions-one-at-a-time pattern. Every question must reference real findings with `file:line` evidence and pull a DECISION from the developer.
+
+**Present a compiled scan first** (under 20 lines):
+
+```
+Review: [scope]
+Files: [N]
+Quality: [C🔴/I🟡/S🔵/D💭]
+Security: [C/I/S/D]
+Dependencies: [C/I/S/D | not-applicable]
+Precedents: [N composite lessons, top: "[one-line]"]
+Advisor: [used (model) | unavailable]
+```
+
+Wait for the developer's response. Then ask **one question at a time**, waiting for each answer.
+
+**Question patterns:**
+
+- **Severity dispute**: Only ask when the advisor re-ranked a finding or when inline reconciliation surfaced a contradiction. Use `ask_user_question` — Options: "Keep [original severity] (Recommended)" / "Downgrade" / "Escalate" — with `file:line` evidence in the description.
+- **Scope ambiguity**: "❓ Question: finding at `file:line` lies in a test helper — does the team count test-only issues? Include in artifact or not?"
+- **False-positive confirmation**: Only ask when a security/dep finding hinges on context the orchestrator cannot see (e.g., `exec()` with a variable that the developer might know is constant).
+
+**Critical rules:**
+- Ask ONE question at a time. Wait before asking the next.
+- Lead with the most load-bearing finding.
+- Skip the checkpoint entirely if no disputes surfaced and the developer set `status: approved` in the scan response.
+
+## Step 6: Write the Review Document
+
+1. **Determine metadata**:
+   - Filename: `thoughts/shared/reviews/YYYY-MM-DD_HH-MM-SS_[scope-kebab].md`
+   - Repository: git root basename (fallback: cwd basename).
+   - Branch + commit: from git-context injected at session start, or `git branch --show-current` / `git rev-parse --short HEAD` (fallback: `no-branch` / `no-commit`).
+   - Reviewer: user from injected git-context (fallback: `unknown`).
+
+2. **Write the artifact** using the Write tool (no Edit — this skill writes once per run):
+
+```markdown
+---
+date: [ISO 8601 with timezone]
+reviewer: [User]
+repository: [Repo name]
+branch: [Branch]
+commit: [Short hash]
+review_type: [commit|pr|staged|working]
+scope: "[What was reviewed]"
+files_changed: [N]
+critical_issues: [Count across all lenses]
+important_issues: [Count]
+suggestions: [Count]
+quality_issues: [Count]
+security_issues: [Count]
+dependency_issues: [Count | 0 when not-applicable]
+passes: [quality, security, dependencies]   # omit dependencies when not-applicable
+advisor_used: [true|false]
+advisor_model: [provider:id]                 # only when advisor_used is true
+status: [approved|needs_changes|requesting_changes]
+tags: [code-review, relevant-components]
+last_updated: [YYYY-MM-DD]
+last_updated_by: [User]
+---
+
+# Code Review: [Scope Description]
+
+**Date**: [full ISO date]
+**Reviewer**: [User]
+**Repository**: [Repo]
+**Branch**: [Branch]
+**Commit**: [Short hash]
+
+## Review Summary
+[3–5 sentences: overall verdict, highest-severity finding per lens, advisor outcome.]
+
+## Issues Found
+
+### Quality
+#### 🔴 Critical
+- `file:line` — [evidence + one-sentence fix pointer]
+#### 🟡 Important
+- `file:line` — [evidence + fix pointer]
+#### 🔵 Suggestions
+- `file:line` — [nearby template reference + suggested alignment]
+#### 💭 Discussion
+- `file:line` — [open question or trade-off]
+
+### Security
+#### 🔴 Critical
+- `file:line` — [sink quoted + exploitability rationale referencing auth-boundary from Discovery Map]
+#### 🟡 Important
+- `file:line` — [missing hardening + secure precedent]
+#### 🔵 Suggestions
+- `file:line` — [pattern divergence from secure example]
+#### 💭 Discussion
+- `file:line` — [architectural question]
+
+### Dependencies
+(Omit this H3 block entirely when `passes` excludes `dependencies`.)
+#### 🔴 Critical
+- `dep@ver` (`package.json:line`) — [CVE id + link + affected-range + fix version]
+#### 🟡 Important
+- `dep@ver` — [moderate CVE / license / lockstep note with link]
+#### 🔵 Suggestions
+- `dep@ver` — [minor/transitive drift]
+#### 💭 Discussion
+- `dep@ver` — [architectural dep question]
+
+## Precedents & Lessons
+- `commit hash` — [precedent + one-sentence takeaway]
+- Composite lessons (most-recurring first):
+  1. [lesson 1]
+  2. [lesson 2]
+
+## Pattern Analysis
+[How changes align with or diverge from existing patterns in the changed files. Cite `file:line` of the nearest established pattern.]
+
+## Impact Assessment
+[Files and inbound refs affected per the Discovery Map. Enumerate each affected consumer with `file:line` and what changes for it.]
+
+## Historical Context
+[Links to thoughts/ docs referenced by precedent-locator; one line each, no summaries.]
+
+## Advisor Adjudication
+(Omit when `advisor_used: false`.)
+[Advisor model prose pasted VERBATIM. Do not edit or paraphrase. If `advisor error:` prefix is present, leave it as-is.]
+
+## Reconciliation Notes
+(Include only when the inline path ran, OR when developer dispute in Step 5 moved a severity.)
+[Short prose: which findings shifted severity and why.]
+
+## Recommendation
+[Clear verdict: Approved / Needs Changes / Requesting Changes. Cite the top 1–3 items that drove the verdict with `file:line`.]
+```
+
+## Step 7: Present and Chain
+
+```
+Review written to:
+`thoughts/shared/reviews/[filename].md`
+
+[C] critical, [I] important, [S] suggestions across [Q] quality, [Se] security, [D] dependency issues.
+Advisor: [used (model) | unavailable]
+Status: [verdict]
+
+Top items:
+1. `file:line` — [headline]
+2. `file:line` — [headline]
+3. `file:line` — [headline]
+
+Ask follow-ups, or run `/skill:revise` to address the findings.
+```
+
+## Step 8: Handle Follow-ups
+
+- If the user asks for deeper analysis of a specific finding, spawn a targeted `codebase-analyzer` on that area (1 agent max) and append a `## Follow-up [timestamp]` section using the Edit tool.
+- Update frontmatter: `last_updated`, `last_updated_by`, and `last_updated_note: "Appended follow-up on [area]"`.
+- Never rewrite prior findings; only append.
+
+## Important Notes
+
+- **No tool-permission widening**: `allowed-tools` is intentionally omitted — the skill inherits `Agent`, `ask_user_question`, `advisor`, `Write`, `web_search`, `todo` per `.rpiv/guidance/skills/architecture.md:40`. Do NOT re-add the line.
+- **Always use parallel Agent tool calls** in Phase-2 to maximise efficiency.
+- **Always read the full diff FIRST** (Step 1) before spawning any Phase-1 or Phase-2 agent.
+- **Always pass the Discovery Map inline** as `Known Context` to every Phase-2 agent — agents are `isolated: true` and cannot see sibling transcripts.
+- **Critical ordering**: Follow the numbered steps exactly.
+  - ALWAYS resolve scope and bail on empty diff (Step 1) before Phase-1.
+  - ALWAYS wait for Phase-1 completion before Phase-2 dispatch.
+  - ALWAYS wait for ALL Phase-2 agents to complete before reconciliation (Step 4).
+  - ALWAYS probe advisor availability before calling `advisor()` (strip-when-unconfigured at `packages/rpiv-advisor/advisor.ts:463-472`).
+  - ALWAYS emit the `## Pre-Adjudication Findings` block to the main branch BEFORE calling `advisor()` — the advisor reads `getBranch()` (main-thread-only at `packages/rpiv-advisor/advisor.ts:336`) and will not see evidence you did not flush.
+  - ALWAYS preserve the severity taxonomy emoji + naming (🔴 Critical / 🟡 Important / 🔵 Suggestions / 💭 Discussion) and the existing frontmatter keys verbatim — discovery agents `thoughts-locator` and `thoughts-analyzer` grep these.
+  - NEVER call `advisor()` from inside a sub-agent — its branch is invisible to the advisor.
+  - NEVER parse advisor prose mechanically — paste verbatim into `## Advisor Adjudication`.
+  - NEVER add a new bundled agent to support this skill — zero-new-agents contract per `packages/rpiv-pi/extensions/rpiv-core/agents.ts:148-268` sync cost.
 - **Severity classification**:
-  - Use evidence from agents to justify each issue's severity
-  - Provide specific file:line references for all issues
-  - Include examples of correct patterns when available
-  - Suggest concrete fixes, not vague improvements
+  - Evidence from agents justifies each issue's severity.
+  - Every finding carries a `file:line`.
+  - Correct-pattern examples cited where available.
+  - Fixes are concrete (pointer, not vague).
+- **Agent roles (for this skill)**:
+  - `integration-scanner` (Phase-1): inbound refs, outbound deps, auth-boundary crossings.
+  - `codebase-analyzer` × 3 (Phase-2): one per lens — evidence-only, no recommendations (honors the guardrail at `packages/rpiv-pi/agents/codebase-analyzer.md:113-119`).
+  - `precedent-locator` (Phase-2, always): git history + thoughts/ for lessons.
+  - `web-search-researcher` (Phase-2, conditional on `ManifestChanged`): CVE / GitHub Advisory / OSS Index lookups with LINKS.
+- **File reading**: read the diff FULLY (no limit/offset) via `git` commands before spawning agents. Let agents read their scoped targets; the orchestrator does not need to read source files for non-risk findings.
+- CC auto-loads CLAUDE.md files when agents read files in a directory — no need to scan for them explicitly.
