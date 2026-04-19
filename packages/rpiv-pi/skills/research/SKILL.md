@@ -81,11 +81,11 @@ Question 2: [Full dense question paragraph]
 For each question, provide your analysis with exact file:line references. Note connections between the questions where the same code serves multiple roles. Focus on DEPTH — trace the actual code, don't just locate it.
 ```
 
-**Precedent sweep (always spawn):**
-Spawn one `precedent-locator` agent alongside the question agents:
-"Find similar past changes involving [list key files from Discovery Summary]. Search git log for commits that touched these files, similar commit messages, and follow-up fixes. Research topic: [original query]."
+**Precedent sweep (git-gated):**
 
-This agent runs with full knowledge of discovered files — its findings go into Precedents & Lessons, not tied to a specific question.
+When `git_commit` is available (not `no-commit`), spawn one `precedent-locator` agent alongside the question agents with prompt: "Find similar past changes involving [list key files from Discovery Summary]. Search git log for commits that touched these files, similar commit messages, and follow-up fixes. Research topic: [original query]."
+
+Findings go into Precedents & Lessons. Otherwise skip and note "git history unavailable" there.
 
 **Wait for ALL agents to complete** before proceeding.
 

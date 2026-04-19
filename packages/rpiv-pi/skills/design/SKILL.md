@@ -57,16 +57,16 @@ This is NOT a discovery sweep. Focus on DEPTH (how things work, what patterns to
    - Use **codebase-pattern-finder** to find existing implementations to model after — the primary template for code shape
    - Use **codebase-analyzer** to understand HOW integration points work in detail
    - Use **integration-scanner** to map the wiring surface — inbound refs, outbound deps, config/DI/event registration
-   - Use **precedent-locator** to find similar past changes in git history — what commits introduced comparable features, what broke, and what lessons apply to this design
+   - Use **precedent-locator** to find similar past changes in git history — what commits introduced comparable features, what broke, and what lessons apply to this design. Only when `git_commit` is available (not `no-commit`); otherwise skip and note "git history unavailable" in Verification Notes.
 
    **Novel work** (new libraries, first-time patterns, no existing codebase precedent):
    - Add **web-search-researcher** for external documentation, API references, and community patterns
    - Instruct it to return LINKS with findings — include those links in the final design artifact
 
-   Agent prompts should focus on:
-   - "Find the implementation pattern I should model after for [feature type]"
-   - "How does [integration point] work in detail — show me the wiring"
-   - "What connects to [component] — inbound refs, outbound deps, config"
+   Agent prompts should focus on (labeled by target agent):
+   - **codebase-pattern-finder**: "Find the implementation pattern I should model after for [feature type]"
+   - **codebase-analyzer**: "How does [integration point] work in detail"
+   - **integration-scanner**: "What connects to [component] — inbound refs, outbound deps, config"
 
    NOT: "Find all files related to X" — that's discovery's job, upstream of this skill.
 

@@ -95,7 +95,7 @@ Using the entry points discovered in Step 2 (validated against _meta.md when ava
 
 **Agent D — Postcondition Discovery:**
 - subagent_type: `integration-scanner`
-- Prompt: "Find all side effects triggered by {feature name} actions{endpoint_scope}. Look for: domain events published, message handlers invoked, email/notification triggers, external API calls, database cascades, cache invalidations, audit log entries, webhook dispatches. For each side effect, report: what triggers it (which action/endpoint), what it does, and where the handler code lives. These become postconditions in test cases.{scope_context}"
+- Prompt: "Find all side effects triggered by {feature name} actions{endpoint_scope}. Look for: domain events published, message handlers invoked, email/notification triggers, external API calls, database cascades, cache invalidations, audit log entries, webhook dispatches. For each side effect, report: what triggers it (which action/endpoint) and where the handler code lives (file:line). Do NOT describe what the handler does — only locate it. These locations become postconditions in test cases.{scope_context}"
 
 Wait for ALL agents to complete before proceeding.
 

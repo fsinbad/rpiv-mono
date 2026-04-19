@@ -71,7 +71,7 @@ Before Step 1, create a todo list tracking every step below (Step 1 through Step
    - Do NOT ask a locator to also cover packaging, docs, runtime wiring, and permissions unless they are the same seam
 
    Example prompts:
-   - codebase-locator: "Find ALL files that [implement/call/emit/subscribe to/import] [specific component]. For each file, report the key function signatures, exported types, and import chains. Search exhaustively — grep for method names, class names, event strings."
+   - codebase-locator: "Find ALL files that [implement/call/emit/subscribe to/import] [specific component]. For each file, report the key function names, class/type names, and import chains. Search exhaustively — grep for method names, class names, event strings. Report only declaration lines via grep match anchors (e.g., `file.ts:42`); full multi-line signatures and type bodies are captured by the orchestrator in Step 3 when it reads key files for depth."
    - integration-scanner: "What connects to [area] — inbound refs, outbound deps, config/DI/event wiring. For each connection, report the function/method that creates it."
    - thoughts-locator: "What existing docs/decisions exist about [topic]"
 
