@@ -50,4 +50,9 @@ export const SIBLINGS: readonly SiblingPlugin[] = [
 		matches: /rpiv-web-tools/i,
 		provides: "web_search + web_fetch tools + /web-search-config",
 	},
+	{
+		pkg: "npm:@juicesharp/rpiv-args",
+		matches: /@juicesharp\/rpiv-args(?![-\w])/i,
+		provides: "skill-argument resolver — substitutes $N/$ARGUMENTS in skill bodies",
+	},
 ];

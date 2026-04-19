@@ -47,6 +47,7 @@
     "@juicesharp/rpiv-todo": "*",
     "@juicesharp/rpiv-advisor": "*",
     "@juicesharp/rpiv-btw": "*",
-    "@juicesharp/rpiv-web-tools": "*"
+    "@juicesharp/rpiv-web-tools": "*",
+    "@juicesharp/rpiv-args": "*"
   }
 }
