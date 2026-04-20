@@ -110,3 +110,85 @@ describe("syncBundledAgents — error paths", () => {
 		}
 	});
 });
+
+describe("syncBundledAgents — stale-file detection (apply=false)", () => {
+	it("reports pendingRemove when a managed file has no matching source", () => {
+		mkdirSync(targetDir, { recursive: true });
+		writeFileSync(join(targetDir, "stale.md"), "x", "utf-8");
+		writeFileSync(manifestPath, JSON.stringify(["stale.md"]), "utf-8");
+		const r = syncBundledAgents(cwd, false);
+		expect(r.pendingRemove).toContain("stale.md");
+		expect(r.removed).toEqual([]);
+		expect(existsSync(join(targetDir, "stale.md"))).toBe(true);
+	});
+
+	it("keeps pendingRemove entries in the manifest so the next apply can finish removal", () => {
+		mkdirSync(targetDir, { recursive: true });
+		writeFileSync(join(targetDir, "stale.md"), "x", "utf-8");
+		writeFileSync(manifestPath, JSON.stringify(["stale.md"]), "utf-8");
+		syncBundledAgents(cwd, false);
+		const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as string[];
+		expect(manifest).toContain("stale.md");
+	});
+
+	it("skips pendingRemove when the stale file no longer exists on disk", () => {
+		mkdirSync(targetDir, { recursive: true });
+		// Manifest claims stale.md but disk does not have it
+		writeFileSync(manifestPath, JSON.stringify(["stale.md"]), "utf-8");
+		const r = syncBundledAgents(cwd, false);
+		expect(r.pendingRemove).not.toContain("stale.md");
+		expect(r.removed).not.toContain("stale.md");
+	});
+});
+
+describe("syncBundledAgents — manifest robustness", () => {
+	it("treats a corrupt manifest (invalid JSON) as empty and re-bootstraps", () => {
+		mkdirSync(targetDir, { recursive: true });
+		writeFileSync(manifestPath, "{ not json ::", "utf-8");
+		const r = syncBundledAgents(cwd, false);
+		expect(r.errors).toEqual([]);
+		// After sync, the manifest should be valid JSON again.
+		const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as string[];
+		expect(Array.isArray(manifest)).toBe(true);
+	});
+
+	it("treats a non-array manifest as empty and re-bootstraps", () => {
+		mkdirSync(targetDir, { recursive: true });
+		writeFileSync(manifestPath, JSON.stringify({ oops: true }), "utf-8");
+		const r = syncBundledAgents(cwd, false);
+		expect(r.errors).toEqual([]);
+		const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as string[];
+		expect(Array.isArray(manifest)).toBe(true);
+	});
+
+	it("filters non-string manifest entries during parse", () => {
+		mkdirSync(targetDir, { recursive: true });
+		writeFileSync(join(targetDir, "unrelated.md"), "keep me", "utf-8");
+		// Write manifest containing mixed types (must be ignored per-entry rather than whole-file)
+		writeFileSync(manifestPath, JSON.stringify([42, null, "unrelated.md"]), "utf-8");
+		const r = syncBundledAgents(cwd, false);
+		expect(r.errors).toEqual([]);
+		// unrelated.md is not in source, so it will be tracked for pendingRemove
+		expect(r.pendingRemove).toContain("unrelated.md");
+	});
+});
+
+describe("syncBundledAgents — subsequent-run bookkeeping", () => {
+	it("reports unchanged (not added) on a second run with no changes", () => {
+		syncBundledAgents(cwd, true);
+		const r = syncBundledAgents(cwd, false);
+		expect(r.added).toEqual([]);
+		expect(r.updated).toEqual([]);
+		expect(r.pendingUpdate).toEqual([]);
+		expect(r.unchanged.length).toBeGreaterThan(0);
+	});
+
+	it("treats a destination file that was manually removed as a new add on next sync", () => {
+		syncBundledAgents(cwd, true);
+		const bundled = readdirSync(BUNDLED_AGENTS_DIR).filter((f) => f.endsWith(".md"));
+		if (bundled.length === 0) return;
+		rmSync(join(targetDir, bundled[0]));
+		const r = syncBundledAgents(cwd, false);
+		expect(r.added).toContain(bundled[0]);
+	});
+});
