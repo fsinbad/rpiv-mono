@@ -1,4 +1,4 @@
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, vi } from "vitest";
@@ -38,4 +38,9 @@ beforeEach(async () => {
 
 	delete (globalThis as Record<symbol, unknown>)[ADVISOR_SYMBOL];
 	delete (globalThis as Record<symbol, unknown>)[BTW_SYMBOL];
+
+	const piAgentSettings = join(process.env.HOME!, ".pi", "agent", "settings.json");
+	const advisorConfig = join(process.env.HOME!, ".config", "rpiv-advisor", "advisor.json");
+	rmSync(piAgentSettings, { force: true });
+	rmSync(advisorConfig, { force: true });
 });
