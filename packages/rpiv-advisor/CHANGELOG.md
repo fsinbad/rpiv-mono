@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `loadAdvisorConfig()` and `saveAdvisorConfig(key, effort)` are now exported from `advisor.ts` to unlock config-axis round-trip tests. Bodies and semantics unchanged — still best-effort writes to `~/.config/rpiv-advisor/advisor.json` with `chmod 0600`.
+
 ## [0.9.1] - 2026-04-20
 
 ## [0.9.0] - 2026-04-19
