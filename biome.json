@@ -29,6 +29,8 @@
 			"packages/*/**/*.js",
 			"scripts/**/*.js",
 			"scripts/**/*.mjs",
+			"test/**/*.ts",
+			"vitest.config.ts",
 			"!**/node_modules",
 			"!**/.pi",
 			"!**/.rpiv",

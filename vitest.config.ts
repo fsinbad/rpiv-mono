@@ -1,0 +1,27 @@
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+	test: {
+		projects: ["packages/*"],
+		setupFiles: ["./test/setup.ts"],
+		unstubGlobals: true,
+		clearMocks: true,
+		restoreMocks: true,
+		passWithNoTests: true,
+		coverage: {
+			provider: "v8",
+			reporter: ["text", "html"],
+			include: ["packages/*/**/*.ts"],
+			exclude: [
+				"**/node_modules/**",
+				"**/.pi/**",
+				"**/.rpiv/**",
+				"**/thoughts/**",
+				"**/docs/**",
+				"**/*.test.ts",
+				"**/index.ts",
+				"packages/test-utils/**",
+			],
+		},
+	},
+});
