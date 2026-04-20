@@ -2,7 +2,7 @@
 
 All notable changes to this package will be documented in this file.
 
-## [Unreleased]
+## [0.11.0] - 2026-04-20
 
 ### Added
 - `stubFetch(matchers)` at `fetch.ts` — `globalThis.fetch` replacement matching by URL origin+pathname with full `Response`-shape returns and `AbortSignal` capture.

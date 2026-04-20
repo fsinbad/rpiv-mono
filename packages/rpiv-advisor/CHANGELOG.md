@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-advisor` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.0] - 2026-04-20
 
 ### Added
 - `stripInflightAdvisorCall(messages)` and `stableStringify(value)` are now exported from `advisor.ts` so the 8 strip-path branches and the key-sorted JSON serializer can be unit-tested directly. Bodies and semantics unchanged.
