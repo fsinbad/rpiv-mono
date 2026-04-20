@@ -16,10 +16,11 @@ You are tasked with reviewing changes across three parallel lenses — **Quality
 - Resolve scope and assemble the diff (Step 1)
 - Phase-1 Discovery Map (Step 2 — one agent + orchestrator-side git work)
 - Phase-2 three-lens review + precedents + conditional CVE lookup (Step 3 — parallel agents)
-- Reconcile findings via advisor (if present) or inline dimension-sweep (Step 4)
-- Grounded-questions developer checkpoint (Step 5)
-- Write the review artifact (Step 6)
-- Present and handle follow-ups (Steps 7–8)
+- Cross-Finding Interaction Sweep (Step 4 — one synthesis agent over Phase-2 evidence, gated)
+- Reconcile findings via advisor (if present) or inline dimension-sweep (Step 5)
+- Grounded-questions developer checkpoint (Step 6)
+- Write the review artifact (Step 7)
+- Present and handle follow-ups (Steps 8–9)
 
 ## Step 1: Resolve Scope and Assemble the Diff
 
@@ -177,9 +178,46 @@ Spawn these agents in parallel using the Agent tool. Each receives the `## Disco
 
 **Wait for ALL agents to complete** before proceeding.
 
-## Step 4: Reconcile Findings
+## Step 4: Cross-Finding Interaction Sweep
 
-1. **Compile evidence** from every lens:
+**Gate**: SKIP this step (go directly to Step 5) when EITHER `len(ChangedFiles) < 2` OR the Quality lens returned fewer than 4 total observations across all hunks. Emergent interactions need surface area; tiny diffs cannot structurally produce them.
+
+Otherwise, spawn ONE additional agent after all Phase-2 agents complete:
+
+**Interaction sweep:**
+- subagent_type: `codebase-analyzer`
+- Prompt:
+  ```
+  Known Context:
+  [paste Discovery Map verbatim]
+
+  Quality Evidence:
+  [paste Quality lens output verbatim]
+
+  Security Evidence:
+  [paste Security lens output verbatim]
+
+  Precedents:
+  [paste precedents output verbatim]
+
+  Task: Perform a cross-finding interaction sweep. Group the evidence by shared entity, state machine, workflow, data flow path, API boundary, background process, or producer-consumer contract.
+
+  For each group, check whether multiple local observations combine into an emergent defect, including:
+  1. contradictory assumptions between components or layers,
+  2. unreachable, stuck, or non-terminal states,
+  3. retry/reprocess mechanisms made inert by another behavior,
+  4. duplicate-processing or idempotency gaps created by ordering or missing guards,
+  5. guards in one layer invalidating transitions in another,
+  6. one finding masking, amplifying, or permanently triggering another.
+
+  Return only interaction findings backed by explicit evidence from at least two concrete file:line locations from different files or different components. No recommendations. Do not repeat single-location findings.
+  ```
+
+**Wait for the interaction-sweep agent to complete** before proceeding.
+
+## Step 5: Reconcile Findings
+
+1. **Compile evidence** from every lens and the interaction sweep (when it ran):
    - Quality evidence → classify each `file:line` observation into severity:
      - 🔴 Critical: traced flow contradiction (dropped error path, missing validation on a known sink, null-deref).
      - 🟡 Important: blast-radius × complexity-delta (hot path + new allocation, visible ABI change without migration).
@@ -195,6 +233,9 @@ Spawn these agents in parallel using the Agent tool. Each receives the `## Disco
      - 🟡 Moderate CVE, outdated major with a migration path, license incompatibility with the project license.
      - 🔵 Minor/transitive drift.
      - 💭 Architectural dep question.
+   - Interaction-sweep evidence → classify (🔴/🟡 only; no 💭 tier — the sweep must produce concrete emergent defects, not speculation):
+     - 🔴 Critical: concrete emergent failure across 2+ `file:line` facts from different files/components (stranded state, duplicate-processing path, inert retry, producer/consumer contradiction).
+     - 🟡 Important: concrete multi-component mismatch with bounded blast radius or an existing mitigation.
    - Precedents → compile into a separate `## Precedents & Lessons` section orthogonal to per-lens findings. Composite lessons go at the bottom of that section.
 
 2. **Probe advisor availability** — attempt a probe by checking whether `advisor` is in the active tool set (main-thread visibility). If yes, proceed to advisor path; otherwise take the inline path.
@@ -209,8 +250,10 @@ Spawn these agents in parallel using the Agent tool. Each receives the `## Disco
    - Produce a short `## Reconciliation Notes` block inside the artifact capturing any severity moves and the rationale.
 
 5. **Emit the reconciled severity map** — authoritative severity per finding, carrying the advisor's guidance when present. Keep the per-pass grouping (do NOT tag each finding with its originating lens in prose; the H2 it sits under is the tag).
+   - Interaction findings live in their own `### Cross-Finding Interactions` H3 under `## Issues Found`, not folded into per-lens H3s.
+   - When an interaction finding subsumes multiple local findings, keep the local findings if still actionable, but lead with the interaction finding and explain the relationship in `## Reconciliation Notes`.
 
-## Step 5: Developer Checkpoint
+## Step 6: Developer Checkpoint
 
 Use the grounded-questions-one-at-a-time pattern. Every question must reference real findings with `file:line` evidence and pull a DECISION from the developer.
 
@@ -239,7 +282,7 @@ Wait for the developer's response. Then ask **one question at a time**, waiting 
 - Lead with the most load-bearing finding.
 - Skip the checkpoint entirely if no disputes surfaced and the developer set `status: approved` in the scan response.
 
-## Step 6: Write the Review Document
+## Step 7: Write the Review Document
 
 1. **Determine metadata**:
    - Filename: `thoughts/shared/reviews/YYYY-MM-DD_HH-MM-SS_[scope-kebab].md`
@@ -279,6 +322,13 @@ last_updated_by: [User]
 [3–5 sentences: overall verdict, highest-severity finding per lens, advisor outcome.]
 
 ## Issues Found
+
+### Cross-Finding Interactions
+(Omit this H3 block entirely when the interaction sweep was skipped per the Step 4 gate, OR when the sweep returned no findings. Only 🔴/🟡 tiers — no 💭.)
+#### 🔴 Critical
+- `file:line` + `file:line` (≥ 2 distinct locations) — [emergent defect narrative: which local facts combine, and how the failure path is reached]
+#### 🟡 Important
+- `file:line` + `file:line` — [multi-component mismatch + blast radius or existing mitigation]
 
 ### Quality
 #### 🔴 Critical
@@ -338,7 +388,7 @@ last_updated_by: [User]
 [Clear verdict: Approved / Needs Changes / Requesting Changes. Cite the top 1–3 items that drove the verdict with `file:line`.]
 ```
 
-## Step 7: Present and Chain
+## Step 8: Present and Chain
 
 ```
 Review written to:
@@ -356,7 +406,7 @@ Top items:
 Ask follow-ups, or run `/skill:revise` to address the findings.
 ```
 
-## Step 8: Handle Follow-ups
+## Step 9: Handle Follow-ups
 
 - If the user asks for deeper analysis of a specific finding, spawn a targeted `codebase-analyzer` on that area (1 agent max) and append a `## Follow-up [timestamp]` section using the Edit tool.
 - Update frontmatter: `last_updated`, `last_updated_by`, and `last_updated_note: "Appended follow-up on [area]"`.
@@ -372,7 +422,10 @@ Ask follow-ups, or run `/skill:revise` to address the findings.
 - **Critical ordering**: Follow the numbered steps exactly.
   - ALWAYS resolve scope and bail on empty diff (Step 1) before Phase-1.
   - ALWAYS wait for Phase-1 completion before Phase-2 dispatch.
-  - ALWAYS wait for ALL Phase-2 agents to complete before reconciliation (Step 4).
+  - ALWAYS wait for ALL Phase-2 agents to complete before the interaction sweep (Step 4).
+  - ALWAYS run the Cross-Finding Interaction Sweep (Step 4) after ALL Phase-2 agents complete and BEFORE severity classification in Step 5, UNLESS the Step 4 gate skipped it.
+  - NEVER emit an interaction finding unless it cites at least two concrete `file:line` facts from different files/components.
+  - ALWAYS wait for the interaction sweep (when it ran) to complete before reconciliation (Step 5).
   - ALWAYS probe advisor availability before calling `advisor()` (strip-when-unconfigured at `packages/rpiv-advisor/advisor.ts:463-472`).
   - ALWAYS emit the `## Pre-Adjudication Findings` block to the main branch BEFORE calling `advisor()` — the advisor reads `getBranch()` (main-thread-only at `packages/rpiv-advisor/advisor.ts:336`) and will not see evidence you did not flush.
   - ALWAYS preserve the severity taxonomy emoji + naming (🔴 Critical / 🟡 Important / 🔵 Suggestions / 💭 Discussion) and the existing frontmatter keys verbatim — discovery agents `thoughts-locator` and `thoughts-analyzer` grep these.
@@ -387,6 +440,7 @@ Ask follow-ups, or run `/skill:revise` to address the findings.
 - **Agent roles (for this skill)**:
   - `integration-scanner` (Phase-1): inbound refs, outbound deps, auth-boundary crossings.
   - `codebase-analyzer` × 3 (Phase-2): one per lens — evidence-only, no recommendations (honors the guardrail at `packages/rpiv-pi/agents/codebase-analyzer.md:113-119`).
+  - `codebase-analyzer` × 1 (Step 4, gated): cross-finding interaction sweep — emergent defects only, evidence-backed across multiple locations, no recommendations.
   - `precedent-locator` (Phase-2, always): git history + thoughts/ for lessons.
   - `web-search-researcher` (Phase-2, conditional on `ManifestChanged`): CVE / GitHub Advisory / OSS Index lookups with LINKS.
 - **File reading**: read the diff FULLY (no limit/offset) via `git` commands before spawning agents. Let agents read their scoped targets; the orchestrator does not need to read source files for non-risk findings.
