@@ -9,10 +9,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.11.3] - 2026-04-21
 
-## [0.11.2] - 2026-04-21
-
 ### Changed
-- `code-review` skill replaced by the file-oriented three-wave variant (previously A/B-tested as `codereview-files`). File-centric framing: `-U30` diffs inline full-function context, Discovery Map uses semantic file summaries, lens prompts read files as coherent units. Adds a `templates/review.md` scaffold consumed at Step 7 artifact emission. Losing variants (`code-review` 0.11.1 hunk-centric, `codereview` hunk-centric A/B twin) removed.
+- `code-review` skill revised based on A/B-test results. The winning variant produces better review quality across Quality, Security, and Dependencies lenses with a three-wave parallel flow and advisor adjudication. Adds a `templates/review.md` scaffold used at artifact emission. Superseded skill variants removed.
+
+## [0.11.2] - 2026-04-21
 
 ## [0.11.1] - 2026-04-20
 
