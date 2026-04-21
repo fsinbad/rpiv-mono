@@ -382,7 +382,7 @@ Before writing the artifact, spawn ONE `codebase-analyzer` whose sole job is to 
   [paste the full reconciled severity map — each finding with its file:line citation, verbatim line quote per the citation contract, and severity tier]
 
   For EACH finding:
-  1. Open the cited file at the cited line using Read. Confirm the verbatim quote appears at that line.
+  1. `grep -n` the verbatim quote in the cited file. Absent → Falsified. Present at a different line → rewrite the citation to the actual line, then continue. Present at cited line → continue.
   2. If the finding makes a claim about behavior reachable elsewhere (consumer filters, dispatch registrations, peer aggregates, upstream guards, downstream sinks), Read those referenced files too. Do NOT trust the patch-only view.
   3. If the finding claims a state is "stranded" / a predicate is "false-promise" / a precondition is "missing" — construct a concrete 2–3 line reproducer trace: "caller at A:L invokes B:L with entity in state X; guard at C:L rejects; exit path would require D which the code does not provide." If you cannot construct it, the finding is Weakened.
   4. If the finding was marked `resolved-by: <hash>` in Step 5, Read the resolving commit's changes on the reviewed branch (via `git show <hash> -- <file>`) and confirm the resolution is actually present at TIP.
