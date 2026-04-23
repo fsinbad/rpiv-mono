@@ -56,3 +56,26 @@ export const SIBLINGS: readonly SiblingPlugin[] = [
 		provides: "skill-argument resolver — substitutes $N/$ARGUMENTS in skill bodies",
 	},
 ];
+
+/**
+ * Deprecated sibling packages that `/rpiv-setup` actively prunes from
+ * ~/.pi/agent/settings.json (so upgraders don't end up with superseded
+ * libraries loaded alongside their replacements). Single source of truth
+ * for `prune-legacy-siblings.ts`.
+ */
+export interface LegacyPackage {
+	/** Human-readable label used in the prune notify message. */
+	readonly label: string;
+	/** Case-insensitive regex matched against settings.json `packages[]` entries. */
+	readonly matches: RegExp;
+	/** Short reason — useful when debugging; not user-facing. */
+	readonly reason: string;
+}
+
+export const LEGACY_SIBLINGS: readonly LegacyPackage[] = [
+	{
+		label: "@tintinweb/pi-subagents",
+		matches: /@tintinweb\/pi-subagents/i,
+		reason: "superseded by pi-subagents (nicobailon fork) in rpiv-pi 0.12.0",
+	},
+];

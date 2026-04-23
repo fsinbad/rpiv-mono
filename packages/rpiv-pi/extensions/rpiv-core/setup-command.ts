@@ -9,6 +9,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { ensureSubagentConfig } from "./ensure-subagent-config.js";
 import { findMissingSiblings } from "./package-checks.js";
 import { spawnPiInstall } from "./pi-installer.js";
+import { pruneLegacySiblings } from "./prune-legacy-siblings.js";
 import type { SiblingPlugin } from "./siblings.js";
 
 const INSTALL_TIMEOUT_MS = 120_000;
@@ -25,6 +26,8 @@ const msgInstalledLine = (pkgs: string[]) => `✓ Installed: ${pkgs.join(", ")}`
 const msgFailedHeader = () => `✗ Failed:`;
 const msgFailedLine = (pkg: string, err: string) => `  ${pkg}: ${err}`;
 const msgSubagentSeeded = (keys: string[]) => `Seeded subagent config keys: ${keys.join(", ")}`;
+const msgLegacyPruned = (entries: string[]) =>
+	`Removed legacy subagent library from settings.json: ${entries.join(", ")}. Run \`pi uninstall\` to free disk space, then restart Pi.`;
 
 type UI = {
 	notify: (msg: string, sev: "info" | "warning" | "error") => void;
@@ -49,6 +52,11 @@ export function registerSetupCommand(pi: ExtensionAPI): void {
 			if (!ctx.hasUI) {
 				ctx.ui.notify(MSG_INTERACTIVE_ONLY, "error");
 				return;
+			}
+
+			const prune = pruneLegacySiblings();
+			if (prune.pruned.length > 0) {
+				ctx.ui.notify(msgLegacyPruned(prune.pruned), "info");
 			}
 
 			const missing = findMissingSiblings();

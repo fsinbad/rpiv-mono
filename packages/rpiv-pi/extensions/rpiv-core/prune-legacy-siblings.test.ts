@@ -1,0 +1,110 @@
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { pruneLegacySiblings } from "./prune-legacy-siblings.js";
+
+const SETTINGS_PATH = join(process.env.HOME!, ".pi", "agent", "settings.json");
+
+function writeSettings(contents: unknown): void {
+	mkdirSync(dirname(SETTINGS_PATH), { recursive: true });
+	writeFileSync(SETTINGS_PATH, JSON.stringify(contents), "utf-8");
+}
+
+function readSettings(): unknown {
+	return JSON.parse(readFileSync(SETTINGS_PATH, "utf-8"));
+}
+
+describe("pruneLegacySiblings", () => {
+	it("no settings file → pruned: []", () => {
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+	});
+
+	it("invalid JSON → pruned: [], file byte-exact unchanged", () => {
+		mkdirSync(dirname(SETTINGS_PATH), { recursive: true });
+		writeFileSync(SETTINGS_PATH, "{not json", "utf-8");
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+		expect(readFileSync(SETTINGS_PATH, "utf-8")).toBe("{not json");
+	});
+
+	it("non-object top-level (array) → pruned: [], file unchanged", () => {
+		writeSettings([1, 2, 3]);
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+		expect(readSettings()).toEqual([1, 2, 3]);
+	});
+
+	it("no packages field → pruned: []", () => {
+		writeSettings({ other: "data" });
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+		expect(readSettings()).toEqual({ other: "data" });
+	});
+
+	it("non-array packages field → pruned: []", () => {
+		writeSettings({ packages: "not-array" });
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+	});
+
+	it("only non-legacy entries → pruned: [], file unchanged", () => {
+		writeSettings({
+			packages: ["npm:pi-subagents", "npm:@juicesharp/rpiv-todo"],
+		});
+		const before = readFileSync(SETTINGS_PATH, "utf-8");
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+		expect(readFileSync(SETTINGS_PATH, "utf-8")).toBe(before);
+	});
+
+	it("legacy-only: removes @tintinweb/pi-subagents, preserves other top-level keys", () => {
+		writeSettings({
+			defaultProvider: "zai",
+			theme: "dark",
+			packages: ["npm:@tintinweb/pi-subagents"],
+		});
+		const result = pruneLegacySiblings();
+		expect(result.pruned).toEqual(["npm:@tintinweb/pi-subagents"]);
+		expect(readSettings()).toEqual({
+			defaultProvider: "zai",
+			theme: "dark",
+			packages: [],
+		});
+	});
+
+	it("mixed list: only legacy pruned; strings/paths/non-strings preserved in order", () => {
+		writeSettings({
+			packages: [
+				"npm:pi-perplexity",
+				"npm:@tintinweb/pi-subagents",
+				"npm:@juicesharp/rpiv-todo",
+				"/Users/x/rpiv-mono/packages/rpiv-pi",
+				null,
+				42,
+				"npm:pi-subagents",
+			],
+		});
+		const result = pruneLegacySiblings();
+		expect(result.pruned).toEqual(["npm:@tintinweb/pi-subagents"]);
+		expect(readSettings()).toEqual({
+			packages: [
+				"npm:pi-perplexity",
+				"npm:@juicesharp/rpiv-todo",
+				"/Users/x/rpiv-mono/packages/rpiv-pi",
+				null,
+				42,
+				"npm:pi-subagents",
+			],
+		});
+	});
+
+	it("idempotent: second call after prune is a no-op", () => {
+		writeSettings({
+			packages: ["npm:@tintinweb/pi-subagents", "npm:pi-subagents"],
+		});
+		expect(pruneLegacySiblings().pruned).toEqual(["npm:@tintinweb/pi-subagents"]);
+		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
+	});
+
+	it("case-insensitive match", () => {
+		writeSettings({
+			packages: ["NPM:@TintinWeb/Pi-Subagents"],
+		});
+		expect(pruneLegacySiblings().pruned).toEqual(["NPM:@TintinWeb/Pi-Subagents"]);
+	});
+});

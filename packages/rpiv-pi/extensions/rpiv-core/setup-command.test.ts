@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("./pi-installer.js", () => ({ spawnPiInstall: vi.fn() }));
 vi.mock("./package-checks.js", () => ({ findMissingSiblings: vi.fn() }));
 vi.mock("./ensure-subagent-config.js", () => ({ ensureSubagentConfig: vi.fn() }));
+vi.mock("./prune-legacy-siblings.js", () => ({ pruneLegacySiblings: vi.fn() }));
 
 import { ensureSubagentConfig } from "./ensure-subagent-config.js";
 import { findMissingSiblings } from "./package-checks.js";
 import { spawnPiInstall } from "./pi-installer.js";
+import { pruneLegacySiblings } from "./prune-legacy-siblings.js";
 import { registerSetupCommand } from "./setup-command.js";
 
 beforeEach(() => {
@@ -15,6 +17,8 @@ beforeEach(() => {
 	vi.mocked(findMissingSiblings).mockReset();
 	vi.mocked(ensureSubagentConfig).mockReset();
 	vi.mocked(ensureSubagentConfig).mockReturnValue({ created: false, merged: [] });
+	vi.mocked(pruneLegacySiblings).mockReset();
+	vi.mocked(pruneLegacySiblings).mockReturnValue({ pruned: [] });
 });
 
 describe("/rpiv-setup — command shape", () => {
@@ -167,5 +171,53 @@ describe("/rpiv-setup — subagent config seeding", () => {
 		const ctx = createMockCtx({ hasUI: true });
 		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
 		expect(ensureSubagentConfig).not.toHaveBeenCalled();
+	});
+});
+
+describe("/rpiv-setup — legacy sibling pruning", () => {
+	it("emits pruned notify when legacy entry removed", async () => {
+		vi.mocked(pruneLegacySiblings).mockReturnValue({ pruned: ["npm:@tintinweb/pi-subagents"] });
+		vi.mocked(findMissingSiblings).mockReturnValue([]);
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		const pruneCall = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.find(
+			(c) => typeof c[0] === "string" && c[0].startsWith("Removed legacy subagent library"),
+		);
+		expect(pruneCall).toBeDefined();
+		expect(pruneCall?.[0]).toContain("npm:@tintinweb/pi-subagents");
+		expect(pruneCall?.[1]).toBe("info");
+	});
+
+	it("no notify when nothing pruned", async () => {
+		vi.mocked(pruneLegacySiblings).mockReturnValue({ pruned: [] });
+		vi.mocked(findMissingSiblings).mockReturnValue([]);
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		const pruneCall = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.find(
+			(c) => typeof c[0] === "string" && c[0].startsWith("Removed legacy subagent library"),
+		);
+		expect(pruneCall).toBeUndefined();
+	});
+
+	it("prune runs in the all-installed path (before early-return)", async () => {
+		vi.mocked(pruneLegacySiblings).mockReturnValue({ pruned: ["npm:@tintinweb/pi-subagents"] });
+		vi.mocked(findMissingSiblings).mockReturnValue([]);
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(pruneLegacySiblings).toHaveBeenCalledTimes(1);
+	});
+
+	it("prune does NOT run on !hasUI guard", async () => {
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: false });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(pruneLegacySiblings).not.toHaveBeenCalled();
 	});
 });
