@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./pi-installer.js", () => ({ spawnPiInstall: vi.fn() }));
 vi.mock("./package-checks.js", () => ({ findMissingSiblings: vi.fn() }));
+vi.mock("./ensure-subagent-config.js", () => ({ ensureSubagentConfig: vi.fn() }));
 
+import { ensureSubagentConfig } from "./ensure-subagent-config.js";
 import { findMissingSiblings } from "./package-checks.js";
 import { spawnPiInstall } from "./pi-installer.js";
 import { registerSetupCommand } from "./setup-command.js";
@@ -11,6 +13,8 @@ import { registerSetupCommand } from "./setup-command.js";
 beforeEach(() => {
 	vi.mocked(spawnPiInstall).mockReset();
 	vi.mocked(findMissingSiblings).mockReset();
+	vi.mocked(ensureSubagentConfig).mockReset();
+	vi.mocked(ensureSubagentConfig).mockReturnValue({ created: false, merged: [] });
 });
 
 describe("/rpiv-setup — command shape", () => {
@@ -98,5 +102,70 @@ describe("/rpiv-setup — mixed success/failure report", () => {
 		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
 		const report = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
 		expect(report).not.toContain("Restart");
+	});
+});
+
+describe("/rpiv-setup — subagent config seeding", () => {
+	it("seeds config + emits notify after at least one successful install", async () => {
+		vi.mocked(findMissingSiblings).mockReturnValue([{ pkg: "npm:pi-subagents", matches: /./, provides: "P" }]);
+		vi.mocked(spawnPiInstall).mockResolvedValueOnce({ code: 0, stdout: "ok", stderr: "" });
+		vi.mocked(ensureSubagentConfig).mockReturnValue({
+			created: true,
+			merged: ["parallel.concurrency", "maxSubagentDepth"],
+		});
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(ensureSubagentConfig).toHaveBeenCalledTimes(1);
+		const seedCall = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.find(
+			(c) => typeof c[0] === "string" && c[0].startsWith("Seeded subagent config keys:"),
+		);
+		expect(seedCall).toBeDefined();
+		expect(seedCall?.[1]).toBe("info");
+	});
+
+	it("empty merged set emits no seed notify", async () => {
+		vi.mocked(findMissingSiblings).mockReturnValue([{ pkg: "npm:pi-subagents", matches: /./, provides: "P" }]);
+		vi.mocked(spawnPiInstall).mockResolvedValueOnce({ code: 0, stdout: "ok", stderr: "" });
+		vi.mocked(ensureSubagentConfig).mockReturnValue({ created: false, merged: [] });
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(ensureSubagentConfig).toHaveBeenCalledTimes(1);
+		const seedCall = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.find(
+			(c) => typeof c[0] === "string" && c[0].startsWith("Seeded subagent config keys:"),
+		);
+		expect(seedCall).toBeUndefined();
+	});
+
+	it("skips seed when all installs fail", async () => {
+		vi.mocked(findMissingSiblings).mockReturnValue([{ pkg: "npm:pi-subagents", matches: /./, provides: "P" }]);
+		vi.mocked(spawnPiInstall).mockResolvedValueOnce({ code: 1, stdout: "", stderr: "err" });
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(ensureSubagentConfig).not.toHaveBeenCalled();
+	});
+
+	it("skips seed when user cancels", async () => {
+		vi.mocked(findMissingSiblings).mockReturnValue([{ pkg: "npm:pi-subagents", matches: /./, provides: "P" }]);
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		(ctx.ui.confirm as ReturnType<typeof vi.fn>).mockResolvedValueOnce(false);
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(ensureSubagentConfig).not.toHaveBeenCalled();
+	});
+
+	it("skips seed when no siblings missing", async () => {
+		vi.mocked(findMissingSiblings).mockReturnValue([]);
+		const { pi, captured } = createMockPi();
+		registerSetupCommand(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.commands.get("rpiv-setup")?.handler("", ctx as never);
+		expect(ensureSubagentConfig).not.toHaveBeenCalled();
 	});
 });

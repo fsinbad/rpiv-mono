@@ -41,6 +41,8 @@ beforeEach(async () => {
 
 	const piAgentSettings = join(process.env.HOME!, ".pi", "agent", "settings.json");
 	const advisorConfig = join(process.env.HOME!, ".config", "rpiv-advisor", "advisor.json");
+	const subagentConfig = join(process.env.HOME!, ".pi", "agent", "extensions", "subagent", "config.json");
 	rmSync(piAgentSettings, { force: true });
 	rmSync(advisorConfig, { force: true });
+	rmSync(subagentConfig, { force: true });
 });

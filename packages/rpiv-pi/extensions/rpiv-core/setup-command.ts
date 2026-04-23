@@ -6,6 +6,7 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { ensureSubagentConfig } from "./ensure-subagent-config.js";
 import { findMissingSiblings } from "./package-checks.js";
 import { spawnPiInstall } from "./pi-installer.js";
 import type { SiblingPlugin } from "./siblings.js";
@@ -23,6 +24,7 @@ const msgInstalling = (pkg: string) => `Installing ${pkg}…`;
 const msgInstalledLine = (pkgs: string[]) => `✓ Installed: ${pkgs.join(", ")}`;
 const msgFailedHeader = () => `✗ Failed:`;
 const msgFailedLine = (pkg: string, err: string) => `  ${pkg}: ${err}`;
+const msgSubagentSeeded = (keys: string[]) => `Seeded subagent config keys: ${keys.join(", ")}`;
 
 type UI = {
 	notify: (msg: string, sev: "info" | "warning" | "error") => void;
@@ -62,6 +64,10 @@ export function registerSetupCommand(pi: ExtensionAPI): void {
 			}
 
 			const { succeeded, failed } = await installMissing(ctx.ui, missing);
+			if (succeeded.length > 0) {
+				const seed = ensureSubagentConfig();
+				if (seed.merged.length > 0) ctx.ui.notify(msgSubagentSeeded(seed.merged), "info");
+			}
 			ctx.ui.notify(buildReport(succeeded, failed), failed.length > 0 ? "warning" : "info");
 		},
 	});
