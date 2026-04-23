@@ -21,6 +21,18 @@ describe("SIBLINGS registry", () => {
 		expect(argsEntry?.matches.test("@juicesharp/rpiv-args-extended")).toBe(false);
 	});
 
+	it("pi-subagents does NOT match @tintinweb/pi-subagents (transitional safety)", () => {
+		const piSubagents = SIBLINGS.find((s) => s.pkg === "npm:pi-subagents");
+		expect(piSubagents).toBeDefined();
+		expect(piSubagents?.matches.test("@tintinweb/pi-subagents")).toBe(false);
+	});
+
+	it("pi-subagents does NOT match pi-subagents-legacy (word boundary)", () => {
+		const piSubagents = SIBLINGS.find((s) => s.pkg === "npm:pi-subagents");
+		expect(piSubagents).toBeDefined();
+		expect(piSubagents?.matches.test("pi-subagents-legacy")).toBe(false);
+	});
+
 	it("every entry has non-empty pkg + provides", () => {
 		for (const s of SIBLINGS) {
 			expect(s.pkg.length).toBeGreaterThan(0);

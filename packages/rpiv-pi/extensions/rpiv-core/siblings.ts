@@ -21,9 +21,9 @@ export interface SiblingPlugin {
 
 export const SIBLINGS: readonly SiblingPlugin[] = [
 	{
-		pkg: "npm:@tintinweb/pi-subagents",
-		matches: /@tintinweb\/pi-subagents/i,
-		provides: "Agent / get_subagent_result / steer_subagent tools",
+		pkg: "npm:pi-subagents",
+		matches: /(^|[^\w/-])pi-subagents(?![-\w])/i,
+		provides: "subagent / subagent_status tools + /agents command",
 	},
 	{
 		pkg: "npm:@juicesharp/rpiv-ask-user-question",
