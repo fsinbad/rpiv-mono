@@ -52,7 +52,7 @@ When this command is invoked:
 
 This is NOT a discovery sweep. Focus on DEPTH (how things work, what patterns to follow) not BREADTH (where things are).
 
-1. **Spawn parallel research agents** using the subagent tool:
+1. **Spawn parallel research agents** using the subagent tool. Pass `context: "fresh"` on each dispatch (the default).
 
    - Use **codebase-pattern-finder** to find existing implementations to model after — the primary template for code shape
    - Use **codebase-analyzer** to understand HOW integration points work in detail
