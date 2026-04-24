@@ -111,7 +111,11 @@ export function invalidateSkillIndex(): void {
 
 /** Build the name→path index by asking Pi for its currently-loaded skills. */
 function buildSkillIndex(): Map<string, SkillIndexEntry> {
-	const { skills } = loadSkills({ cwd: process.cwd() });
+	const { skills } = loadSkills({
+		cwd: process.cwd(),
+		skillPaths: [],
+		includeDefaults: true,
+	});
 	const index = new Map<string, SkillIndexEntry>();
 	for (const s of skills as Skill[]) {
 		index.set(s.name, { name: s.name, filePath: s.filePath, baseDir: s.baseDir });
