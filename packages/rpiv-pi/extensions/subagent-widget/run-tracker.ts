@@ -92,6 +92,7 @@ export function onUpdate(toolCallId: string, details: SubagentDetails | undefine
 	if (!run) return;
 	run.mode = details.mode;
 	run.results = details.results;
+	if (details.progress) run.progress = details.progress;
 }
 
 export function onEnd(toolCallId: string, result: { details?: SubagentDetails } | undefined, isError: boolean): void {
@@ -101,6 +102,7 @@ export function onEnd(toolCallId: string, result: { details?: SubagentDetails } 
 	if (details) {
 		run.mode = details.mode;
 		run.results = details.results;
+		if (details.progress) run.progress = details.progress;
 	}
 	run.completedAt = Date.now();
 	run.status = deriveTerminalStatus(isError, run.results);

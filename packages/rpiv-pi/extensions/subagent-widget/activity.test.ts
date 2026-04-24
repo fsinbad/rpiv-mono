@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { describeActivity, formatDuration, formatTokens, formatToolCall, formatTurns } from "./activity.js";
+import {
+	describeActivity,
+	formatDuration,
+	formatTokens,
+	formatToolCall,
+	formatToolUses,
+	formatTurns,
+} from "./activity.js";
 import type { SingleResult } from "./types.js";
 
 function makeResult(messages: unknown[]): SingleResult {
@@ -121,5 +128,46 @@ describe("formatTurns", () => {
 
 	it("formats ⟳N≤M with max", () => {
 		expect(formatTurns(5, 30)).toBe("⟳5≤30");
+	});
+});
+
+describe("formatToolUses", () => {
+	it("uses singular form for 1", () => {
+		expect(formatToolUses(1)).toBe("1 tool use");
+	});
+
+	it("uses plural form for 0 and >1", () => {
+		expect(formatToolUses(0)).toBe("0 tool uses");
+		expect(formatToolUses(7)).toBe("7 tool uses");
+	});
+});
+
+describe("describeActivity progress override", () => {
+	it("prefers progress.currentTool over scanning messages", () => {
+		const result = makeResult([
+			{
+				role: "assistant",
+				content: [{ type: "text", text: "scanning" }],
+			},
+		]);
+		expect(describeActivity(result, { currentTool: "bash" })).toBe("running");
+	});
+
+	it("falls through to message scan when progress omitted", () => {
+		const result = makeResult([
+			{
+				role: "assistant",
+				content: [{ type: "text", text: "scanning" }],
+			},
+		]);
+		expect(describeActivity(result, undefined)).toBe("scanning");
+	});
+
+	it("works without result when progress.currentTool is set", () => {
+		expect(describeActivity(undefined, { currentTool: "grep" })).toBe("searching");
+	});
+
+	it("falls back to tool name when no verb mapping exists", () => {
+		expect(describeActivity(undefined, { currentTool: "custom_tool" })).toBe("custom_tool");
 	});
 });

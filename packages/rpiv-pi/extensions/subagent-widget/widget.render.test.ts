@@ -65,12 +65,15 @@ beforeEach(() => {
 });
 
 describe("SubagentWidget render — empty", () => {
-	it("skips setWidget when no runs tracked", () => {
+	it("pre-registers the widget slot even when no runs tracked (claim top position above Todos)", () => {
 		const { ctx, captured } = makeUICtx();
 		const widget = new SubagentWidget();
 		widget.setUICtx(ctx);
 		widget.update();
-		expect(captured).toHaveLength(0);
+		expect(captured).toHaveLength(1);
+		// renderWidget returns [] when no runs — no visible footprint.
+		const comp = captured[0].factory?.(makeTUI(), makeTheme());
+		expect(comp?.render(120)).toEqual([]);
 	});
 });
 
@@ -84,6 +87,27 @@ describe("SubagentWidget render — single", () => {
 		expect(lines[0]).toContain("Subagents");
 		expect(lines[1]).toContain("scout");
 		expect(lines[2]).toContain("⎿");
+	});
+
+	it("renders live tool-uses + tokens from details.progress during streaming", () => {
+		onStart("t1", { agent: "scout", task: "probe" });
+		onUpdate("t1", {
+			mode: "single",
+			agentScope: "user",
+			projectAgentsDir: null,
+			results: [
+				makeResult({
+					usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 3 },
+				}),
+			],
+			progress: [{ status: "running", toolCount: 7, tokens: 42_000, durationMs: 3_500, currentTool: "bash" }],
+		});
+		const { ctx, captured } = makeUICtx();
+		const lines = renderOnce(new SubagentWidget(), ctx, captured);
+		expect(lines[1]).toContain("⟳3");
+		expect(lines[1]).toContain("7 tool uses");
+		expect(lines[1]).toContain("42.0k");
+		expect(lines[2]).toContain("running");
 	});
 });
 

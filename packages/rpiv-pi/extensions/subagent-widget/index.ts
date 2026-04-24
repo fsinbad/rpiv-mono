@@ -3,8 +3,9 @@
  *
  * Subscribes to tool_execution_* events for toolName === "subagent",
  * tracks state via the RunTracker, and renders an aboveEditor tree
- * under key "rpiv-subagents". Coexists with pi-subagents' modal widget
- * (different key + different UX role — no suppression).
+ * under key "rpiv-subagents". Also owns the nicobailon registration
+ * via a proxy-wrap (renderer-override.ts) so we can quiet the inline
+ * tool-result card during streaming (our overlay is the live view).
  *
  * Discovery: auto-loaded via pi.extensions: ["./extensions"] directory
  * scan at packages/rpiv-pi/package.json. No siblings.ts entry
@@ -16,13 +17,21 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { registerSubagentsWithQuietRenderer } from "./renderer-override.js";
 import * as tracker from "./run-tracker.js";
 import type { SubagentDetails } from "./types.js";
 import { SubagentWidget } from "./widget.js";
 
 const SUBAGENT_TOOL = "subagent";
 
-export default function (pi: ExtensionAPI) {
+export default async function (pi: ExtensionAPI) {
+	// Register pi-subagents through our proxy so the "subagent" tool's
+	// renderResult is swapped for a quiet one. Must run before any of
+	// our own tool_execution_* handlers so the tool exists before the
+	// first event fires. Settings coordination (strip "npm:pi-subagents"
+	// from packages[]) is handled by rpiv-core/claim-pi-subagents.ts.
+	await registerSubagentsWithQuietRenderer(pi);
+
 	let widget: SubagentWidget | undefined;
 
 	pi.on("session_start", async (_event, ctx) => {
@@ -69,12 +78,17 @@ export default function (pi: ExtensionAPI) {
 		}
 	});
 
-	pi.on("tool_execution_update", async (event, ctx) => {
+	// Per-event re-render on tool_execution_update would fire once per
+	// streamed partial-result frame, compounding with the spinner ticker
+	// and Pi's main-stream spinner to produce terminal redraw races that
+	// visibly clip neighbouring above-editor widgets. Mutating tracker
+	// state in place is enough — the spinner tick picks up the fresh
+	// run.results on its next cycle (≤ TICK_MS ms later).
+	pi.on("tool_execution_update", async (event, _ctx) => {
 		if (event.toolName !== SUBAGENT_TOOL) return;
 		if (isAsyncDispatch(event.args)) return;
 		const details = (event.partialResult as { details?: SubagentDetails } | undefined)?.details;
 		tracker.onUpdate(event.toolCallId, details);
-		if (ctx.hasUI) widget?.update();
 	});
 
 	// tool_execution_end has no args — if onStart was skipped as async,

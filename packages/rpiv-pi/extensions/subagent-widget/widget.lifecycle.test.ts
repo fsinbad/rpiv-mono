@@ -60,6 +60,30 @@ describe("SubagentWidget lifecycle", () => {
 		expect(vi.getTimerCount()).toBe(0);
 	});
 
+	it("stops interval when the last running run transitions to completed (while lingering)", () => {
+		onStart("t1", { agent: "scout", task: "x" });
+		const widget = new SubagentWidget();
+		widget.setUICtx(makeUICtx());
+		widget.update();
+		expect(vi.getTimerCount()).toBeGreaterThan(0);
+		onEnd("t1", { details: makeDetails() }, false); // completed, still lingering
+		widget.update();
+		expect(vi.getTimerCount()).toBe(0);
+	});
+
+	it("restarts interval when a new run starts during linger", () => {
+		onStart("t1", { agent: "scout", task: "x" });
+		const widget = new SubagentWidget();
+		widget.setUICtx(makeUICtx());
+		widget.update();
+		onEnd("t1", { details: makeDetails() }, false);
+		widget.update();
+		expect(vi.getTimerCount()).toBe(0);
+		onStart("t2", { agent: "worker", task: "y" });
+		widget.update();
+		expect(vi.getTimerCount()).toBeGreaterThan(0);
+	});
+
 	it("clears interval on dispose()", () => {
 		onStart("t1", { agent: "scout", task: "x" });
 		const widget = new SubagentWidget();

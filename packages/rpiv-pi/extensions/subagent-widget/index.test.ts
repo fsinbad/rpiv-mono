@@ -1,5 +1,12 @@
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Stub nicobailon's default + render exports so the renderer-override
+// wrapper doesn't actually run registerSubagentExtension during unit
+// tests (it needs a full ExtensionAPI that our minimal MockPi lacks).
+vi.mock("pi-subagents", () => ({ default: vi.fn() }));
+vi.mock("pi-subagents/render", () => ({ renderSubagentResult: vi.fn() }));
+
 import initExtension from "./index.js";
 import { __resetState, listRuns } from "./run-tracker.js";
 
@@ -32,9 +39,9 @@ beforeEach(() => {
 });
 
 describe("subagent-widget extension factory", () => {
-	it("subscribes to the expected events", () => {
+	it("subscribes to the expected events", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const subscribed = [...pi.handlers.keys()];
 		expect(subscribed).toEqual(
 			expect.arrayContaining([
@@ -50,7 +57,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("tracker records onStart even when hasUI is false", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		await startHandler(
 			{
@@ -66,7 +73,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("filters non-subagent tool calls", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		await startHandler(
 			{
@@ -82,7 +89,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("skips async (background) subagent dispatches — pi-subagents owns the live view", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		await startHandler(
 			{
@@ -98,7 +105,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("tracks sync subagent dispatches even when async field is explicitly false", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		await startHandler(
 			{
@@ -114,7 +121,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("tool_execution_update is a no-op for async dispatches", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const updateHandler = pi.handlers.get("tool_execution_update")!;
 		await updateHandler(
 			{
@@ -133,7 +140,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("tool_execution_update routes partialResult.details to tracker", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		const updateHandler = pi.handlers.get("tool_execution_update")!;
 		await startHandler(
@@ -162,7 +169,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("tool_execution_end sets terminal status", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		const endHandler = pi.handlers.get("tool_execution_end")!;
 		await startHandler(
@@ -189,7 +196,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("session_start resets the tracker", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		await startHandler(
 			{
@@ -208,7 +215,7 @@ describe("subagent-widget extension factory", () => {
 
 	it("input evicts lingering finished runs on the next user turn", async () => {
 		const pi = makePi();
-		initExtension(pi);
+		await initExtension(pi);
 		const startHandler = pi.handlers.get("tool_execution_start")!;
 		const endHandler = pi.handlers.get("tool_execution_end")!;
 		const inputHandler = pi.handlers.get("input")!;

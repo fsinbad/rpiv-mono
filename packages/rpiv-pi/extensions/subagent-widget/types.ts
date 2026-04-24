@@ -39,11 +39,29 @@ export interface SingleResult {
 	step?: number;
 }
 
+/**
+ * Per-agent live progress snapshot. Nicobailon emits this in
+ * partialResult.details.progress during streaming — fields update on
+ * every tool start and every message_end, well before the terminal
+ * usage fields on SingleResult settle. Mirrors the shape at
+ * /usr/local/lib/node_modules/pi-subagents/types.ts:76-94 (only the
+ * fields we render are declared here).
+ */
+export interface AgentProgress {
+	status?: "pending" | "running" | "completed" | "failed" | "detached";
+	toolCount?: number;
+	tokens?: number;
+	durationMs?: number;
+	currentTool?: string;
+	activityState?: "starting" | "active" | "quiet" | "stalled" | "paused";
+}
+
 export interface SubagentDetails {
 	mode: RunMode;
 	agentScope: string;
 	projectAgentsDir: string | null;
 	results: SingleResult[];
+	progress?: AgentProgress[];
 }
 
 /**
@@ -60,5 +78,6 @@ export interface TrackedRun {
 	displayName: string;
 	description: string;
 	results: SingleResult[];
+	progress?: AgentProgress[];
 	errorMessage?: string;
 }

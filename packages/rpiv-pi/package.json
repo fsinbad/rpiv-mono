@@ -45,12 +45,14 @@
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",
-    "pi-subagents": "*",
     "@juicesharp/rpiv-ask-user-question": "*",
     "@juicesharp/rpiv-todo": "*",
     "@juicesharp/rpiv-advisor": "*",
     "@juicesharp/rpiv-btw": "*",
     "@juicesharp/rpiv-web-tools": "*",
     "@juicesharp/rpiv-args": "*"
+  },
+  "dependencies": {
+    "pi-subagents": "^0.17.5"
   }
 }

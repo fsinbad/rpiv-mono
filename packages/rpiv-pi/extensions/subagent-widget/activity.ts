@@ -8,7 +8,7 @@
  */
 
 import { homedir } from "node:os";
-import type { SingleResult } from "./types.js";
+import type { AgentProgress, SingleResult } from "./types.js";
 
 const TOOL_VERB: Record<string, string> = {
 	read: "reading",
@@ -78,7 +78,14 @@ interface MessageLike {
 	content?: AssistantPart[];
 }
 
-export function describeActivity(result: SingleResult | undefined): string {
+export function describeActivity(result: SingleResult | undefined, progress?: AgentProgress): string {
+	// Nicobailon populates progress.currentTool on tool_execution_start inside the
+	// child agent — earlier and more reliable than scanning messages (which can be
+	// empty for seconds during the first turn). Progress carries only the tool
+	// name, not args, so we report the verb form when known, else the tool name.
+	if (progress?.currentTool) {
+		return TOOL_VERB[progress.currentTool] ?? progress.currentTool;
+	}
 	if (!result) return "thinking…";
 	const messages = result.messages as unknown as MessageLike[];
 	for (let i = messages.length - 1; i >= 0; i--) {
@@ -113,4 +120,8 @@ export function formatDuration(startedAt: number, completedAt?: number): string 
 
 export function formatTurns(turns: number, maxTurns?: number | null): string {
 	return maxTurns != null ? `⟳${turns}≤${maxTurns}` : `⟳${turns}`;
+}
+
+export function formatToolUses(n: number): string {
+	return `${n} tool use${n === 1 ? "" : "s"}`;
 }

@@ -102,6 +102,16 @@ describe("run-tracker onUpdate", () => {
 		expect(() => onUpdate("t1", undefined)).not.toThrow();
 		expect(listRuns()[0].results).toEqual([]);
 	});
+
+	it("captures details.progress when present", () => {
+		onStart("t1", { agent: "scout", task: "x" });
+		onUpdate("t1", {
+			...makeDetails("single", [makeResult()]),
+			progress: [{ status: "running", toolCount: 3, tokens: 1_234, durationMs: 500 }],
+		});
+		const [run] = listRuns();
+		expect(run.progress).toEqual([{ status: "running", toolCount: 3, tokens: 1_234, durationMs: 500 }]);
+	});
 });
 
 describe("run-tracker onEnd", () => {
