@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **Quiet `◐ running` card no longer shifts layout**: the inline subagent tool card now renders exactly one status line throughout the entire non-terminal lifetime (including the pre-progress first frames), eliminating the 1-line ↔ N-line oscillation that could push rows into scrollback mid-stream.
+
 ## [0.12.1] - 2026-04-24
 
 ### Fixed

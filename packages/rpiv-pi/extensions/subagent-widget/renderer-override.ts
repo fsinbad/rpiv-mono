@@ -34,30 +34,45 @@ interface ProgressLike {
 interface ResultLike {
 	agent?: string;
 	progress?: ProgressLike;
+	exitCode?: number;
+	stopReason?: string;
 }
 interface DetailsLike {
 	results?: ResultLike[];
 }
 
-function buildQuietRenderResult(): (
+// Layout-stable quiet card height: while the subagent is non-terminal, emit EXACTLY
+// one `Text` line. If we fell through to the full renderer whenever progress.status
+// was missing (pre-progress partial updates), the card would flip 1-line ↔ N-line
+// every few frames mid-stream — same physical-row-stacking pathology that ghosted
+// the overlay rows before the run-tracker newline fix.
+//
+// Terminal state: exitCode or stopReason is present on the last SingleResult AND
+// progress.status is not in the running set. Anything else is treated as running,
+// including "no progress yet" (status === undefined) and the first tool_execution_*
+// frames before pi-subagents has stamped progress.
+function isTerminal(r: ResultLike | undefined): boolean {
+	if (!r) return false;
+	const status = r.progress?.status;
+	if (status === "pending" || status === "running") return false;
+	return r.exitCode != null || r.stopReason != null;
+}
+
+export function buildQuietRenderResult(): (
 	result: { details?: DetailsLike; content?: Array<{ type: string; text?: string }> },
 	options: { expanded: boolean },
 	theme: Theme,
 ) => unknown {
 	return (result, options, theme) => {
 		const r = result.details?.results?.[0];
-		const status: string | undefined = r?.progress?.status;
-		if (status !== "pending" && status !== "running") {
+		if (isTerminal(r)) {
 			return renderSubagentResult(result, options, theme);
 		}
-		// renderCall already shows "subagent <agent>" above — avoid repeating
-		// the identity. Todo-style glyph + status (single line), directly
-		// under the tool-call header. Glyphs mirror packages/rpiv-todo/
-		// todo-overlay.ts:28-35 for a consistent status language across
-		// overlays.
+		// Non-terminal → single-line status. Renders under the tool-call header,
+		// glyph at column 0 to align with "subagent <agent>" above. Glyphs mirror
+		// packages/rpiv-todo/todo-overlay.ts:28-35 for consistent status language.
+		const status = r?.progress?.status ?? "running";
 		const glyph = status === "pending" ? theme.fg("dim", "○") : theme.fg("warning", "◐");
-		// Glyph at column 0 — aligned directly under the "s" of "subagent"
-		// in the renderCall line above (pi prints that at column 0 too).
 		return new Text(`${glyph} ${theme.fg("muted", status)}`, 0, 0);
 	};
 }
