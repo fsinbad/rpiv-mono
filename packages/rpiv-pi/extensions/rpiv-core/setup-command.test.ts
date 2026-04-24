@@ -6,7 +6,9 @@ vi.mock("./package-checks.js", () => ({ findMissingSiblings: vi.fn() }));
 vi.mock("./ensure-subagent-config.js", () => ({ ensureSubagentConfig: vi.fn() }));
 vi.mock("./prune-legacy-siblings.js", () => ({ pruneLegacySiblings: vi.fn() }));
 vi.mock("./ensure-builtins-disabled.js", () => ({ ensureBuiltinsDisabled: vi.fn() }));
+vi.mock("./claim-pi-subagents.js", () => ({ claimPiSubagents: vi.fn() }));
 
+import { claimPiSubagents } from "./claim-pi-subagents.js";
 import { ensureBuiltinsDisabled } from "./ensure-builtins-disabled.js";
 import { ensureSubagentConfig } from "./ensure-subagent-config.js";
 import { findMissingSiblings } from "./package-checks.js";
@@ -23,6 +25,8 @@ beforeEach(() => {
 	vi.mocked(pruneLegacySiblings).mockReturnValue({ pruned: [] });
 	vi.mocked(ensureBuiltinsDisabled).mockReset();
 	vi.mocked(ensureBuiltinsDisabled).mockReturnValue({ disabled: false });
+	vi.mocked(claimPiSubagents).mockReset();
+	vi.mocked(claimPiSubagents).mockReturnValue({ claimed: false });
 });
 
 describe("/rpiv-setup — command shape", () => {
@@ -42,6 +46,7 @@ describe("/rpiv-setup — !hasUI", () => {
 		expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("interactive"), "error");
 		expect(pruneLegacySiblings).toHaveBeenCalledTimes(1);
 		expect(ensureBuiltinsDisabled).toHaveBeenCalledTimes(1);
+		expect(claimPiSubagents).toHaveBeenCalledTimes(1);
 		expect(ensureSubagentConfig).toHaveBeenCalledTimes(1);
 		expect(findMissingSiblings).not.toHaveBeenCalled();
 		expect(spawnPiInstall).not.toHaveBeenCalled();

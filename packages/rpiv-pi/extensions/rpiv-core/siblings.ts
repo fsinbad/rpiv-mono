@@ -21,11 +21,6 @@ export interface SiblingPlugin {
 
 export const SIBLINGS: readonly SiblingPlugin[] = [
 	{
-		pkg: "npm:pi-subagents",
-		matches: /(^|[^\w/-])pi-subagents(?![-\w])/i,
-		provides: "subagent / subagent_status tools + /agents command",
-	},
-	{
 		pkg: "npm:@juicesharp/rpiv-ask-user-question",
 		matches: /rpiv-ask-user-question/i,
 		provides: "ask_user_question tool",
@@ -77,5 +72,14 @@ export const LEGACY_SIBLINGS: readonly LegacyPackage[] = [
 		label: "@tintinweb/pi-subagents",
 		matches: /@tintinweb\/pi-subagents/i,
 		reason: "superseded by pi-subagents (nicobailon fork) in rpiv-pi 0.12.0",
+	},
+	{
+		// rpiv-pi now owns nicobailon's registration via a proxy in
+		// subagent-widget/renderer-override.ts (quiet inline card + live
+		// overlay). Having pi-subagents ALSO loaded as a top-level sibling
+		// causes pi to reject startup with duplicate-tool registration.
+		label: "pi-subagents",
+		matches: /(^|[^\w/-])pi-subagents(?![-\w])/i,
+		reason: "claimed by rpiv-pi subagent-widget proxy since 0.11.8",
 	},
 ];
