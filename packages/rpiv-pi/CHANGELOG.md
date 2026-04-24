@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-pi` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.12.4] - 2026-04-24
 
 ### Changed
 - The `subagent` tool now only offers rpiv-pi's 13 specialist agents to the assistant — the disabled built-in agents from the upstream library are no longer presented as dispatch options, so the assistant always lands on a curated rpiv specialist. Each agent's purpose is shown inline when the tool is used, sourced directly from its `agents/<name>.md` file, so editing an agent's description immediately updates what the assistant sees.
