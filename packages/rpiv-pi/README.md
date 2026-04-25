@@ -94,6 +94,19 @@ On first Pi Agent session start, rpiv-pi automatically:
 
 Each skill produces an artifact consumed by the next. Run them in order, or jump in at any stage if you already have the input artifact.
 
+### Recipes
+
+Skills compose. Pick the entry point that matches your intent:
+
+- **Form context before a task** — `/skill:discover "[topic]"` → `/skill:research <questions artifact>`. Produces a high-signal subspace of the codebase relevant to your topic, ready to feed directly into the next prompt.
+- **Compare approaches before designing** — `/skill:explore "[problem]"` → `/skill:design <solutions artifact>`. Use when multiple valid solutions exist; the solutions artifact is a first-class input to `design` alongside a `research` artifact.
+- **Full feature build** — `/skill:discover` → `research` → `design` → `plan` → `implement` → `validate`. The default pipeline; jump in at any stage if you already have the input artifact.
+- **Investigate a bug** — `/skill:discover "why does X fail"` → `/skill:research <questions artifact>`. Fix from the research output without writing a plan when the change is small.
+- **Adjust mid-implementation** — `/skill:revise <plan artifact>` → resume `/skill:implement`. Use when new constraints land after the plan is drafted.
+- **Scaffold manual UI test specs** — `/skill:outline-test-cases` → `/skill:write-test-cases <feature>`. Outline first via Frontend-First Discovery to map project scope and avoid duplicate coverage, then generate flow-based manual test cases (with a regression suite) under `.rpiv/test-cases/<feature>/`.
+- **Hand off across sessions** — `/skill:create-handoff` → (new session) `/skill:resume-handoff <doc>`. Preserves context when stopping mid-task.
+- **Onboard a fresh repo** — `/skill:annotate-guidance` once, then use the rest of the pipeline normally. Use `annotate-inline` instead if the project follows the `CLAUDE.md` convention.
+
 ### Skills
 
 Invoke via `/skill:<name>` from inside a Pi Agent session.
@@ -157,18 +170,18 @@ Agents are dispatched automatically by skills via the `Agent` tool — you don't
 
 | Agent | Purpose |
 |---|---|
-| `claim-verifier` | Grounds reconciled code-review findings at cited `file:line`; tags Verified / Weakened / Falsified |
+| `claim-verifier` | Grounds each supplied code-review claim against repository state and tags it Verified / Weakened / Falsified |
 | `codebase-analyzer` | Analyzes implementation details for specific components |
-| `codebase-locator` | Locates files and components relevant to a task |
-| `codebase-pattern-finder` | Finds similar implementations and usage patterns |
-| `diff-auditor` | Row-only patch auditor; walks a patch against a caller-supplied surface-list and emits `file:line \| verbatim \| surface-id \| note` rows |
-| `integration-scanner` | Maps inbound references, outbound deps, and config wiring |
-| `peer-comparator` | Pairwise peer-invariant comparator; tags each peer invariant Mirrored / Missing / Diverged / Intentionally-absent |
-| `precedent-locator` | Finds similar past changes in git history |
-| `test-case-locator` | Finds existing test cases and reports coverage stats |
-| `thoughts-analyzer` | Deep-dive analysis on research topics |
+| `codebase-locator` | Locates files, directories, and components relevant to a feature or task |
+| `codebase-pattern-finder` | Finds similar implementations and usage examples with concrete code snippets |
+| `diff-auditor` | Walks a patch against a caller-supplied surface-list and emits `file:line \| verbatim \| surface-id \| note` rows |
+| `integration-scanner` | Maps inbound references, outbound dependencies, config registrations, and event subscriptions for a component |
+| `peer-comparator` | Compares a new file against a peer sibling and tags each invariant Mirrored / Missing / Diverged / Intentionally-absent |
+| `precedent-locator` | Finds similar past changes in git history — commits, blast radius, and follow-up fixes |
+| `test-case-locator` | Catalogs existing manual test cases under `.rpiv/test-cases/` and reports coverage stats |
+| `thoughts-analyzer` | Performs deep-dive analysis on a research topic in `thoughts/` |
 | `thoughts-locator` | Discovers relevant documents in the `thoughts/` directory |
-| `web-search-researcher` | Researches web-based information and documentation |
+| `web-search-researcher` | Researches modern web-only information via deep search and fetch |
 
 ## Architecture
 
