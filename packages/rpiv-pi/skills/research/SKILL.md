@@ -47,7 +47,7 @@ You are tasked with answering structured research questions by spawning targeted
 
 ## Step 2: Dispatch Analysis Agents
 
-Dispatch all agents below in a SINGLE tool-use batch — one call per agent in the SAME response (parallel tool calls, not sequential turns). Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+Dispatch all agents below as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
 
 **Default agent**: `codebase-analyzer` for all codebase questions. This agent has Read, Grep, Glob, LS — it can trace code paths, find patterns, and analyze integration points.
 

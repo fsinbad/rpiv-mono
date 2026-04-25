@@ -78,7 +78,7 @@ When this command is invoked:
 
 If the user's feedback requires understanding new code patterns or validating assumptions:
 
-1. **Dispatch all agents below in a SINGLE tool-use batch** — one call per agent in the SAME response (parallel tool calls, not sequential turns). Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+1. **Dispatch all agents below as parallel `subagent` tool calls in the same assistant message** — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
    **For code investigation:**
    - Use the **codebase-locator** agent to find relevant files
    - Use the **codebase-analyzer** agent to understand implementation details
@@ -217,7 +217,7 @@ When updating success criteria, always maintain the two-category structure:
 When spawning research agents:
 
 1. **Only spawn if truly needed** - don't research for simple changes
-2. **Parallel dispatch** — one `subagent(...)` call per agent in a SINGLE tool-use batch (same response), never sequentially. Call shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`.
+2. **Parallel dispatch** — every `subagent(...)` call in the same assistant message (multiple tool_use blocks in one response), never one per turn. Call shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`.
 3. **Each agent should be focused** on a specific area
 4. **Provide detailed instructions** including:
    - Exactly what to search for
