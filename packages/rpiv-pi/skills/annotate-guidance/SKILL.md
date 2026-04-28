@@ -2,7 +2,7 @@
 name: annotate-guidance
 description: Generate architecture.md guidance files in .rpiv/guidance/ by analyzing architecture and patterns in parallel. Auto-detects architecture, proposes locations, and batch-writes compact documentation. Use for onboarding or improving AI assistant context.
 argument-hint: [target-directory]
-allowed-tools: subagent, Read, Write, Glob, Grep
+allowed-tools: Agent, Read, Write, Glob, Grep
 ---
 
 # Annotate Project
@@ -22,14 +22,14 @@ Use the current working directory as the target project by default. If the user 
    - This ensures you have full context before decomposing the work
 
 2. **Pass 1 — Map the project (parallel agents):**
-   - Dispatch all agents below as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+   - Dispatch all agents below as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`. Wait for all to return before proceeding.
 
    **Agent A — Project tree mapping:**
-   - agent: `codebase-locator`
+   - subagent_type: `codebase-locator`
    - Prompt: "Map the full project tree structure for [target directory]. List all directories and their contents, respecting .gitignore. Focus on source code directories, configuration files, and build artifacts. Return a complete tree view."
 
    **Agent B — Architecture and conventions:**
-   - agent: `codebase-locator`
+   - subagent_type: `codebase-locator`
    - Prompt: "Identify the architectural layout of [target directory] from path shape and manifest files — NO content analysis. Detect: (1) Architecture pattern inferred from folder shape — clean-arch via Domain/Application/Infrastructure dirs; MVC via Controllers/Models/Views; monorepo via packages/* + workspaces; microservices via services/* with individual manifests; hexagonal via ports/adapters. (2) Main layers/modules — top-level source directories + their names. (3) Frameworks and languages from manifest files (package.json dependencies, *.csproj TargetFramework, pyproject.toml, go.mod, Cargo.toml) and file extensions. (4) Build system from build-config filenames (vite/webpack/tsup/esbuild configs, Makefile, nx.json, turbo.json, dotnet .sln). For each main layer/module, check sub-directory composition. If sub-directories with distinct names/roles exist, flag each as a guidance target candidate with: (a) path, (b) role inferred from folder name (controllers/, services/, entities/, components/, stores/, etc.), (c) file count via ls, (d) how its sub-directory composition differs from sibling layers. Use grep/find/ls only. Do not read file contents. Pass 2 runs codebase-analyzer + codebase-pattern-finder per target folder for deep analysis."
 
    - While agents run, read .gitignore yourself to understand exclusion rules
@@ -75,19 +75,19 @@ Use the current working directory as the target project by default. If the user 
    - Adjust the target list based on user feedback
 
 4. **Pass 2 — Analyze each layer (parallel analyzer agents):**
-   - For each confirmed target folder, dispatch all agents below as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+   - For each confirmed target folder, dispatch all agents below as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`. Wait for all to return before proceeding.
 
    **For each target folder, spawn TWO agents:**
 
    **Analyzer agent:**
-   - agent: `codebase-analyzer`
+   - subagent_type: `codebase-analyzer`
    - Prompt: "Analyze [folder path] in detail. Determine: 1) What is this layer's responsibility? 2) What are its dependencies (what does it import/use)? 3) Who consumes it (what imports/uses it)? 4) What are the key architectural boundaries and constraints? 5) What is the module structure — list DIRECTORIES with their roles, base types, and naming conventions. Use architectural annotations (e.g., 'one repo per entity', 'one controller per resource') instead of listing individual filenames. The structure should remain valid when non-architectural files are added. 6) What naming conventions are used (prefixes, suffixes, base classes)?"
 
    **Pattern finder agent:**
-   - agent: `codebase-pattern-finder`
+   - subagent_type: `codebase-pattern-finder`
    - Prompt: "Find all distinct code patterns used in [folder path]. For each pattern found: 1) Name the pattern with a descriptive heading (e.g., 'Repository Boundary (CRITICAL: Plain Types, NOT Result<T>)'). 2) Provide an IDIOMATIC code example — a generalized, representative version that shows the pattern's essential shape (constructor, key method signatures, return types, error handling). Do NOT copy-paste a single file verbatim; instead synthesize the typical usage across the layer. 3) Add inline comments highlighting important conventions (e.g., '// DB int → boolean', '// throws on error — service wraps in Result'). 4) If the pattern involves a boundary between layers, show both sides. 5) Identify any repeatable workflows for adding new elements to this layer — backend entities (repositories, services, controllers) AND frontend elements (components, services, pages/routes, directives). For example: creating a new repository requires extending BaseRepository + registering in factory; adding a new Angular component requires extending BaseComponent + adding to routes + creating the template. Return these as step-by-step checklists. Return patterns with full code block examples."
 
-   - Emit 1 analyzer + 1 pattern finder per folder as separate `subagent(...)` calls in the same tool-use batch
+   - Emit 1 analyzer + 1 pattern finder per folder as separate `Agent(...)` calls in the same tool-use batch
    - For the root architecture.md, use findings from ALL folders to create the overview
 
 5. **Wait for Pass 2 and synthesize:**
@@ -286,7 +286,7 @@ See the following for well-formed subfolder architecture.md examples:
 - Folder is a simple grouping without unique constraints
 
 ## Important notes:
-- Parallel subagent dispatch — every `subagent(...)` call in the same assistant message (multiple tool_use blocks in one response), never one per turn. Call shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`.
+- Parallel Agent dispatch — every `Agent(...)` call in the same assistant message (multiple tool_use blocks in one response), never one per turn. Call shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`.
 - **File reading**: Always read mentioned files FULLY (no limit/offset) before invoking skills
 - **Critical ordering**: Follow the numbered steps exactly
   - ALWAYS read mentioned files first before invoking skills (step 1)

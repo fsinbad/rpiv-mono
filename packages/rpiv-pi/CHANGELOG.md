@@ -7,6 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Subagent provider reverted to `@tintinweb/pi-subagents`**: tintinweb resumed active maintenance with `0.6.x` (latest `0.6.3`), tracks `@mariozechner/pi-coding-agent` `^0.70.5`, and ships a simpler `Agent` tool surface (single tool + 3-5 word `description`, no `parallel`/`chain` mode overload, native `general-purpose` / `Explore` / `Plan` defaults). `siblings.ts SIBLINGS[0]` rewritten back to `npm:@tintinweb/pi-subagents` with the scoped-name regex; `LEGACY_SIBLINGS` inverted so `/rpiv-setup` now prunes the unscoped `npm:pi-subagents` (nicobailon fork) entry on upgrade.
+- **Pi peer bumped**: root `devDependencies` and `peerDependencies["@mariozechner/pi-coding-agent"]` now pull `^0.70.5` (was `^0.67.68`). `pi-ai`/`pi-tui` bumped in lockstep. `@tintinweb/pi-subagents@0.6.3` requires this floor.
+- **TypeBox migrated to `typebox@1.x`**: pi-ai 0.70 dropped `@sinclair/typebox` for the new `typebox` package. All sibling tool-parameter schemas (`rpiv-advisor`, `rpiv-todo`, `rpiv-web-tools`, `rpiv-ask-user-question`) and `rpiv-test-utils` now import from `typebox`. Same API surface for our usage; no behavioral change.
+- **`rpiv-args` Pi 0.70 compatibility**: `loadSkills()` now requires the new `agentDir` option (Pi 0.70 dropped the default). `args.ts` passes `getAgentDir()` from `pi-coding-agent`.
+- **Agent frontmatter reverted to `isolated: true`**: all 12 bundled agents (`agents/{claim-verifier,codebase-analyzer,codebase-locator,codebase-pattern-finder,diff-auditor,integration-scanner,peer-comparator,precedent-locator,test-case-locator,thoughts-analyzer,thoughts-locator,web-search-researcher}.md`) replaced the explicit three-key recipe (`systemPromptMode: replace` + `inheritProjectContext: false` + `inheritSkills: false`) with the single-key `isolated: true` that tintinweb parses. Behavioral semantics preserved.
+- **Skill vocabulary reverted to tintinweb's tool schema**: all skills that fan out (`annotate-guidance`, `annotate-inline`, `code-review`, `design`, `design2`, `discover`, `explore`, `implement`, `outline-test-cases`, `plan2`, `research`, `resume-handoff`, `revise`, `validate`, `write-test-cases`) now reference the `Agent` tool and `subagent_type:` parameter name. Frontmatter `allowed-tools:` entries had `subagent` replaced with `Agent` (Pi enforces this list literally; without the rename, `@tintinweb/pi-subagents@0.6.3` could not dispatch). Call-shape sites rewritten from `subagent({ agent, task, context: "fresh", artifacts: false })` to `Agent({ subagent_type, description, prompt })`. `.rpiv/guidance/agents/architecture.md` and `.rpiv/guidance/skills/architecture.md` updated to cite the new tool name, package name, and call shape.
+- **Agent description frontmatter vocabulary**: `agents/{thoughts-analyzer,codebase-pattern-finder,web-search-researcher}.md` `description:` fields use `subagent_type` again (matches the `@tintinweb/pi-subagents@0.6.3` tool vocabulary the dispatching model reads).
+- **Concurrency persistence**: README rewritten to drop the `~/.pi/agent/extensions/subagent/config.json` seeding section; the `/agents → Settings → Max concurrency` UI breadcrumb is back. tintinweb 0.6.x persists this setting natively.
+
+### Removed
+- **`extensions/subagent-widget/` extension**: the 22-file proxy + live overlay + builtin-filter + agent-catalog package is gone. tintinweb 0.6.x ships its own quiet inline `Agent` card and a 3-default-agent roster, so the proxy and the per-agent description rewrite carried no weight against the simpler upstream surface.
+- **`extensions/rpiv-core/claim-pi-subagents.ts`**: stripped `npm:pi-subagents` from `settings.json` so the proxy was the sole loader. With the proxy gone, `@tintinweb/pi-subagents` loads as a normal sibling — no claim required.
+- **`extensions/rpiv-core/ensure-builtins-disabled.ts`**: seeded `subagents.disableBuiltins: true` to hide nicobailon's 9 bundled agents from `/agents`. tintinweb's roster is 3 agents (all rpiv skills already use), so no hiding is necessary.
+- **`extensions/rpiv-core/ensure-subagent-config.ts`**: seeded `~/.pi/agent/extensions/subagent/config.json` with `parallel.concurrency` + `maxSubagentDepth`. tintinweb persists concurrency via the `/agents` UI; the seeding helper is no longer needed.
+- **`agents/general-purpose.md`**: `@tintinweb/pi-subagents@0.6.3` ships `general-purpose` as a default agent (broad tool set, inherits project context). Skills referencing `general-purpose` now resolve to tintinweb's builtin — no rpiv-pi profile required.
+- **`pi-subagents` stub d.ts files** (`extensions/subagent-widget/pi-subagents-stubs/*`) and the `tsconfig.base.json` `paths` entries that pointed at them.
+
+### Breaking / Upgrade Notes
+- **Upgrading from `0.13.x`**: run `/rpiv-setup` once and restart Pi. It will prune `npm:pi-subagents` from `~/.pi/agent/settings.json` and install `npm:@tintinweb/pi-subagents`. The `Agent` / `get_subagent_result` / `steer_subagent` tools and `/agents` command continue to work — call shape changes from `subagent({ agent, task })` to `Agent({ subagent_type, description, prompt })`, but only your own custom skills/agents need editing; the 12 rpiv-pi specialists are migrated in this release.
+- **User-customized bundled agent files**: `/rpiv-update-agents` overwrites edits to rpiv-managed filenames. With 12 agent frontmatters changing in this release (single-key `isolated: true` replaces the three-key recipe), copy your customizations to a different filename before running `/rpiv-update-agents` if you have edits.
+- **Pi version floor**: `@mariozechner/pi-coding-agent` `^0.70.5` is now required (was `^0.67.68`). Pi versions older than `0.70.5` will fail peer-dep resolution.
+- **Existing `~/.pi/agent/extensions/subagent/config.json`**: harmless leftover. tintinweb does not read this file; you can delete it manually.
+- **Existing `subagents.disableBuiltins: true` in `settings.json`**: harmless leftover. tintinweb does not parse this key.
+- **Async dispatch (`async: true`) gone**: nicobailon's background-dispatch mode is not part of tintinweb's `Agent` schema. Skills no longer reference it; if you used it in custom skills, switch to `run_in_background: true` (tintinweb's equivalent) or remove the parameter.
+- **Rollback**: git revert the release commit and `pi install npm:@juicesharp/rpiv-pi@0.13.3`.
+
 ## [0.13.0] - 2026-04-28
 
 ## [0.12.7] - 2026-04-26

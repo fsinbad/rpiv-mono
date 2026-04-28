@@ -55,22 +55,22 @@ Synthesis runs one phase at a time in topological order (`depends_on` of the cor
 
 3. **Parallel pre-fetch of pattern-finder for every slice (Step 2.0)**.
 
-   **Hard rule — fan-out, not loop.** Emit ONE assistant message that contains N `subagent(...)` tool calls, where N = `slice_count`. Every slice's pattern-finder dispatches in the SAME message as a separate `tool_use` block. The model that emits this message MUST list all N tool calls before sending. If you find yourself sending one tool call per assistant turn, STOP — you are violating Step 2.0; restart the message with all N blocks together.
+   **Hard rule — fan-out, not loop.** Emit ONE assistant message that contains N `Agent(...)` tool calls, where N = `slice_count`. Every slice's pattern-finder dispatches in the SAME message as a separate `tool_use` block. The model that emits this message MUST list all N tool calls before sending. If you find yourself sending one tool call per assistant turn, STOP — you are violating Step 2.0; restart the message with all N blocks together.
 
    Forbidden anti-patterns:
-   - One `subagent(...)` call per assistant message, looping through slices serially.
+   - One `Agent(...)` call per assistant message, looping through slices serially.
    - Mixing pattern-finder dispatches with synthesis or other tool calls.
    - Dispatching pattern-finder for "the next slice" inside the topological loop (Step 2a) — pattern-finder is pre-fetched ONCE for ALL slices before the loop starts.
 
    Required shape — one assistant message with N parallel blocks (illustration for N=3; scale to actual `slice_count`):
 
    ```
-   subagent({ agent: "codebase-pattern-finder", task: "<contract excerpt for Slice 1>", context: "fresh", artifacts: false })
-   subagent({ agent: "codebase-pattern-finder", task: "<contract excerpt for Slice 2>", context: "fresh", artifacts: false })
-   subagent({ agent: "codebase-pattern-finder", task: "<contract excerpt for Slice 3>", context: "fresh", artifacts: false })
+   Agent({ subagent_type: "codebase-pattern-finder", description: "patterns slice 1", prompt: "<contract excerpt for Slice 1>" })
+   Agent({ subagent_type: "codebase-pattern-finder", description: "patterns slice 2", prompt: "<contract excerpt for Slice 2>" })
+   Agent({ subagent_type: "codebase-pattern-finder", description: "patterns slice 3", prompt: "<contract excerpt for Slice 3>" })
    ```
 
-   Each `task` prompt includes that slice's contract excerpt verbatim:
+   Each `prompt` includes that slice's contract excerpt verbatim:
 
    ```
    "Find code templates I can model the [slice name] implementation after.
@@ -95,7 +95,7 @@ Synthesis runs one phase at a time in topological order (`depends_on` of the cor
 
 - **Spot-check anchors**: Re-read every `file:line` in this slice's `Integration anchors` and `Files touched` (the artifact-level reverification ran once in Step 1.4; this catches drift introduced by an earlier slice's MODIFY in this same plan run). If a cited symbol moved, Edit the design artifact to correct the line range. If gone, STOP — return to /skill:design2 Step 5 for this slice.
 - **Read prior phases' synthesized code from the artifact**: For each slice in this slice's `depends_on`, read its `## Phase N` section in the in-progress plan. Imports and types come from the actually-emitted code, not the contract abstraction.
-- **Conditional dispatches** (run in parallel as `subagent(...)` blocks in one assistant message; only those that apply):
+- **Conditional dispatches** (run in parallel as `Agent(...)` blocks in one assistant message; only those that apply):
   - Any `Files touched` entry is MODIFY → dispatch **integration-scanner** for that file/symbol. Task: "Map current callsites and wiring for [symbol] at [file]. List inbound references that must be preserved or updated, outbound dependencies the new code will inherit, and any config / event registration the symbol participates in."
   - Change classification is replacement (closure / function rewrite > 20 lines) → dispatch **precedent-locator**. Task: "Find prior commits in this repository that performed similar [closure / function] rewrites at comparable size. Return commit SHAs, file paths, and any follow-up fix commits."
   - An Integration anchor's surrounding code shape isn't obvious from the contract → dispatch **codebase-analyzer** (max 1) for that anchor.
@@ -286,18 +286,16 @@ After all phases are synthesized (`unresolved_phase_count == 0`), verify consist
 2. **Dispatch `claim-verifier`** with the claim list:
 
    ```
-   subagent({
-     agent: "claim-verifier",
-     task: "Verify each claim below against <plan artifact path> and <design artifact path>. Ground non-ANCHOR claims in the plan artifact's '## Phase N' code blocks; ANCHOR claims in the cited source file. Emit one row per claim:
+   Agent({
+     subagent_type: "claim-verifier",
+     description: "verify plan claims",
+     prompt: "Verify each claim below against <plan artifact path> and <design artifact path>. Ground non-ANCHOR claims in the plan artifact's '## Phase N' code blocks; ANCHOR claims in the cited source file. Emit one row per claim:
 
      FINDING <id> | <Verified|Weakened|Falsified> | <one-line justification with file:line>
 
      Claims:
      <id-1> | <category> | <claim text with cited <file:line> evidence the orchestrator expects to see>
-     <id-2> | <category> | ...
-     ...",
-     context: "fresh",
-     artifacts: false
+     <id-2> | <category> | ..."
    })
    ```
 

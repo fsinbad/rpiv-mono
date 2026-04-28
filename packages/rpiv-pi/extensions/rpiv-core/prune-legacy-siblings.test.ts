@@ -45,21 +45,21 @@ describe("pruneLegacySiblings", () => {
 
 	it("only non-legacy entries → pruned: [], file unchanged", () => {
 		writeSettings({
-			packages: ["npm:pi-perplexity", "npm:@juicesharp/rpiv-todo"],
+			packages: ["npm:pi-perplexity", "npm:@juicesharp/rpiv-todo", "npm:@tintinweb/pi-subagents"],
 		});
 		const before = readFileSync(SETTINGS_PATH, "utf-8");
 		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
 		expect(readFileSync(SETTINGS_PATH, "utf-8")).toBe(before);
 	});
 
-	it("legacy-only: removes @tintinweb/pi-subagents, preserves other top-level keys", () => {
+	it("legacy-only: removes pi-subagents (nicobailon fork), preserves other top-level keys", () => {
 		writeSettings({
 			defaultProvider: "zai",
 			theme: "dark",
-			packages: ["npm:@tintinweb/pi-subagents"],
+			packages: ["npm:pi-subagents"],
 		});
 		const result = pruneLegacySiblings();
-		expect(result.pruned).toEqual(["npm:@tintinweb/pi-subagents"]);
+		expect(result.pruned).toEqual(["npm:pi-subagents"]);
 		expect(readSettings()).toEqual({
 			defaultProvider: "zai",
 			theme: "dark",
@@ -67,7 +67,7 @@ describe("pruneLegacySiblings", () => {
 		});
 	});
 
-	it("mixed list: prunes both legacy entries (tintinweb + nicobailon pi-subagents), preserves order for kept", () => {
+	it("mixed list: prunes nicobailon's pi-subagents only, preserves @tintinweb/pi-subagents and other entries", () => {
 		writeSettings({
 			packages: [
 				"npm:pi-perplexity",
@@ -80,24 +80,31 @@ describe("pruneLegacySiblings", () => {
 			],
 		});
 		const result = pruneLegacySiblings();
-		expect(result.pruned).toEqual(["npm:@tintinweb/pi-subagents", "npm:pi-subagents"]);
+		expect(result.pruned).toEqual(["npm:pi-subagents"]);
 		expect(readSettings()).toEqual({
-			packages: ["npm:pi-perplexity", "npm:@juicesharp/rpiv-todo", "/Users/x/rpiv-mono/packages/rpiv-pi", null, 42],
+			packages: [
+				"npm:pi-perplexity",
+				"npm:@tintinweb/pi-subagents",
+				"npm:@juicesharp/rpiv-todo",
+				"/Users/x/rpiv-mono/packages/rpiv-pi",
+				null,
+				42,
+			],
 		});
 	});
 
 	it("idempotent: second call after prune is a no-op", () => {
 		writeSettings({
-			packages: ["npm:@tintinweb/pi-subagents", "npm:pi-subagents"],
+			packages: ["npm:pi-subagents"],
 		});
-		expect(pruneLegacySiblings().pruned).toEqual(["npm:@tintinweb/pi-subagents", "npm:pi-subagents"]);
+		expect(pruneLegacySiblings().pruned).toEqual(["npm:pi-subagents"]);
 		expect(pruneLegacySiblings()).toEqual({ pruned: [] });
 	});
 
 	it("case-insensitive match", () => {
 		writeSettings({
-			packages: ["NPM:@TintinWeb/Pi-Subagents"],
+			packages: ["NPM:Pi-Subagents"],
 		});
-		expect(pruneLegacySiblings().pruned).toEqual(["NPM:@TintinWeb/Pi-Subagents"]);
+		expect(pruneLegacySiblings().pruned).toEqual(["NPM:Pi-Subagents"]);
 	});
 });

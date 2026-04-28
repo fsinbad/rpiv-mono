@@ -1,10 +1,10 @@
 /**
  * Remove deprecated sibling package entries from ~/.pi/agent/settings.json.
  *
- * Runs at the top of /rpiv-setup so 0.11.x → 0.12.0 upgraders don't end up
- * with both @tintinweb/pi-subagents and pi-subagents loaded side-by-side
- * (which crashes Pi's subagent dispatch — the tintinweb tools blow up with
- * `path argument must be of type string. Received undefined`).
+ * Runs at the top of /rpiv-setup so 0.13.x → 0.14.0 upgraders don't end up
+ * with both nicobailon's pi-subagents and @tintinweb/pi-subagents loaded
+ * side-by-side (Pi rejects boot with duplicate-tool registration when both
+ * load).
  *
  * Fail-soft: missing file / invalid JSON / non-object / unwritable → silent
  * no-op. Idempotent: re-running with no legacy entries returns { pruned: [] }.

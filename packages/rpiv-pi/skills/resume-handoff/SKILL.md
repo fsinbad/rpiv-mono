@@ -45,7 +45,7 @@ Then wait for the user's input.
      - Other notes
 
 2. **Spawn focused research agents**:
-   After reading all critical handoff/plan/research documents directly, dispatch all agents below as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+   After reading all critical handoff/plan/research documents directly, dispatch all agents below as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`. Wait for all to return before proceeding.
 
    ```
    Task 1 - Gather artifact context:

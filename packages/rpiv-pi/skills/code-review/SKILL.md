@@ -69,10 +69,10 @@ Every Wave-2 agent prompt contains EXACTLY: (a) `Known Context:` followed by the
 
 ## Step 2: Dispatch Wave-1 — Integration + Precedents + Deps/CVE + Peer-Mirror
 
-Dispatch ALL agents below at T=0 as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })` (isolated conversation per agent). Do NOT wait for integration-scanner before dispatching precedents / dependencies / CVE — they do not consume Discovery-Map output, only `ChangedFiles` and the manifest diff (both orchestrator-produced in Step 1). Wait for all to return before proceeding.
+Dispatch ALL agents below at T=0 as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })` (isolated conversation per agent). Do NOT wait for integration-scanner before dispatching precedents / dependencies / CVE — they do not consume Discovery-Map output, only `ChangedFiles` and the manifest diff (both orchestrator-produced in Step 1). Wait for all to return before proceeding.
 
 **Agent — Integration map:**
-- agent: `integration-scanner`
+- subagent_type: `integration-scanner`
 - Prompt: "Map inbound references, outbound dependencies, and infrastructure wiring for the following changed files: [ChangedFiles, one per line]. Flag any auth-boundary crossings (middleware, guards, interceptors, authorize-style decorators) and config/DI/event registration touching these paths. Do NOT analyse code quality — connections only, in your standard output format."
 
 **Agent — Precedents** (always): use the `precedent-locator` prompt defined in Step 3 below — dispatch it here, not in Wave-2. Input it needs: `ChangedFiles` only.
@@ -81,7 +81,7 @@ Dispatch ALL agents below at T=0 as parallel `subagent` tool calls in the same a
 
 **Agent — CVE / advisory** (only when `ManifestChanged`): use the `web-search-researcher` prompt defined in Step 3 below — dispatch here. Input it needs: parsed `name@version` list from the manifest diff (orchestrator extracts and hands over directly).
 
-**Agent — Peer-Mirror** (only when `len(PeerPairs) > 0`): `agent: peer-comparator`. Input: the `PeerPairs` list verbatim, nothing else — no Discovery Map (it isn't built yet and the agent doesn't need it), no patch path (the work is peer-vs-new entity comparison, not diff analysis). Prompt:
+**Agent — Peer-Mirror** (only when `len(PeerPairs) > 0`): `subagent_type: peer-comparator`. Input: the `PeerPairs` list verbatim, nothing else — no Discovery Map (it isn't built yet and the agent doesn't need it), no patch path (the work is peer-vs-new entity comparison, not diff analysis). Prompt:
   ```
   Peer-mirror check.
 
@@ -152,7 +152,7 @@ Peer mirrors: [peer-mirror agent output verbatim — Missing/Diverged rows only;
 
 ## Step 3: Dispatch Wave-2 — Quality + Security Lenses
 
-Dispatch Quality + Security as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })` (isolated conversation per agent). Each receives the `## Discovery Map` block inline as `Known Context` above its task, and a pointer to `.git/code-review-patch.diff` for the diff itself. Precedents / Dependencies / CVE are already running from Wave-1 — do NOT re-dispatch them here; the prompts below document what those Wave-1 agents received, they are not re-issued.
+Dispatch Quality + Security as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })` (isolated conversation per agent). Each receives the `## Discovery Map` block inline as `Known Context` above its task, and a pointer to `.git/code-review-patch.diff` for the diff itself. Precedents / Dependencies / CVE are already running from Wave-1 — do NOT re-dispatch them here; the prompts below document what those Wave-1 agents received, they are not re-issued.
 
 **Wave-2 context isolation (LOAD-BEARING — violations cause silent quality collapse)**: Each Wave-2 agent receives EXACTLY two things, nothing else: (1) the Discovery Map (digested form) and (2) the literal path string `.git/code-review-patch.diff`.
 
@@ -165,7 +165,7 @@ Dispatch Quality + Security as parallel `subagent` tool calls in the same assist
 
 **Why this is load-bearing**: summary context induces *narrativisation* — the agent treats the preamble as "the orchestrator already framed the findings, I just classify them" instead of independently reading the patch file. Observed failure signatures when this is violated: Quality drops from ~40 tool calls / 3M tokens / 500s to ~5-15 tool calls / 300k tokens / 100-200s, and returns hallucinated findings (invented statuses, mis-cited line numbers, claims that files are "missing from patch" when they are in fact present).
 
-**Self-check before dispatching Wave-2**: read your outgoing subagent prompt. If it contains any content from Wave-1 agent RESULTS beyond the Discovery Map you synthesised, strip it. The Discovery Map is the contract; raw outputs are reconciliation-only.
+**Self-check before dispatching Wave-2**: read your outgoing Agent prompt. If it contains any content from Wave-1 agent RESULTS beyond the Discovery Map you synthesised, strip it. The Discovery Map is the contract; raw outputs are reconciliation-only.
 
 **Citation contract** (applies to every Wave-2+ agent, every step): every `file:line` citation MUST be accompanied by the literal line text in backticks — format `file:line — \`<verbatim line>\` — <note>`. Omit findings whose lines you cannot quote verbatim.
 
@@ -463,10 +463,10 @@ Ask follow-ups.
 
 ## Important Notes
 
-- **Frontmatter**: `allowed-tools` is intentionally omitted — the skill inherits `subagent`, `ask_user_question`, `advisor`, `Write`, `web_search`, `todo`. Do NOT re-add the line.
+- **Frontmatter**: `allowed-tools` is intentionally omitted — the skill inherits `Agent`, `ask_user_question`, `advisor`, `Write`, `web_search`, `todo`. Do NOT re-add the line.
 - **Security-lens precision stance**: prefer false negatives. Evidence must carry `confidence ≥ 8`; 🔴 requires an explicit source→sink trace. Missing hardening without a traced sink is NOT a finding.
 - **Load-bearing ordering**:
-  - Wave-1 fans out at T=0 — integration-scanner, Precedents, (when `ManifestChanged`) Dependencies + CVE, and (when `len(PeerPairs) > 0`) the peer-mirror agent dispatch in a single multi-subagent message. integration-scanner AND peer-mirror gate Wave-2 (both feed the Discovery Map Wave-2 consumes); **Precedents is a hard gate on Step 5** (its follow-up-within-30-days counts drive severity weighting; reconciling without them produces mis-weighted severities the verification pass cannot correct); Dependencies + CVE soft-gate Step 5.
+  - Wave-1 fans out at T=0 — integration-scanner, Precedents, (when `ManifestChanged`) Dependencies + CVE, and (when `len(PeerPairs) > 0`) the peer-mirror agent dispatch in a single multi-Agent message. integration-scanner AND peer-mirror gate Wave-2 (both feed the Discovery Map Wave-2 consumes); **Precedents is a hard gate on Step 5** (its follow-up-within-30-days counts drive severity weighting; reconciling without them produces mis-weighted severities the verification pass cannot correct); Dependencies + CVE soft-gate Step 5.
   - Step 4a (Predicate-Trace) and 4b (Interaction Sweep) dispatch in parallel once Wave-2 completes; 4c (Gap-Finder) is orchestrator-side coverage arithmetic — no agent. Interaction Sweep (4b) receives Quality's `Predicate-set coherence` table as its predicate-row source, not 4a's output.
   - When Quality's `Predicate-set coherence` surface returns ≥2 rows with mismatched values on the same enum/type, the 4b sweep MUST evaluate categories 7–9 against those rows.
   - **File orientation is load-bearing**: patches MUST use `-U30` (or `-U10` fallback for >1MB patches), never `-U0`. The Discovery Map's semantic file map (clusters + role tags + symbols-touched hint) is the orientation primitive, not per-hunk line ranges. Lens prompts organise findings per file (`### file/path.ext`), not per hunk. Agents SHOULD NOT issue extra `Read` calls for files already represented in the patch unless specifically needed for a cross-file trace.

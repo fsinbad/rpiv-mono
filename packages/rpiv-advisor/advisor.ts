@@ -29,7 +29,7 @@ import {
 	type ToolInfo,
 } from "@mariozechner/pi-coding-agent";
 import type { SelectItem } from "@mariozechner/pi-tui";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { showAdvisorPicker, showEffortPicker } from "./advisor-ui.js";
 
 // ---------------------------------------------------------------------------

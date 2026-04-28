@@ -15,6 +15,7 @@
 import { readFileSync } from "node:fs";
 import {
 	type ExtensionAPI,
+	getAgentDir,
 	type InputEvent,
 	type InputEventResult,
 	loadSkills,
@@ -113,6 +114,7 @@ export function invalidateSkillIndex(): void {
 function buildSkillIndex(): Map<string, SkillIndexEntry> {
 	const { skills } = loadSkills({
 		cwd: process.cwd(),
+		agentDir: getAgentDir(),
 		skillPaths: [],
 		includeDefaults: true,
 	});

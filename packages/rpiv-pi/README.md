@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@juicesharp/rpiv-pi.svg)](https://www.npmjs.com/package/@juicesharp/rpiv-pi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Pi compatibility** — `rpiv-pi` `0.12.x` tracks the current `@mariozechner/pi-coding-agent` release line. If you see peer-dep resolution issues after a Pi upgrade, open an issue.
+> **Pi compatibility** — `rpiv-pi` `0.14.x` tracks `@mariozechner/pi-coding-agent` `0.70.x` and `@tintinweb/pi-subagents` `0.6.x`. If you see peer-dep resolution issues after a Pi upgrade, open an issue.
 
 Skill-based development workflow for [Pi Agent](https://github.com/badlogic/pi-mono) — discover, research, design, plan, implement, and validate. rpiv-pi extends Pi Agent with a pipeline of chained AI skills, named subagents for parallel analysis, and session lifecycle hooks for automatic context injection.
 
@@ -203,25 +203,14 @@ Pi Agent discovers extensions via `"extensions": ["./extensions"]` and skills vi
 - **Web search** — run `/web-search-config` to set the Brave Search API key, or set the `BRAVE_SEARCH_API_KEY` environment variable
 - **Advisor** — run `/advisor` to select a reviewer model and reasoning effort
 - **Side questions** — type `/btw <question>` anytime (even mid-stream) to ask the primary model a one-off question; answer appears in a borderless bottom overlay and never enters the main conversation
-- **Agent concurrency** — on first `/rpiv-setup`, rpiv-pi persistently seeds `~/.pi/agent/extensions/subagent/config.json` with `parallel.concurrency: 4` and `maxSubagentDepth: 3`. The cap keeps rate-limit and cache pressure predictable; skills with wider fan-outs queue the remainder and drain as slots free. Edit that file to raise the limit (e.g. `parallel.concurrency: 48`); user values are preserved on subsequent `/rpiv-setup` runs.
+- **Agent concurrency** — open the `/agents` overlay and tune `Settings → Max concurrency` to match your provider's rate limits. `@tintinweb/pi-subagents` owns this setting; rpiv-pi does not seed it.
 - **Agent profiles** — editable at `<cwd>/.pi/agents/`; sync from bundled defaults with `/rpiv-update-agents` (overwrites rpiv-managed files, preserves your custom agents)
 
 ## Uninstall
 
-rpiv-pi owns nicobailon's pi-subagents registration (runs it through an in-process proxy so the inline tool card stays quiet and the Subagents overlay is the live view). `/rpiv-setup` strips `"npm:pi-subagents"` from your `~/.pi/agent/settings.json#packages[]` to prevent Pi from loading it twice. If you remove rpiv-pi, subagents will stop loading until you re-add that entry.
-
-The bundled built-in agents from `pi-subagents` (`scout`, `planner`, `oracle`, …) are hidden from both the `subagent` tool that the assistant dispatches to and the `/agents` manager overlay (and `ctrl+shift+a`). The overlay filter is best-effort — if a future `pi-subagents` release changes its manager UI, rpiv-pi will print one boot-time warning to stderr and the built-in rows will reappear in `/agents` until rpiv-pi ships an update. The assistant-side filter is unaffected by upstream changes. To re-enable a built-in agent yourself, edit `subagents.disableBuiltins` in `~/.pi/agent/settings.json` (set to `false` or delete the key) and restart Pi.
-
-To fully uninstall:
-
 1. Remove rpiv-pi from Pi: `pi uninstall npm:@juicesharp/rpiv-pi`
-2. Open `~/.pi/agent/settings.json` and add `"npm:pi-subagents"` back to the `packages` array so Pi loads nicobailon's subagents directly again.
-3. Optional — drop the rpiv-pi seeded keys if you no longer want them:
-   - `~/.pi/agent/extensions/subagent/config.json` (parallel.concurrency, maxSubagentDepth)
-   - `subagents.disableBuiltins` in `~/.pi/agent/settings.json` (set to `false` or delete to re-enable the 9 bundled nicobailon agents)
-4. Restart Pi.
-
-After step 2 you'll have nicobailon's original inline tool card and no Subagents overlay, same as a clean pi-subagents install.
+2. Optional — uninstall the subagent runtime if no other plugin needs it: `pi uninstall npm:@tintinweb/pi-subagents`
+3. Restart Pi.
 
 ## Troubleshooting
 
@@ -232,7 +221,7 @@ After step 2 you'll have nicobailon's original inline tool card and no Subagents
 | `/rpiv-setup` says "requires interactive mode" | Running in headless mode | Install manually: `pi install npm:<pkg>` for each sibling |
 | `web_search` or `web_fetch` errors | Brave API key not configured | Run `/web-search-config` or set `BRAVE_SEARCH_API_KEY` |
 | `advisor` tool not available after upgrade | Advisor model selection lost | Run `/advisor` to re-select a model |
-| Skills hang or serialize agent calls | Agent concurrency too low | Edit `~/.pi/agent/extensions/subagent/config.json` and raise `parallel.concurrency` (default `4`; try `16`–`48` for wide fan-outs) |
+| Skills hang or serialize agent calls | Agent concurrency too low | Open `/agents`, raise `Settings → Max concurrency` |
 
 ## License
 

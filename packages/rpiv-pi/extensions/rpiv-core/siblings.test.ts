@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 import { LEGACY_SIBLINGS, SIBLINGS } from "./siblings.js";
 
 describe("SIBLINGS registry", () => {
-	it("contains 6 entries (pi-subagents moved to LEGACY — rpiv-pi owns its registration)", () => {
-		expect(SIBLINGS).toHaveLength(6);
+	it("contains 7 entries (pi-subagents at SIBLINGS[0] — tintinweb fork is the dispatch runtime)", () => {
+		expect(SIBLINGS).toHaveLength(7);
 	});
 
-	it("does NOT list pi-subagents (superseded by subagent-widget proxy)", () => {
+	it("lists @tintinweb/pi-subagents at SIBLINGS[0]", () => {
+		expect(SIBLINGS[0]?.pkg).toBe("npm:@tintinweb/pi-subagents");
+	});
+
+	it("does NOT list nicobailon's unscoped pi-subagents (superseded in 0.14.0)", () => {
 		expect(SIBLINGS.find((s) => s.pkg === "npm:pi-subagents")).toBeUndefined();
 	});
 
@@ -34,14 +38,14 @@ describe("SIBLINGS registry", () => {
 });
 
 describe("LEGACY_SIBLINGS registry", () => {
-	it("lists pi-subagents for pruning (rpiv-pi claims the registration)", () => {
+	it("lists nicobailon's pi-subagents for pruning (superseded by @tintinweb/pi-subagents in 0.14.0)", () => {
 		const entry = LEGACY_SIBLINGS.find((l) => l.label === "pi-subagents");
 		expect(entry).toBeDefined();
 		expect(entry?.matches.test("npm:pi-subagents")).toBe(true);
 		expect(entry?.matches.test("pi-subagents")).toBe(true);
 	});
 
-	it("pi-subagents legacy match does NOT catch @tintinweb/pi-subagents (separate legacy entry handles that)", () => {
+	it("pi-subagents legacy match does NOT catch @tintinweb/pi-subagents (active sibling)", () => {
 		const piSubagents = LEGACY_SIBLINGS.find((l) => l.label === "pi-subagents");
 		expect(piSubagents?.matches.test("@tintinweb/pi-subagents")).toBe(false);
 	});

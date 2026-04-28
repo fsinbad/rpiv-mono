@@ -2,7 +2,7 @@
 name: validate
 description: Verify that an implementation plan was correctly executed. Runs success criteria checks and generates validation reports. Use after implementation is complete.
 argument-hint: [plan-path]
-allowed-tools: Read, Bash(git *), Bash(make *), Glob, Grep, subagent
+allowed-tools: Read, Bash(git *), Bash(make *), Glob, Grep, Agent
 ---
 
 # Validate Plan
@@ -49,7 +49,7 @@ If starting fresh or need more context:
 
 3. **Spawn parallel research agents** to verify implementation:
 
-   Dispatch all agents below as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+   Dispatch all agents below as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`. Wait for all to return before proceeding.
    - **general-purpose** agent — Verify implementation details match plan specifications (analyzer role)
    - **general-purpose** agent — Verify implementation follows established codebase patterns (pattern-finder role)
 

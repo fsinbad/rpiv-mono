@@ -45,6 +45,7 @@
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",
+    "@tintinweb/pi-subagents": "*",
     "@juicesharp/rpiv-ask-user-question": "*",
     "@juicesharp/rpiv-todo": "*",
     "@juicesharp/rpiv-advisor": "*",
@@ -52,8 +53,5 @@
     "@juicesharp/rpiv-web-tools": "*",
     "@juicesharp/rpiv-args": "*",
     "yaml": "*"
-  },
-  "dependencies": {
-    "pi-subagents": "^0.17.5"
   }
 }

@@ -1,16 +1,16 @@
 ---
 name: research
-description: Answer structured research questions via targeted parallel analysis agents. Accepts either a questions artifact from discover OR a free-text prompt/task (in which case it auto-runs discover via a subagent). Produces research documents in thoughts/shared/research/.
+description: Answer structured research questions via targeted parallel analysis agents. Accepts either a questions artifact from discover OR a free-text prompt/task (in which case it auto-runs discover via an Agent). Produces research documents in thoughts/shared/research/.
 argument-hint: [path to discover artifact | free-text research prompt]
 ---
 
 ## Questions Source
 
-The user's argument is inlined below as `$ARGUMENTS` (resolved by rpiv-args). If `$ARGUMENTS` is empty, ask for input. If `$ARGUMENTS` is a path to a `.md` file under `thoughts/`, treat it as a discover artifact. Otherwise treat it as a free-text research prompt and auto-run discover via a subagent (Step 1, free-text branch).
+The user's argument is inlined below as `$ARGUMENTS` (resolved by rpiv-args). If `$ARGUMENTS` is empty, ask for input. If `$ARGUMENTS` is a path to a `.md` file under `thoughts/`, treat it as a discover artifact. Otherwise treat it as a free-text research prompt and auto-run discover via an Agent (Step 1, free-text branch).
 
 # Research
 
-You are tasked with answering structured research questions by spawning targeted analysis agents and synthesizing their findings into a comprehensive research document. This skill consumes questions artifacts produced by the `discover` skill — either provided directly by the user, or produced on-demand via a subagent when the user passes free text.
+You are tasked with answering structured research questions by spawning targeted analysis agents and synthesizing their findings into a comprehensive research document. This skill consumes questions artifacts produced by the `discover` skill — either provided directly by the user, or produced on-demand via an Agent when the user passes free text.
 
 Argument (resolved by rpiv-args): `$ARGUMENTS`
 
@@ -24,23 +24,22 @@ Argument (resolved by rpiv-args): `$ARGUMENTS`
    - The Discovery Summary provides the file landscape overview — no need to re-discover
 
    **Free-text prompt / task description** (`$ARGUMENTS` is non-empty and is NOT a path to a `thoughts/**/*.md` file):
-   - Dispatch ONE subagent to run discover end-to-end in non-interactive mode:
+   - Dispatch ONE Agent to run discover end-to-end in non-interactive mode:
      ```
-     subagent({
-       agent: "general-purpose",
-       task: "Read packages/rpiv-pi/skills/discover/SKILL.md and execute it in subagent (non-interactive) mode.
+     Agent({
+       subagent_type: "general-purpose",
+       description: "auto-run discover",
+       prompt: "Read packages/rpiv-pi/skills/discover/SKILL.md and execute it in Agent (non-interactive) mode.
               Topic: $ARGUMENTS
-              Return ONLY the absolute path to the questions artifact you wrote.",
-       context: "fresh",
-       artifacts: false
+              Return ONLY the absolute path to the questions artifact you wrote."
      })
      ```
    - Capture the returned absolute path, then fall through into the "Path to a `.md` file …" branch above.
-   - Report: `[Auto-discovered]: ran discover via subagent for "$ARGUMENTS". Questions artifact: [path].`
+   - Report: `[Auto-discovered]: ran discover via Agent for "$ARGUMENTS". Questions artifact: [path].`
 
    **`$ARGUMENTS` is empty:**
    ```
-   Please provide a discover questions artifact path or a free-text research prompt. Free text will auto-run discover via a subagent first.
+   Please provide a discover questions artifact path or a free-text research prompt. Free text will auto-run discover via an Agent first.
    ```
    Then wait for input.
 
@@ -60,7 +59,7 @@ Argument (resolved by rpiv-args): `$ARGUMENTS`
 
 ## Step 2: Dispatch Analysis Agents
 
-Dispatch all agents below as parallel `subagent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+Dispatch all agents below as parallel `Agent` tool calls in the same assistant message — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`. Wait for all to return before proceeding.
 
 **Default agent**: `codebase-analyzer` for all codebase questions. This agent has Read, Grep, Glob, LS — it can trace code paths, find patterns, and analyze integration points.
 
@@ -302,7 +301,7 @@ When ready:
 ## Important Notes
 
 - **Analysis only**: This skill answers questions. It does NOT discover what to ask — that's discover's job.
-- **Two entry points**: A discover questions artifact path (chained) OR free text (auto-runs discover via a subagent in non-interactive mode, then proceeds with the produced artifact). Argument substitution is handled by `rpiv-args` (`$ARGUMENTS`).
+- **Two entry points**: A discover questions artifact path (chained) OR free text (auto-runs discover via an Agent in non-interactive mode, then proceeds with the produced artifact). Argument substitution is handled by `rpiv-args` (`$ARGUMENTS`).
 - **Grouped dispatch**: Related questions are batched per agent based on file overlap. Default agent: codebase-analyzer. This reduces token waste from redundant file reads and lets agents build cross-question context.
 - **Downstream compatible**: Research documents feed directly into design and plan — the same Code References / Integration Points / Architecture Insights sections they expect.
 - **File reading**: Always read the questions artifact FULLY (no limit/offset) before dispatching agents

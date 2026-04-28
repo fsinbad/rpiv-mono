@@ -21,6 +21,11 @@ export interface SiblingPlugin {
 
 export const SIBLINGS: readonly SiblingPlugin[] = [
 	{
+		pkg: "npm:@tintinweb/pi-subagents",
+		matches: /@tintinweb\/pi-subagents/i,
+		provides: "Agent / get_subagent_result / steer_subagent tools",
+	},
+	{
 		pkg: "npm:@juicesharp/rpiv-ask-user-question",
 		matches: /rpiv-ask-user-question/i,
 		provides: "ask_user_question tool",
@@ -69,17 +74,12 @@ export interface LegacyPackage {
 
 export const LEGACY_SIBLINGS: readonly LegacyPackage[] = [
 	{
-		label: "@tintinweb/pi-subagents",
-		matches: /@tintinweb\/pi-subagents/i,
-		reason: "superseded by pi-subagents (nicobailon fork) in rpiv-pi 0.12.0",
-	},
-	{
-		// rpiv-pi now owns nicobailon's registration via a proxy in
-		// subagent-widget/renderer-override.ts (quiet inline card + live
-		// overlay). Having pi-subagents ALSO loaded as a top-level sibling
-		// causes pi to reject startup with duplicate-tool registration.
+		// nicobailon's pi-subagents fork was the SIBLINGS[0] package between
+		// rpiv-pi 0.12.0 and 0.13.x. Reverted to @tintinweb/pi-subagents in
+		// rpiv-pi 0.14.0 once tintinweb resumed active maintenance and shipped
+		// 0.6.x against pi-coding-agent ^0.70.5.
 		label: "pi-subagents",
 		matches: /(^|[^\w/-])pi-subagents(?![-\w])/i,
-		reason: "claimed by rpiv-pi subagent-widget proxy since 0.11.8",
+		reason: "superseded by @tintinweb/pi-subagents (resumed maintenance) in rpiv-pi 0.14.0",
 	},
 ];

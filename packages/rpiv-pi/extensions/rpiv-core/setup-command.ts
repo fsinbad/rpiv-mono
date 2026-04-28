@@ -6,9 +6,6 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { claimPiSubagents } from "./claim-pi-subagents.js";
-import { ensureBuiltinsDisabled } from "./ensure-builtins-disabled.js";
-import { ensureSubagentConfig } from "./ensure-subagent-config.js";
 import { findMissingSiblings } from "./package-checks.js";
 import { spawnPiInstall } from "./pi-installer.js";
 import { pruneLegacySiblings } from "./prune-legacy-siblings.js";
@@ -27,12 +24,8 @@ const msgInstalling = (pkg: string) => `Installing ${pkg}…`;
 const msgInstalledLine = (pkgs: string[]) => `✓ Installed: ${pkgs.join(", ")}`;
 const msgFailedHeader = () => `✗ Failed:`;
 const msgFailedLine = (pkg: string, err: string) => `  ${pkg}: ${err}`;
-const msgSubagentSeeded = (keys: string[]) => `Seeded subagent config keys: ${keys.join(", ")}`;
 const msgLegacyPruned = (entries: string[]) =>
 	`Removed legacy subagent library from settings.json: ${entries.join(", ")}. Run \`pi uninstall\` to free disk space, then restart Pi.`;
-const MSG_BUILTINS_DISABLED = "Disabled pi-subagents built-in agents (scout, planner, worker, …). Restart Pi to apply.";
-const MSG_CLAIMED_PI_SUBAGENTS =
-	"Removed 'npm:pi-subagents' from settings.json — rpiv-pi now owns its registration (quiet inline card + overlay). Restart Pi to apply.";
 
 type UI = {
 	notify: (msg: string, sev: "info" | "warning" | "error") => void;
@@ -57,21 +50,6 @@ export function registerSetupCommand(pi: ExtensionAPI): void {
 			const prune = pruneLegacySiblings();
 			if (prune.pruned.length > 0) {
 				ctx.ui.notify(msgLegacyPruned(prune.pruned), "info");
-			}
-
-			const builtins = ensureBuiltinsDisabled();
-			if (builtins.disabled) {
-				ctx.ui.notify(MSG_BUILTINS_DISABLED, "info");
-			}
-
-			const claim = claimPiSubagents();
-			if (claim.claimed) {
-				ctx.ui.notify(MSG_CLAIMED_PI_SUBAGENTS, "info");
-			}
-
-			const seed = ensureSubagentConfig();
-			if (seed.merged.length > 0) {
-				ctx.ui.notify(msgSubagentSeeded(seed.merged), "info");
 			}
 
 			if (!ctx.hasUI) {

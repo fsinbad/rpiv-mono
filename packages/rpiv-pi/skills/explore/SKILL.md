@@ -322,7 +322,7 @@ Wait for ALL agents to complete before proceeding.
 
 ## Important Notes
 
-- Parallel subagent dispatch — every `subagent(...)` call in the same assistant message (multiple tool_use blocks in one response), never one per turn. Call shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`.
+- Parallel Agent dispatch — every `Agent(...)` call in the same assistant message (multiple tool_use blocks in one response), never one per turn. Call shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`.
 - Always spawn fresh research to validate current state - never rely on old research docs as source of truth
 - Old research documents can provide historical context but must be validated against current code
 - Generate 2-4 named candidates in Step 2; confirm them with the developer at Step 3 before per-candidate fit dispatch

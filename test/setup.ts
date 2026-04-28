@@ -23,12 +23,6 @@ beforeEach(async () => {
 	const todo = await import("../packages/rpiv-todo/todo.js");
 	todo.__resetState();
 
-	const subagentWidget = await import("../packages/rpiv-pi/extensions/subagent-widget/run-tracker.js");
-	subagentWidget.__resetState();
-
-	const managerRowFilter = await import("../packages/rpiv-pi/extensions/subagent-widget/hide-builtin-manager-rows.js");
-	managerRowFilter.__resetManagerRowFilterForTests();
-
 	const advisor = await import("../packages/rpiv-advisor/advisor.js");
 	advisor.setAdvisorModel(undefined);
 	advisor.setAdvisorEffort(undefined);
@@ -47,8 +41,6 @@ beforeEach(async () => {
 
 	const piAgentSettings = join(process.env.HOME!, ".pi", "agent", "settings.json");
 	const advisorConfig = join(process.env.HOME!, ".config", "rpiv-advisor", "advisor.json");
-	const subagentConfig = join(process.env.HOME!, ".pi", "agent", "extensions", "subagent", "config.json");
 	rmSync(piAgentSettings, { force: true });
 	rmSync(advisorConfig, { force: true });
-	rmSync(subagentConfig, { force: true });
 });

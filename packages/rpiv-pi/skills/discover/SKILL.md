@@ -23,7 +23,7 @@ Before Step 1, create a todo list tracking every step below (Step 1 through Step
 
 ## Steps
 
-**Subagent mode (non-interactive)**: When this skill is invoked from another skill via a subagent (e.g., `research` auto-running discover from a free-text prompt), there is no developer to ask. Skip Step 5 (Developer Checkpoint) entirely, write the artifact (Step 6), and as your final output return ONLY the absolute path to the questions artifact. All other steps run unchanged.
+**Subagent mode (non-interactive)**: When this skill is invoked from another skill via an Agent (e.g., `research` auto-running discover from a free-text prompt), there is no developer to ask. Skip Step 5 (Developer Checkpoint) entirely, write the artifact (Step 6), and as your final output return ONLY the absolute path to the questions artifact. All other steps run unchanged.
 
 ### Step 1: Read Mentioned Files
 
@@ -57,7 +57,7 @@ Before Step 1, create a todo list tracking every step below (Step 1 through Step
 
    This plan stays internal — do NOT present it to the developer unless asked.
 
-3. **Dispatch all discovery agents as parallel `subagent` tool calls in the same assistant message** — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `subagent({ agent: "<agent-name>", task: "<task>", context: "fresh", artifacts: false })`. Wait for all to return before proceeding.
+3. **Dispatch all discovery agents as parallel `Agent` tool calls in the same assistant message** — multiple tool_use blocks in one response, not one call per turn. Each call matches this shape: `Agent({ subagent_type: "<agent-name>", description: "<3-5 word task label>", prompt: "<task>" })`. Wait for all to return before proceeding.
 
    - Use **codebase-locator** for "Where do these files/symbols live?" slices — spawn one per focused code/discovery seam. Prefer 5-9 narrow discovery agents over 2-3 broad ones when the topic spans multiple subsystems.
    - Use **thoughts-locator** only for historical docs, decisions, plans, and prior artifacts about the topic
