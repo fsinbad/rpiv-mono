@@ -12,6 +12,7 @@ Monorepo for Pi CLI extensions in the `@juicesharp/rpiv-*` family. Lockstep vers
 | [`@juicesharp/rpiv-ask-user-question`](packages/rpiv-ask-user-question) | `ask_user_question` tool — structured clarifying-question selector |
 | [`@juicesharp/rpiv-btw`](packages/rpiv-btw) | `/btw` slash command — side-question without polluting main transcript |
 | [`@juicesharp/rpiv-todo`](packages/rpiv-todo) | `todo` tool + `/todos` overlay — Claude-Code-parity task tracking |
+| [`@juicesharp/rpiv-warp`](packages/rpiv-warp) | Native [Warp](https://warp.dev) terminal toasts via `OSC 777` for Pi lifecycle events — opt-in, not auto-installed by `/rpiv-setup` |
 | [`@juicesharp/rpiv-web-tools`](packages/rpiv-web-tools) | `web_search` + `web_fetch` tools — backed by Brave Search API |
 
 Each package is published independently to npm and installable by name:
@@ -22,7 +23,7 @@ pi install npm:@juicesharp/rpiv-advisor
 # …
 ```
 
-`@juicesharp/rpiv-pi` registers the others as siblings; `/rpiv-setup` installs any that are missing.
+`@juicesharp/rpiv-pi` registers the core siblings (see [`siblings.ts`](packages/rpiv-pi/extensions/rpiv-core/siblings.ts)); `/rpiv-setup` installs any that are missing. Other packages (e.g. `rpiv-warp`) are opt-in — install them explicitly with `pi install`.
 
 ## Development
 
