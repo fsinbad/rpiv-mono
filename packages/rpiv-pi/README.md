@@ -102,6 +102,7 @@ Skills compose. Pick the entry point that matches your intent:
 
 - **Form context before a task** — `/skill:discover "[topic]"` → `/skill:research <questions artifact>`. Produces a high-signal subspace of the codebase relevant to your topic, ready to feed directly into the next prompt.
 - **Compare approaches before designing** — `/skill:explore "[problem]"` → `/skill:design <solutions artifact>`. Use when multiple valid solutions exist; the solutions artifact is a first-class input to `design` alongside a `research` artifact.
+- **One-shot plan from research** — `/skill:research <questions>` → `/skill:blueprint <research artifact>` → `/skill:implement`. Fuses `design` + `plan` into a single pass with the same slice-by-slice rigor, but spawns only `codebase-pattern-finder` upfront (vs `design`'s 4-agent fan-out) by trusting the research artifact's integration/precedent sections. Use for solo work or when no one else needs to review the design before implementation; pick `design` → `plan` when the design is itself a deliverable or when research is thin and you want the fuller verification sweep.
 - **Full feature build** — `/skill:discover` → `research` → `design` → `plan` → `implement` → `validate` → (`code-review` ↔ `commit`). The default pipeline; jump in at any stage if you already have the input artifact. Review and commit are interchangeable in order — review `staged`/`working` before committing, or commit first and review the resulting branch (empty scope, first-parent vs default).
 - **Investigate a bug** — `/skill:discover "why does X fail"` → `/skill:research <questions artifact>`. Fix from the research output without writing a plan when the change is small.
 - **Adjust mid-implementation** — `/skill:revise <plan artifact>` → resume `/skill:implement`. Use when new constraints land after the plan is drafted.
@@ -130,6 +131,7 @@ Invoke via `/skill:<name>` from inside a Pi Agent session.
 | Skill | Input | Output | Description |
 |---|---|---|---|
 | `plan` | Design artifact | `thoughts/shared/plans/` | Create phased implementation plans |
+| `blueprint` | Research or solutions artifact | `thoughts/shared/plans/` | Fused `design` + `plan`: vertical-slice decomposition with micro-checkpoints, emits implement-ready phased plan in one pass. Lighter on subagent fan-out than `design` — trusts the research artifact's integration/precedent sections instead of re-dispatching. Use when a separate design artifact isn't needed for review or handoff |
 | `implement` | Plan artifact | Code changes | Execute plans phase by phase |
 | `revise` | Plan artifact | Updated plan | Revise plans based on feedback |
 | `validate` | Plan artifact | Validation report | Verify plan execution |
