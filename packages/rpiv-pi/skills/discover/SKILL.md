@@ -209,4 +209,3 @@ The written artifact is the developer's review surface — they read it and resp
   - ALWAYS read key files for depth before writing questions (Step 3)
   - NEVER write the artifact with placeholder values
 - **Frontmatter consistency**: Always include frontmatter, use snake_case for multi-word fields, keep tags relevant
-- CC auto-loads CLAUDE.md files when agents read files in a directory — no need to scan for them explicitly

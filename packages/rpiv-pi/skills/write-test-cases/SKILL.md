@@ -319,4 +319,3 @@ On any TC change: always regenerate `_regression-suite.md` and `_coverage-map.md
   - NEVER write test case files with placeholder values
 - **Duplicate avoidance**: Always check existing TCs via test-case-locator before generating new ones.
 - **ID continuity**: If existing TCs exist for this module, continue numbering from the highest existing ID.
-- CC auto-loads CLAUDE.md files when agents read files in a directory — no need to scan for them explicitly.

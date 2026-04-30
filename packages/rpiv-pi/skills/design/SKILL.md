@@ -405,7 +405,6 @@ Spawn multiple agents in parallel when they're searching for different things. E
 - **Code is source of truth** — if the Architecture code section conflicts with the Decisions prose, the code wins. Update the prose.
 - **Checkpoint recordings**: Record micro-checkpoint interactions in Developer Context with `file:line` references, same as Step 5 questions.
 - **Frontmatter consistency**: Always include frontmatter, use snake_case for multi-word fields, keep tags relevant
-- CC auto-loads CLAUDE.md files when agents read files in a directory — no need to scan for them explicitly
 
 ## Common Design Patterns
 
