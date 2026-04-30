@@ -7,6 +7,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **`blueprint` skill** (`packages/rpiv-pi/skills/blueprint/SKILL.md`): single-shot alternative to the `design` → `plan` split. Reads a research or solutions artifact and emits an implement-ready phased plan directly into `thoughts/shared/plans/` using the same vertical-slice decomposition + developer micro-checkpoints as `design`. Lighter on subagent fan-out than `design` — spawns only `codebase-pattern-finder` upfront and trusts the research artifact's `## Integration Points` and `## Precedents & Lessons` sections instead of re-dispatching `integration-scanner` / `precedent-locator` / `codebase-analyzer`. Use when a separable design artifact isn't needed for review or handoff.
+- **README Implementation table + Recipes entry** for `blueprint`. New "One-shot plan from research" recipe explains the tradeoff vs `design` → `plan`.
+
+### Changed
+- **`research` skill — `## Precedents & Lessons` template restructured** (`packages/rpiv-pi/skills/research/SKILL.md`): replaced the single composite-bullet section with per-precedent blocks (commits, blast radius by layer, follow-up fixes, doc lessons, takeaway) plus a trailing `### Composite Lessons` block. Surfaces blast radius and follow-up history that `blueprint` and `design` consume directly from the artifact.
+- **`discover` skill — dropped the post-write rubber-stamp checkpoint** (`packages/rpiv-pi/skills/discover/SKILL.md`): the trailing "Looks good / I want to adjust" `ask_user_question` never pulled new information — research's own guidance forbids exactly that shape. Iteration moves to Step 7 (Handle Follow-ups), where the user reacts to the written artifact.
+- **`research` skill — simplified Agent dispatch** (`packages/rpiv-pi/skills/research/SKILL.md`): the free-text branch's Agent dispatch no longer needs the "non-interactive mode" carve-out (moot now that `discover` is uniformly non-interactive at question time). Compresses the dispatch prompt to a single line.
+
+### Removed
+- **`design2` and `plan2` skills**: experimental grill-me variants superseded by `blueprint`. Neither was documented in the README; removal is internal cleanup.
+- **"CC auto-loads CLAUDE.md files…" note** from `design`, `discover`, and `write-test-cases` SKILL.md `## Important Notes` sections. The note is a Claude Code convention that does not apply to Pi Agent.
+
 ## [1.0.9] - 2026-04-30
 
 ## [1.0.8] - 2026-04-29
