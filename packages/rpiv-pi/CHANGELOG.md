@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-pi` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.10] - 2026-04-30
 
 ### Added
 - **`blueprint` skill** (`packages/rpiv-pi/skills/blueprint/SKILL.md`): single-shot alternative to the `design` → `plan` split. Reads a research or solutions artifact and emits an implement-ready phased plan directly into `thoughts/shared/plans/` using the same vertical-slice decomposition + developer micro-checkpoints as `design`. Lighter on subagent fan-out than `design` — spawns only `codebase-pattern-finder` upfront and trusts the research artifact's `## Integration Points` and `## Precedents & Lessons` sections instead of re-dispatching `integration-scanner` / `precedent-locator` / `codebase-analyzer`. Use when a separable design artifact isn't needed for review or handoff.
