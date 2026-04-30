@@ -19,11 +19,9 @@ Please provide your research question or area of interest.
 ```
 and wait for the user's research query, then proceed to Step 1.
 
-Before Step 1, create a todo list tracking every step below (Step 1 through Step 7).
+Before Step 1, create a todo list tracking every step below (Step 1 through Step 6).
 
 ## Steps
-
-**Subagent mode (non-interactive)**: When this skill is invoked from another skill via an Agent (e.g., `research` auto-running discover from a free-text prompt), there is no developer to ask. Skip Step 5 (Developer Checkpoint) entirely, write the artifact (Step 6), and as your final output return ONLY the absolute path to the questions artifact. All other steps run unchanged.
 
 ### Step 1: Read Mentioned Files
 
@@ -137,38 +135,7 @@ Using the combined knowledge of WHERE files are (locators), WHAT connects to wha
 
 4. **Coverage check**: Every key file read in Step 3 should appear in at least one question. Files that were read but don't appear in any question indicate either an unnecessary read or a missing question.
 
-### Step 5: Developer Checkpoint
-
-Present the generated questions to the developer for review.
-
-1. **Present the questions:**
-
-   ```
-   ## Research Questions for: [Topic]
-
-   Based on discovery across [N] files and reading [K] key files for depth:
-
-   1. [First sentence of question, truncated to ~100 chars]...
-   2. [First sentence of question, truncated to ~100 chars]...
-   ...
-
-   <full question text for each, numbered to match>
-   ```
-
-2. **Ask for review** using the `ask_user_question` tool with the following question: "[N] trace-quality research questions generated from discovery across [M] files. Review and adjust?". Header: "Questions". Options: "Looks good (Recommended)" (Proceed to write the questions artifact as-is); "I want to adjust" (Add, remove, or modify questions before proceeding).
-
-3. **Handle developer input:**
-
-   **"Looks good"**: Proceed to Step 6.
-
-   **"I want to adjust"**: Ask follow-up:
-   - Question: Which questions would you like to add, remove, or modify?
-   - Incorporate changes. If the developer mentions a new area, spawn a targeted rescan (max 2 agents: codebase-locator + integration-scanner on the new area) and read any newly discovered key files.
-   - Re-present the updated questions list and confirm again.
-
-   **"Other" (free-text)**: Parse as corrections/additions. Incorporate and re-present if significant changes.
-
-### Step 6: Write Questions Artifact
+### Step 5: Write Questions Artifact
 
 1. **Determine metadata:**
    - Filename: `thoughts/shared/questions/YYYY-MM-DD_HH-MM-SS_[topic].md`
@@ -209,7 +176,7 @@ Present the generated questions to the developer for review.
    ...
    ```
 
-### Step 7: Present and Chain
+### Step 6: Present and Chain
 
 Present the artifact location and chain to the next skill:
 
@@ -222,9 +189,11 @@ Research questions written to:
 When ready, run `/skill:research thoughts/shared/questions/[filename].md` to answer these questions.
 ```
 
-### Step 8: Handle Follow-ups
+### Step 7: Handle Follow-ups
 
-- If the developer asks to add/modify questions, use the Edit tool to update the artifact in-place
+The written artifact is the developer's review surface — they read it and respond. If the developer requests changes after seeing the artifact:
+
+- Use the Edit tool to update the artifact in-place
 - Update frontmatter: `last_updated` and `last_updated_by`
 - Add `last_updated_note: "Updated [brief description]"` to frontmatter
 - If new areas are mentioned, spawn targeted discovery agents (max 2) and read any newly discovered key files
@@ -238,7 +207,6 @@ When ready, run `/skill:research thoughts/shared/questions/[filename].md` to ans
   - ALWAYS read mentioned files first (Step 1)
   - ALWAYS wait for all agents to complete (Step 2)
   - ALWAYS read key files for depth before writing questions (Step 3)
-  - ALWAYS present questions to developer before writing (Step 5)
   - NEVER write the artifact with placeholder values
 - **Frontmatter consistency**: Always include frontmatter, use snake_case for multi-word fields, keep tags relevant
 - CC auto-loads CLAUDE.md files when agents read files in a directory — no need to scan for them explicitly

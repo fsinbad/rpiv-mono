@@ -24,14 +24,12 @@ Argument (resolved by rpiv-args): `$ARGUMENTS`
    - The Discovery Summary provides the file landscape overview — no need to re-discover
 
    **Free-text prompt / task description** (`$ARGUMENTS` is non-empty and is NOT a path to a `thoughts/**/*.md` file):
-   - Dispatch ONE Agent to run discover end-to-end in non-interactive mode:
+   - Dispatch ONE `Agent` tool call to run discover end-to-end:
      ```
      Agent({
        subagent_type: "general-purpose",
        description: "auto-run discover",
-       prompt: "Read packages/rpiv-pi/skills/discover/SKILL.md and execute it in Agent (non-interactive) mode.
-              Topic: $ARGUMENTS
-              Return ONLY the absolute path to the questions artifact you wrote."
+       prompt: "Read packages/rpiv-pi/skills/discover/SKILL.md, execute it for topic '$ARGUMENTS', return ONLY the absolute path to the questions artifact."
      })
      ```
    - Capture the returned absolute path, then fall through into the "Path to a `.md` file …" branch above.
@@ -301,7 +299,7 @@ When ready:
 ## Important Notes
 
 - **Analysis only**: This skill answers questions. It does NOT discover what to ask — that's discover's job.
-- **Two entry points**: A discover questions artifact path (chained) OR free text (auto-runs discover via an Agent in non-interactive mode, then proceeds with the produced artifact). Argument substitution is handled by `rpiv-args` (`$ARGUMENTS`).
+- **Two entry points**: A discover questions artifact path (chained) OR free text (auto-runs discover via an Agent, then proceeds with the produced artifact). Argument substitution is handled by `rpiv-args` (`$ARGUMENTS`).
 - **Grouped dispatch**: Related questions are batched per agent based on file overlap. Default agent: codebase-analyzer. This reduces token waste from redundant file reads and lets agents build cross-question context.
 - **Downstream compatible**: Research documents feed directly into design and plan — the same Code References / Integration Points / Architecture Insights sections they expect.
 - **File reading**: Always read the questions artifact FULLY (no limit/offset) before dispatching agents
