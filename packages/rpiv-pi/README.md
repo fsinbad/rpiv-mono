@@ -9,6 +9,12 @@
 
 Skill-based development workflow for [Pi Agent](https://github.com/badlogic/pi-mono) — discover, research, design, plan, implement, and validate. rpiv-pi extends Pi Agent with a pipeline of chained AI skills, named subagents for parallel analysis, and session lifecycle hooks for automatic context injection.
 
+## What you get
+
+- **A pipeline of chained AI skills** — discover → research → design → plan → implement → validate, each producing a reviewable artifact under `thoughts/shared/`.
+- **Named subagents for parallel analysis** — `codebase-analyzer`, `codebase-locator`, `codebase-pattern-finder`, `claim-verifier`, and 8 more, dispatched automatically by skills.
+- **Session lifecycle hooks** — agent profiles, guidance files, and pipeline directories scaffold themselves on first launch.
+
 ## Prerequisites
 
 - **Node.js** — required by Pi Agent

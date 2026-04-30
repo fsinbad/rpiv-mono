@@ -3,9 +3,16 @@
 [![npm version](https://img.shields.io/npm/v/@juicesharp/rpiv-advisor.svg)](https://www.npmjs.com/package/@juicesharp/rpiv-advisor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Escalate decisions to a stronger reviewer model from inside [Pi Agent](https://github.com/badlogic/pi-mono). `rpiv-advisor` registers the `advisor` tool and `/advisor` slash command, implementing the advisor-strategy pattern — the executor forwards the conversation to a reviewer (e.g. Opus), receives guidance (plan, correction, or stop signal), and resumes.
+Let the model ask a stronger model for a second opinion before it acts. `rpiv-advisor` adds the `advisor` tool and `/advisor` slash command to [Pi Agent](https://github.com/badlogic/pi-mono) — the working model can hand the full conversation to a reviewer (e.g. Opus) and resume with its plan, correction, or stop signal.
 
 ![Advisor model selector](https://raw.githubusercontent.com/juicesharp/rpiv-mono/main/packages/rpiv-advisor/docs/advisor.jpg)
+
+## Features
+
+- **Reviewer model selector** — `/advisor` opens a picker over any model in Pi's registry, plus a reasoning-effort picker for reasoning-capable models.
+- **Persisted across sessions** — selection saved at `~/.config/rpiv-advisor/advisor.json` (chmod 0600).
+- **Off by default** — the `advisor` tool is excluded until you pick a model; choose "No advisor" to disable.
+- **Zero-parameter handoff** — calling `advisor` forwards the full serialized conversation branch; no manual prompt needed.
 
 ## Install
 

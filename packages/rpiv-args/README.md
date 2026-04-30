@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@juicesharp/rpiv-args.svg)](https://www.npmjs.com/package/@juicesharp/rpiv-args)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Substitute shell-style placeholders inside skill bodies in [Pi Agent](https://github.com/badlogic/pi-mono). `rpiv-args` resolves `$1`, `$ARGUMENTS`, `$@`, `${@:N}`, and `${@:N:L}` before the skill content reaches the LLM. Skills without placeholders emit a `<skill>` wrapper byte-identical to Pi's built-in, so installing `rpiv-args` never changes behavior for existing skills.
+Pass arguments to your skills like a shell command. `rpiv-args` adds `$1`, `$ARGUMENTS`, `$@`, `${@:N}`, and `${@:N:L}` placeholders to [Pi Agent](https://github.com/badlogic/pi-mono) skills — write `/skill:deploy api production` and your skill body sees `$1` = `api`, `$2` = `production`. Skills without placeholders are untouched, so installing `rpiv-args` is safe for any existing skill collection.
 
 ## Install
 

@@ -1,7 +1,7 @@
 {
   "name": "@juicesharp/rpiv-args",
   "version": "1.0.10",
-  "description": "Pi extension: skill-argument resolver — pre-emptively wraps /skill:<name> <args> via the input hook and performs opt-in $N/$ARGUMENTS substitution before Pi's built-in expansion",
+  "description": "Pi extension: pass shell-style $1 / $ARGUMENTS placeholders to your Pi skills",
   "keywords": [
     "pi-package",
     "pi-extension",
