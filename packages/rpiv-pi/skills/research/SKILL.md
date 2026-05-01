@@ -4,26 +4,22 @@ description: Answer structured research questions via targeted parallel analysis
 argument-hint: [path to discover artifact | free-text research prompt]
 ---
 
-## Questions Source
-
-The user's argument is inlined below as `$ARGUMENTS` (resolved by rpiv-args). If `$ARGUMENTS` is empty, ask for input. If `$ARGUMENTS` is a path to a `.md` file under `thoughts/`, treat it as a discover artifact. Otherwise treat it as a free-text research prompt and auto-run discover via an Agent (Step 1, free-text branch).
-
 # Research
 
 You are tasked with answering structured research questions by spawning targeted analysis agents and synthesizing their findings into a comprehensive research document. This skill consumes questions artifacts produced by the `discover` skill — either provided directly by the user, or produced on-demand via an Agent when the user passes free text.
 
-Argument (resolved by rpiv-args): `$ARGUMENTS`
+Input: `$ARGUMENTS`
 
 ## Step 1: Read Questions Artifact
 
-1. **Determine input** by inspecting `$ARGUMENTS`:
+1. **Determine input** by inspecting the inlined argument below:
 
    **Path to a `.md` file under `thoughts/`** (questions artifact):
    - Read the questions artifact FULLY using the Read tool WITHOUT limit/offset
    - Extract: Discovery Summary, Questions (dense paragraphs), frontmatter metadata (topic, tags)
    - The Discovery Summary provides the file landscape overview — no need to re-discover
 
-   **Free-text prompt / task description** (`$ARGUMENTS` is non-empty and is NOT a path to a `thoughts/**/*.md` file):
+   **Free-text prompt / task description** (argument is non-empty and is NOT a path to a `thoughts/**/*.md` file):
    - Dispatch ONE `Agent` tool call to run discover end-to-end:
      ```
      Agent({
@@ -35,7 +31,7 @@ Argument (resolved by rpiv-args): `$ARGUMENTS`
    - Capture the returned absolute path, then fall through into the "Path to a `.md` file …" branch above.
    - Report: `[Auto-discovered]: ran discover via Agent for "$ARGUMENTS". Questions artifact: [path].`
 
-   **`$ARGUMENTS` is empty:**
+   **Argument is empty:**
    ```
    Please provide a discover questions artifact path or a free-text research prompt. Free text will auto-run discover via an Agent first.
    ```
@@ -298,8 +294,9 @@ Research document written to:
 
 Please review and let me know if you have follow-up questions.
 
-When ready:
-`/skill:design thoughts/shared/research/[filename].md`
+When ready, choose your next step:
+- `/skill:design thoughts/shared/research/[filename].md` — iterative design with vertical-slice decomposition (produces design artifact for plan)
+- `/skill:blueprint thoughts/shared/research/[filename].md` — combined design + phased plan in one pass (produces implement-ready plan directly)
 ```
 
 ## Step 6: Handle Follow-ups
