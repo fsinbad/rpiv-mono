@@ -68,7 +68,7 @@ describe("registration", () => {
 		setWorkingWarpEnv();
 		const { pi, captured } = createMockPi();
 		register(pi);
-		for (const ev of ["session_start", "agent_start", "agent_end", "tool_call", "turn_end"]) {
+		for (const ev of ["session_start", "agent_start", "agent_end", "tool_call", "tool_execution_end"]) {
 			expect(captured.events.has(ev)).toBe(true);
 		}
 	});
@@ -139,7 +139,7 @@ describe("agent_end handler", () => {
 });
 
 describe("tool_call handler", () => {
-	it("emits 'idle_prompt' for ask_user_question", async () => {
+	it("emits 'question_asked' for a configured blocking tool (default: ask_user_question)", async () => {
 		setWorkingWarpEnv();
 		const { write } = primeFs();
 		const { pi, captured } = createMockPi();
@@ -150,9 +150,9 @@ describe("tool_call handler", () => {
 		const json = String(write.mock.calls[0][1])
 			.replace(/^\x1b\]777;notify;warp:\/\/cli-agent;/, "")
 			.replace(/\x07$/, "");
-		expect(JSON.parse(json).event).toBe("idle_prompt");
+		expect(JSON.parse(json).event).toBe("question_asked");
 	});
-	it("does NOT emit for other tool names", async () => {
+	it("does NOT emit for non-blocking tool names", async () => {
 		setWorkingWarpEnv();
 		const { open } = primeFs();
 		const { pi, captured } = createMockPi();
@@ -163,35 +163,36 @@ describe("tool_call handler", () => {
 	});
 });
 
-describe("turn_end handler", () => {
-	it("emits 'tool_complete' with last toolResults entry's name", async () => {
+describe("tool_execution_end handler", () => {
+	it("emits 'tool_complete' for a configured blocking tool (unblocks Warp's badge)", async () => {
 		setWorkingWarpEnv();
 		const { write } = primeFs();
 		const { pi, captured } = createMockPi();
 		register(pi);
-		const handler = captured.events.get("turn_end")?.[0];
+		const handler = captured.events.get("tool_execution_end")?.[0];
 		await handler?.(
-			{ turnIndex: 0, message: {}, toolResults: [{ toolName: "read" }, { toolName: "edit" }] } as never,
+			{ toolCallId: "x", toolName: "ask_user_question", result: {}, isError: false } as never,
 			createMockCtx() as never,
 		);
+		expect(write).toHaveBeenCalledOnce();
 		const json = String(write.mock.calls[0][1])
 			.replace(/^\x1b\]777;notify;warp:\/\/cli-agent;/, "")
 			.replace(/\x07$/, "");
 		const payload = JSON.parse(json);
 		expect(payload.event).toBe("tool_complete");
-		expect(payload.tool_name).toBe("edit");
+		expect(payload.tool_name).toBe("ask_user_question");
 	});
-	it("emits 'tool_complete' with empty tool_name when no tool ran", async () => {
+	it("does NOT emit for non-blocking tool names", async () => {
 		setWorkingWarpEnv();
-		const { write } = primeFs();
+		const { open } = primeFs();
 		const { pi, captured } = createMockPi();
 		register(pi);
-		const handler = captured.events.get("turn_end")?.[0];
-		await handler?.({ turnIndex: 0, message: {}, toolResults: [] } as never, createMockCtx() as never);
-		const json = String(write.mock.calls[0][1])
-			.replace(/^\x1b\]777;notify;warp:\/\/cli-agent;/, "")
-			.replace(/\x07$/, "");
-		expect(JSON.parse(json).tool_name).toBe("");
+		const handler = captured.events.get("tool_execution_end")?.[0];
+		await handler?.(
+			{ toolCallId: "x", toolName: "bash", result: {}, isError: false } as never,
+			createMockCtx() as never,
+		);
+		expect(open).not.toHaveBeenCalled();
 	});
 });
 

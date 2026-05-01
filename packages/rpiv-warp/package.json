@@ -35,6 +35,7 @@
 		"protocol.ts",
 		"warp-notify.ts",
 		"payload.ts",
+		"config.ts",
 		"README.md",
 		"CHANGELOG.md",
 		"LICENSE"

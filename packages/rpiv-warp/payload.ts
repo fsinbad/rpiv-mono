@@ -145,6 +145,10 @@ export function buildPromptSubmitPayload(ctx: ExtensionContext): WarpPayload {
 	return baseEnvelope("prompt_submit", ctx);
 }
 
+export function buildQuestionAskedPayload(ctx: ExtensionContext): WarpPayload {
+	return baseEnvelope("question_asked", ctx);
+}
+
 export function buildStopPayload(ctx: ExtensionContext, branch: SessionEntry[]): WarpPayload {
 	return {
 		...baseEnvelope("stop", ctx),

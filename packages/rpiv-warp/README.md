@@ -21,14 +21,31 @@ pi install npm:@juicesharp/rpiv-warp
 
 ## What you get
 
-| Pi event | Warp toast |
-|---|---|
-| `session_start` (startup only) | "Pi Agent active — notifications enabled." |
-| `agent_end` | last user prompt → last assistant reply (truncated 200 chars) |
-| `tool_call` (when Pi calls `ask_user_question`) | "Input needed" |
-| `turn_end` | last tool name of the turn |
+| Pi event | Warp wire event | Effect on the tab badge |
+|---|---|---|
+| `session_start` (startup only) | `session_start` | records plugin version |
+| `agent_start` | `prompt_submit` | → **In progress** |
+| `agent_end` | `stop` | → **Success** (checkmark) |
+| `tool_call` (configured blocking tool) | `question_asked` | → **Blocked** ("Waiting for your answer") |
+| `tool_execution_end` (configured blocking tool) | `tool_complete` | Blocked → **In progress** |
 
 `session_start` is filtered to `reason === "startup"` only — `/new`, `/resume`, `/fork`, `/reload` do NOT emit (you're already looking at the terminal in those cases).
+
+## Config
+
+Optional file at `~/.config/rpiv-warp/config.json`:
+
+```json
+{
+  "blockingTools": ["ask_user_question", "my_custom_blocking_tool"]
+}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `blockingTools` | `["ask_user_question"]` | Tool names that put the Warp tab badge into the **Blocked** state when called and clear it when the tool finishes. Use for tools that genuinely block the agent loop on user input. |
+
+Missing or malformed file falls back to defaults — no config required.
 
 ## Detection
 
