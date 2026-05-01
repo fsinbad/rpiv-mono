@@ -7,6 +7,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `docs/vertical-cover.{svg,png}` — portrait-orientation hero artwork (1280×800 canvas; PNG downscaled to 320×711).
+- Best-effort Windows transport: `writeOSC777` writes the OSC 777 byte sequence to `process.stdout` (gated on `isTTY`) when `/dev/tty` is unavailable, relying on ConPTY to forward unrecognized OSCs to Warp.
+- Warp tab-title spinner: animates the first character of the terminal window title with a 4-frame braille rotation at 160ms cadence during agent loops, wrapped in xterm `CSI 22;0t` / `CSI 23;0t` push/pop so Pi's `π - <repo>` title is restored verbatim on stop.
+- `title-spinner.ts` module plus `writeOSC0`, `pushTitleStack`, `popTitleStack` emitters that share `writeOSC777`’s transport path (so they also flow through `process.stdout` on Windows).
+- Test coverage for the title-spinner emitters on Windows transport.
+
+### Changed
+- Cover canvas extended from 1280×640 to 1280×800 with refreshed crop marks/footer.
+- README hero swapped from `docs/cover.png` to `docs/vertical-cover.png`, rendered at `width="160"`. The `<a>` wrapper around the `<picture>` was removed so the image is no longer a clickable link to the package directory.
+- README edge-case table updated to flag the Windows transport as untested in the wild.
+- Internal: renamed "OSC byte sequence" section to "Escape-sequence constants" to cover the new CSI additions; split formatters into their own section to mirror `payload.ts`’s Constants → Builders separation; restated the 160ms frame cadence in module headers.
+
 ## [1.0.12] - 2026-05-01
 
 ### Added
