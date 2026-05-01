@@ -64,11 +64,11 @@ describe("registration", () => {
 		register(pi);
 		expect(captured.events.size).toBe(0);
 	});
-	it("registers all four event handlers in working Warp", () => {
+	it("registers all five event handlers in working Warp", () => {
 		setWorkingWarpEnv();
 		const { pi, captured } = createMockPi();
 		register(pi);
-		for (const ev of ["session_start", "agent_end", "tool_call", "turn_end"]) {
+		for (const ev of ["session_start", "agent_start", "agent_end", "tool_call", "turn_end"]) {
 			expect(captured.events.has(ev)).toBe(true);
 		}
 	});
@@ -98,6 +98,22 @@ describe("session_start handler", () => {
 			expect(open).not.toHaveBeenCalled();
 		});
 	}
+});
+
+describe("agent_start handler", () => {
+	it("emits a 'session_start' payload on every turn", async () => {
+		setWorkingWarpEnv();
+		const { write } = primeFs();
+		const { pi, captured } = createMockPi();
+		register(pi);
+		const handler = captured.events.get("agent_start")?.[0];
+		await handler?.({} as never, createMockCtx() as never);
+		expect(write).toHaveBeenCalledOnce();
+		const json = String(write.mock.calls[0][1])
+			.replace(/^\x1b\]777;notify;warp:\/\/cli-agent;/, "")
+			.replace(/\x07$/, "");
+		expect(JSON.parse(json).event).toBe("session_start");
+	});
 });
 
 describe("agent_end handler", () => {

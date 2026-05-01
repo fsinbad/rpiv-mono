@@ -66,6 +66,10 @@ export default function (pi: ExtensionAPI): void {
 		emit(buildSessionStartPayload(ctx));
 	});
 
+	pi.on("agent_start", async (_event, ctx) => {
+		emit(buildSessionStartPayload(ctx));
+	});
+
 	pi.on("agent_end", async (_event, ctx) => {
 		emit(buildStopPayload(ctx, readBranch(ctx)));
 	});
