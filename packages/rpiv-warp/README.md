@@ -1,8 +1,10 @@
 # rpiv-warp
 
-<picture>
-  <img src="https://raw.githubusercontent.com/juicesharp/rpiv-mono/main/packages/rpiv-warp/docs/vertical-cover.png" alt="rpiv-warp vertical-cover" width="160">
-</picture>
+<a href="https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-warp">
+  <picture>
+    <img src="https://raw.githubusercontent.com/juicesharp/rpiv-mono/main/packages/rpiv-warp/docs/cover.png" alt="rpiv-warp cover" width="100%">
+  </picture>
+</a>
 
 [![npm version](https://img.shields.io/npm/v/@juicesharp/rpiv-warp.svg)](https://www.npmjs.com/package/@juicesharp/rpiv-warp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
