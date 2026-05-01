@@ -62,7 +62,7 @@ Missing or malformed file falls back to defaults — no config required.
 | Not in Warp (`TERM_PROGRAM !== "WarpTerminal"`) | Silent no-op — extension loads, every handler short-circuits |
 | Pi in print mode (`pi -p "..."`) | **Toasts still fire** — print mode emits all four events at the agent layer |
 | `/dev/tty` unreachable (cron, no-tty SSH) | Silent no-op — `try/catch` around `openSync` |
-| Windows | Silent no-op — `/dev/tty` doesn't exist; ConPTY support is future work |
+| Windows | Best-effort — writes OSC 777 to `process.stdout` so ConPTY forwards it to Warp ([Warp eng blog: "ConPTY will send even unrecognized OSCs to the shell"](https://www.warp.dev/blog/building-warp-on-windows)). Skipped when stdout is not a TTY (piped/redirected output). Untested in the wild — no Warp plugin currently ships a Windows transport |
 | Known-broken Warp build | Silent no-op — broken-version table gates emission per channel |
 
 ## Why standalone (not a sibling)
