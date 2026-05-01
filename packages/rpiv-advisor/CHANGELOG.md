@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Cover redesigned as a macOS-style terminal-window screenshot with an EXECUTOR → `advisor()` → ADVISOR handoff diagram and PLAN/CORRECT/STOP outputs.
+
 ## [1.0.13] - 2026-05-01
 
 ### Added
