@@ -62,6 +62,11 @@ const CHECKMARK = " ✓";
 const MSG_ADVISOR_DISABLED = "Advisor disabled";
 const MSG_REQUIRES_INTERACTIVE = "/advisor requires interactive mode";
 
+// User-tail nudge — appended when stripping leaves an assistant tail (some
+// providers, e.g. recent Anthropic models, reject payloads not ending with
+// a user message: "This model does not support assistant message prefill.").
+const ADVISOR_NUDGE_TEXT = "Please advise on the executor's situation above.";
+
 // Errors (static)
 const ERR_NO_MODEL = "No advisor model is configured. The user can enable one with the /advisor command.";
 const ERR_CALL_ABORTED = "Advisor call was cancelled before it completed.";
@@ -206,6 +211,25 @@ export function stripInflightAdvisorCall(messages: Message[]): Message[] {
 	return [...messages.slice(0, -1), { ...last, content: filtered }];
 }
 
+// Some providers (recent Anthropic Claude models) reject payloads that end on
+// an assistant turn — they treat a trailing assistant message as a prefill and
+// require user-tail. After stripInflightAdvisorCall, the tail can be assistant
+// (e.g. the executor wrote thinking text before calling advisor). Append a
+// minimal user-role nudge so the request is well-formed for those providers.
+export function ensureUserTail(messages: Message[]): Message[] {
+	if (messages.length === 0) return messages;
+	const last = messages[messages.length - 1];
+	if (last.role === "user" || last.role === "toolResult") return messages;
+	return [
+		...messages,
+		{
+			role: "user",
+			content: [{ type: "text", text: ADVISOR_NUDGE_TEXT }],
+			timestamp: Date.now(),
+		},
+	];
+}
+
 // Returns `undefined` when the registry is empty (no extensions loaded) so
 // callers can skip prepending an empty block that would still cost a cache unit.
 export function getInventoryMessage(tools: ToolInfo[]): Message | undefined {
@@ -337,7 +361,7 @@ async function executeAdvisor(
 	const agentMessages = branch
 		.filter((e): e is SessionEntry & { type: "message" } => e.type === "message")
 		.map((e) => e.message);
-	const branchMessages = stripInflightAdvisorCall(convertToLlm(agentMessages));
+	const branchMessages = ensureUserTail(stripInflightAdvisorCall(convertToLlm(agentMessages)));
 	const inventoryMessage = getInventoryMessage(pi.getAllTools());
 	const messages: Message[] = inventoryMessage ? [inventoryMessage, ...branchMessages] : branchMessages;
 

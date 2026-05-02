@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Append a synthetic user-role nudge after `stripInflightAdvisorCall` when the trailing assistant message had text content preceding the in-flight `advisor()` call. Recent Anthropic Claude models reject payloads ending on an assistant turn with `"This model does not support assistant message prefill. The conversation must end with a user message."`. The new `ensureUserTail` step guarantees user-tail without disturbing prior toolCall/toolResult chains. Exported from `advisor.ts` for unit tests.
+
 ## [1.0.15] - 2026-05-02
 
 ### Fixed

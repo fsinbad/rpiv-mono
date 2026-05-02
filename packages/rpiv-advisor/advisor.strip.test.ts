@@ -1,7 +1,7 @@
-import { makeAssistantMessage, makeUserMessage } from "@juicesharp/rpiv-test-utils";
+import { makeAssistantMessage, makeToolResult, makeUserMessage } from "@juicesharp/rpiv-test-utils";
 import type { Message } from "@mariozechner/pi-ai";
 import { describe, expect, it } from "vitest";
-import { stripInflightAdvisorCall } from "./advisor.js";
+import { ensureUserTail, stripInflightAdvisorCall } from "./advisor.js";
 
 describe("stripInflightAdvisorCall", () => {
 	it("returns original array for empty messages", () => {
@@ -98,5 +98,37 @@ describe("stripInflightAdvisorCall", () => {
 		];
 		const out = stripInflightAdvisorCall(msgs);
 		expect(out).not.toBe(msgs);
+	});
+});
+
+describe("ensureUserTail", () => {
+	it("returns original on empty input", () => {
+		const msgs: Message[] = [];
+		expect(ensureUserTail(msgs)).toBe(msgs);
+	});
+
+	it("returns original when tail is already user", () => {
+		const msgs = [makeAssistantMessage({ text: "old" }), makeUserMessage("q")];
+		expect(ensureUserTail(msgs)).toBe(msgs);
+	});
+
+	it("returns original when tail is a toolResult", () => {
+		const msgs: Message[] = [
+			makeUserMessage("q"),
+			makeAssistantMessage({ toolCalls: [{ id: "c1", name: "todo", arguments: {} }] }),
+			makeToolResult({ toolCallId: "c1", toolName: "todo", text: "done" }),
+		];
+		expect(ensureUserTail(msgs)).toBe(msgs);
+	});
+
+	it("appends a user nudge when tail is assistant", () => {
+		const msgs = [makeUserMessage("q"), makeAssistantMessage({ text: "thinking..." })];
+		const out = ensureUserTail(msgs);
+		expect(out).not.toBe(msgs);
+		expect(out).toHaveLength(3);
+		const tail = out[out.length - 1];
+		expect(tail.role).toBe("user");
+		if (tail.role !== "user") throw new Error();
+		expect(Array.isArray(tail.content) && tail.content[0]?.type === "text").toBe(true);
 	});
 });
