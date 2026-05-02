@@ -18,7 +18,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Api, Model, StopReason, Usage } from "@mariozechner/pi-ai";
-import { completeSimple, type Message, supportsXhigh, type ThinkingLevel } from "@mariozechner/pi-ai";
+import { completeSimple, getSupportedThinkingLevels, type Message, type ThinkingLevel } from "@mariozechner/pi-ai";
 import {
 	type AgentToolResult,
 	type AgentToolUpdateCallback,
@@ -530,7 +530,9 @@ export function registerAdvisorCommand(pi: ExtensionAPI): void {
 			// Effort picker — only for reasoning-capable models
 			let effortChoice: ThinkingLevel | undefined;
 			if (picked.reasoning) {
-				const levels = supportsXhigh(picked) ? [...BASE_EFFORT_LEVELS, XHIGH_EFFORT_LEVEL] : BASE_EFFORT_LEVELS;
+				const levels = getSupportedThinkingLevels(picked).includes("xhigh")
+					? [...BASE_EFFORT_LEVELS, XHIGH_EFFORT_LEVEL]
+					: BASE_EFFORT_LEVELS;
 
 				const effortItems: SelectItem[] = [
 					{ value: OFF_VALUE, label: "off" },

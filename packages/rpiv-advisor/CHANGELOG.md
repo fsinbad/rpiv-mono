@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Restore compatibility with `@mariozechner/pi-ai` ≥ 0.72.0. The 0.72.0 release removed `supportsXhigh` in favor of `getSupportedThinkingLevels(model): ModelThinkingLevel[]`; `/advisor` was crashing with `(0 , _piAi.supportsXhigh) is not a function` on Pi runtimes shipping the new pi-ai. The effort picker now derives xhigh availability from `getSupportedThinkingLevels(picked).includes("xhigh")`.
+
 ## [1.0.14] - 2026-05-01
 
 ### Changed
