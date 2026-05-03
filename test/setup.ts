@@ -18,6 +18,7 @@ vi.mock("@mariozechner/pi-ai", async (importOriginal) => {
 
 const ADVISOR_SYMBOL = Symbol.for("rpiv-advisor");
 const BTW_SYMBOL = Symbol.for("rpiv-btw");
+const I18N_SYMBOL = Symbol.for("rpiv-i18n");
 
 beforeEach(async () => {
 	const todo = await import("../packages/rpiv-todo/todo.js");
@@ -39,11 +40,17 @@ beforeEach(async () => {
 	const titleSpinner = await import("../packages/rpiv-warp/title-spinner.js");
 	titleSpinner.__resetState();
 
+	const i18n = await import("../packages/rpiv-i18n/i18n.js");
+	i18n.__resetState();
+
 	delete (globalThis as Record<symbol, unknown>)[ADVISOR_SYMBOL];
 	delete (globalThis as Record<symbol, unknown>)[BTW_SYMBOL];
+	delete (globalThis as Record<symbol, unknown>)[I18N_SYMBOL];
 
 	const piAgentSettings = join(process.env.HOME!, ".pi", "agent", "settings.json");
 	const advisorConfig = join(process.env.HOME!, ".config", "rpiv-advisor", "advisor.json");
+	const i18nConfig = join(process.env.HOME!, ".config", "rpiv-i18n", "locale.json");
 	rmSync(piAgentSettings, { force: true });
 	rmSync(advisorConfig, { force: true });
+	rmSync(i18nConfig, { force: true });
 });
