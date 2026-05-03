@@ -45,6 +45,33 @@ disable.
 conversation branch to the advisor model, which returns guidance (plan,
 correction, or stop signal) that the executor consumes.
 
+## Tool
+
+- **`advisor`** — escalate the current conversation branch to the configured reviewer model. Inactive until a model is selected via `/advisor`.
+
+### Schema
+
+```ts
+advisor() // zero parameters
+```
+
+The full conversation branch is auto-serialized from `ctx.sessionManager` — the LLM does not (and cannot) pass it explicitly.
+
+Returns:
+
+```ts
+{
+  content: [{ type: "text", text: string }], // reviewer's guidance, or error message
+  details: {
+    advisorModel?: string,        // "<provider>:<modelId>"
+    effort?: ThinkingLevel,       // reasoning effort, when applicable
+    usage?: Usage,                // token usage from the side-call
+    stopReason?: StopReason,      // pi-ai stop reason
+    errorMessage?: string,        // populated on auth/abort/error/empty paths
+  }
+}
+```
+
 ## License
 
 MIT
