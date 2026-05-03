@@ -16,7 +16,15 @@ i18n/localization SDK for Pi extensions. Pick a UI language interactively or via
 
 ## For users
 
-Install the extension (auto-wired by `/rpiv-setup`), then choose a language:
+Install the SDK so its `/languages` command and `--locale` flag are wired into your Pi session:
+
+```bash
+pi install npm:@juicesharp/rpiv-i18n
+```
+
+Then restart Pi. (If you installed via `pi install npm:@juicesharp/rpiv-pi` + `/rpiv-setup`, this is already done — `/rpiv-setup` auto-wires every sibling.)
+
+Choose a language interactively:
 
 ```
 /languages
@@ -34,7 +42,7 @@ Or edit the config file directly:
 echo '{"locale":"uk"}' > ~/.config/rpiv-i18n/locale.json
 ```
 
-Locale detection priority: `--locale` flag → `~/.config/rpiv-i18n/locale.json` → `process.env.LANG` / `LC_ALL` → English default.
+Locale detection priority: `--locale` flag → `~/.config/rpiv-i18n/locale.json` → `process.env.LANG` / `LC_ALL` → English default. The auto-detection paths (config file, env vars) work even without this package installed — any extension that `import`s the SDK as a peer dep gets the registered locale at module init. Only the picker (`/languages`) and the flag (`--locale`) require this package to be loaded as a Pi extension.
 
 Other Pi extensions that integrate the SDK pick up your choice automatically.
 
