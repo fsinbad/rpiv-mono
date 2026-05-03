@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- README integration guide expanded for third-party extension authors: peerDependencies snippet, file-tree layout, normalized `ExtensionAPI` typing, "Verify it works locally before publishing" section (npm pack → pi install → /languages smoke test), and rewritten `globalThis` escape-hatch example showing the per-call re-read pattern (snapshots are replaced, not mutated, on every locale change).
+
 ## [1.1.2] - 2026-05-03
 
 ## [1.1.1] - 2026-05-03
