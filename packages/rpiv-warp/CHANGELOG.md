@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-warp` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.19] - 2026-05-03
 
 ### Added
 - README `Features` section listing customer-facing functionality: native OS toasts on Pi lifecycle events, live Warp tab badge, tab-title spinner, configurable blocking-tool allowlist, startup-only session notifications, silent-outside-Warp behavior, best-effort Windows support, and zero-tool footprint.
