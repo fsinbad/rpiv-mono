@@ -110,7 +110,7 @@ export default function (pi: ExtensionAPI) {
 
 ## Localizing your extension — step by step
 
-The inline example above is fine for a one-key smoke test. For a real Pi extension, use the file-based pattern that scales to dozens of strings and ten contributors. Same shape proven in production.
+The inline example above is fine for a one-key smoke test. For a real Pi extension, use the file-based pattern that scales to dozens of strings and ten contributors. Two production exemplars in this monorepo follow this exact shape: `packages/rpiv-ask-user-question/` (questionnaire UI; bridge owns `t` + `displayLabel(kind)` for sentinel rows) and `packages/rpiv-todo/` (todo overlay + `/todos` command; bridge owns `t` + `formatStatusLabel(status)` reused across overlay and command). Read either alongside this guide.
 
 End state on disk:
 
