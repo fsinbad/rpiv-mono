@@ -1,5 +1,16 @@
 # @juicesharp/rpiv-i18n
 
+<div align="center">
+  <a href="https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-i18n">
+    <picture>
+      <img src="https://raw.githubusercontent.com/juicesharp/rpiv-mono/main/packages/rpiv-i18n/docs/cover.png" alt="rpiv-i18n cover" width="50%">
+    </picture>
+  </a>
+</div>
+
+[![npm version](https://img.shields.io/npm/v/@juicesharp/rpiv-i18n.svg)](https://www.npmjs.com/package/@juicesharp/rpiv-i18n)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 i18n/localization SDK for Pi extensions. Pick a UI language interactively or via flag; localize your own Pi extension with a few lines of code.
 
 ## Features

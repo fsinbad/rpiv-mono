@@ -31,6 +31,7 @@
     "index.ts",
     "i18n.ts",
     "i18n-ui.ts",
+    "docs/",
     "README.md",
     "LICENSE"
   ],
