@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-i18n` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.4] - 2026-05-03
 
 ### Changed
 - README integration guide now teaches the dynamic-import shim + `peerDependenciesMeta.optional: true` as the recommended posture for new integrators (steps 0/2/3). Replaces the prior static `import { scope }` example, which fails module load if a user installs the consumer extension standalone without rpiv-i18n. Adds a "why dynamic instead of static" explainer.
