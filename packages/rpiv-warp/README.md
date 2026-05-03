@@ -13,6 +13,17 @@
 
 Native [Warp terminal](https://www.warp.dev/) toasts for [Pi Agent](https://github.com/badlogic/pi-mono) lifecycle events. When Pi finishes a long task, asks for your input, or completes a turn, `rpiv-warp` emits Warp's `OSC 777` escape sequence and Warp surfaces a native OS notification. Outside Warp it does nothing — install it everywhere, it only fires where it's useful.
 
+## Features
+
+- **Native OS toasts on Pi lifecycle events** — agent start, agent end, blocking-tool calls, and turn boundaries surface as native Warp / macOS / Windows notifications.
+- **Live Warp tab badge** — the tab indicator transitions through **In progress → Success / Blocked** as Pi works.
+- **Tab-title spinner** — animates the tab title while the agent loop is active and restores Pi's `π - <repo>` title on stop.
+- **Configurable blocking-tool allowlist** — choose which tool calls flip the badge to **Blocked** via `~/.config/rpiv-warp/config.json`. Defaults to `ask_user_question`.
+- **Startup-only session notifications** — `/new`, `/resume`, `/fork`, and `/reload` stay quiet; only fresh startups notify.
+- **Silent outside Warp** — no-op when not running in Warp, on known-broken Warp builds, or when `/dev/tty` is unreachable.
+- **Windows support** — best-effort delivery via `process.stdout` / ConPTY, gated on `isTTY`.
+- **Zero-tool, zero-UI footprint** — no tools registered with the model, no commands, no widgets, no token cost.
+
 ## Install
 
 ```bash

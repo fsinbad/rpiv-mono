@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- README `Features` section listing customer-facing functionality: native OS toasts on Pi lifecycle events, live Warp tab badge, tab-title spinner, configurable blocking-tool allowlist, startup-only session notifications, silent-outside-Warp behavior, best-effort Windows support, and zero-tool footprint.
+
+### Changed
+- **Now publicly published on npm.** `package.json` no longer carries `"private": true`, so workspace publishes pick `@juicesharp/rpiv-warp` up alongside the rest of the family. Install with `pi install npm:@juicesharp/rpiv-warp`. The package is still opt-in: it is intentionally absent from `siblings.ts` and is NOT auto-installed by `/rpiv-setup`.
+
 ## [1.0.18] - 2026-05-02
 
 ## [1.0.17] - 2026-05-02
