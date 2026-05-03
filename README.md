@@ -38,7 +38,15 @@ npm run check        # biome + tsc --noEmit across all packages
 npm test             # forwarded to packages that declare a test script
 ```
 
-Pre-commit hooks (husky) run `npm run check` before every commit.
+Pre-commit hooks (husky) run `npm run check` before every commit; pre-push runs the full coverage suite.
+
+## Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push and pull request:
+
+- Matrix on Node 20 + 22 — `npm run check` (Biome + `tsc --noEmit`) then `npm run coverage` (full Vitest + V8 coverage).
+- Coverage uploads to [Codecov](https://codecov.io/gh/juicesharp/rpiv-mono) via tokenless OIDC (public-repo).
+- On `main` pushes, a follow-up job parses Vitest's JSON output and publishes a `{passed} / {total}` shields-endpoint badge to the orphan `badges` branch.
 
 ## Releasing
 
