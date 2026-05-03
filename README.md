@@ -1,6 +1,8 @@
 # rpiv-mono
 
 [![CI](https://img.shields.io/github/actions/workflow/status/juicesharp/rpiv-mono/ci.yml?branch=main&label=CI)](https://github.com/juicesharp/rpiv-mono/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/juicesharp/rpiv-mono/branch/main/graph/badge.svg)](https://codecov.io/gh/juicesharp/rpiv-mono)
+[![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/juicesharp/rpiv-mono/badges/tests.json)](https://github.com/juicesharp/rpiv-mono/actions/workflows/ci.yml)
 
 Monorepo for Pi CLI extensions in the `@juicesharp/rpiv-*` family. Lockstep versions, single install, single publish pipeline.
 
