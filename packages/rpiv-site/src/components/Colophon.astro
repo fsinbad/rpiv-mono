@@ -1,0 +1,75 @@
+---
+import { getPipelineSkills } from "../lib/skills";
+import SumiInk from "./SumiInk.astro";
+const pipeline = await getPipelineSkills();
+---
+
+<aside class="colophon" aria-label="colophon">
+	<SumiInk variant="divider" />
+	<div class="container colophon__inner">
+		<p class="colophon__kicker mono">colophon</p>
+		<p class="colophon__statement">
+			This site was built running its own pipeline.
+		</p>
+		<ol class="colophon__rail mono" aria-label="pipeline used to build this site">
+			{pipeline.map((skill, i) => (
+				<li class="colophon__node">
+					<span class="colophon__chip">/skill:{skill.data.name}</span>
+					{i < pipeline.length - 1 && <span class="colophon__arrow" aria-hidden="true">→</span>}
+				</li>
+			))}
+		</ol>
+	</div>
+</aside>
+
+<style>
+	.colophon {
+		padding: var(--space-8) 0 var(--space-6);
+	}
+	.colophon__inner {
+		max-width: 64ch;
+		margin: 0 auto;
+		text-align: center;
+	}
+	.colophon__kicker {
+		color: var(--text-distant);
+		font-size: 12px;
+		letter-spacing: 0.22em;
+		text-transform: uppercase;
+		margin: 0 0 var(--space-4);
+	}
+	.colophon__statement {
+		font-family: var(--font-serif);
+		color: var(--washi);
+		font-size: 19px;
+		line-height: 1.55;
+		margin: 0 0 var(--space-5);
+	}
+	.colophon__rail {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: var(--space-2);
+		font-size: 12px;
+	}
+	.colophon__node {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+	.colophon__chip {
+		color: var(--ochre);
+		opacity: 0.9;
+	}
+	.colophon__arrow {
+		color: var(--text-distant);
+	}
+	@media (max-width: 720px) {
+		.colophon { padding: var(--space-7) 0 var(--space-5); }
+		.colophon__statement { font-size: 17px; }
+	}
+</style>

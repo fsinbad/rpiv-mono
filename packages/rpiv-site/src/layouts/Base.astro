@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import Colophon from "../components/Colophon.astro";
 
 interface Props {
 	title?: string;
@@ -75,6 +76,8 @@ const jsonLd = {
 	</head>
 	<body>
 		<slot />
+
+		<Colophon />
 
 		<footer>
 			<div class="container">
