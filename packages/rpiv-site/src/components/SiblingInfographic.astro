@@ -133,35 +133,6 @@ const { name } = Astro.props;
 		</svg>
 	)}
 
-	{name === "rpiv-i18n" && (
-		<svg viewBox="0 0 320 180" class="sib-info__svg" preserveAspectRatio="xMidYMid meet">
-			<!-- center node (the t() function) -->
-			<g>
-				<circle cx="160" cy="92" r="32" fill="none" stroke="var(--sage)" stroke-width="0.6" opacity="0.4" />
-				<circle cx="160" cy="92" r="24" fill="var(--ink-raised)" stroke="var(--sage)" stroke-width="1.1" />
-				<circle cx="160" cy="92" r="24" fill="var(--sage)" opacity="0.14" />
-				<text x="160" y="89" text-anchor="middle" font-family="var(--font-mono)" font-size="11" fill="var(--washi)">t()</text>
-				<text x="160" y="104" text-anchor="middle" font-family="var(--font-mono)" font-size="8" fill="var(--text-distant)" letter-spacing="0.08em">scope</text>
-			</g>
-			<!-- 3 locale tags around the t() with thin lines -->
-			<g fill="none" stroke="var(--sage-deep)" stroke-linecap="round" opacity="0.5">
-				<path d="M160,60 L160,38" stroke-width="0.7" />
-				<path d="M132,108 L84,140" stroke-width="0.7" />
-				<path d="M188,108 L236,140" stroke-width="0.7" />
-			</g>
-			{[
-				{ x: 160, y: 28, label: "EN" },
-				{ x: 80,  y: 152, label: "DE" },
-				{ x: 240, y: 152, label: "JA" },
-			].map((l) => (
-				<g>
-					<rect x={l.x - 18} y={l.y - 12} width="36" height="18" fill="var(--ink-raised)" stroke="var(--ochre)" stroke-width="0.8" rx="2" opacity="0.85" />
-					<text x={l.x} y={l.y + 1} text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ochre)" letter-spacing="0.12em">{l.label}</text>
-				</g>
-			))}
-		</svg>
-	)}
-
 	{name === "rpiv-todo" && (
 		<svg viewBox="0 0 320 180" class="sib-info__svg" preserveAspectRatio="xMidYMid meet">
 			<!-- header -->

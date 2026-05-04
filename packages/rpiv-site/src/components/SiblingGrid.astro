@@ -39,11 +39,21 @@ const siblings = loadSiblings();
 		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-5);
 		align-items: stretch;
+		justify-items: stretch;
 	}
 	/* min-width: 0 prevents cell content (e.g. install pre with white-space:nowrap)
-	   from forcing the grid track wider than its 1fr share — guarantees uniform columns. */
-	.siblings__cell { display: flex; min-width: 0; }
-	.siblings__cell > .sibling { flex: 1; min-width: 0; }
+	   from forcing the grid track wider than its 1fr share — guarantees uniform columns.
+	   width: 100% keeps single-column rows from collapsing to content width. */
+	.siblings__cell {
+		display: flex;
+		min-width: 0;
+		width: 100%;
+	}
+	.siblings__cell > .sibling {
+		flex: 1 1 0;
+		min-width: 0;
+		width: 100%;
+	}
 	@media (min-width: 720px)  { .siblings__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 	@media (min-width: 1080px) { .siblings__list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 </style>

@@ -18,7 +18,6 @@ export const SIBLING_NAMES = [
 	"rpiv-args",
 	"rpiv-ask-user-question",
 	"rpiv-btw",
-	"rpiv-i18n",
 	"rpiv-todo",
 	"rpiv-web-tools",
 ] as const;
@@ -31,7 +30,6 @@ const ROLES: Record<SiblingName, string> = {
 	"rpiv-args": "prompt args",
 	"rpiv-ask-user-question": "tui prompt",
 	"rpiv-btw": "side question",
-	"rpiv-i18n": "i18n foundation",
 	"rpiv-todo": "live overlay",
 	"rpiv-web-tools": "web search",
 };
