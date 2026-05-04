@@ -142,6 +142,25 @@ describe("session_start hook — notifications", () => {
 	});
 });
 
+describe("session_compact hook", () => {
+	it("re-injects guidance + git-context after compaction (clears caches first)", async () => {
+		const exec = stubGitExec({ branch: "main", commit: "abc", user: "alice" });
+		const { pi, captured } = createMockPi({ exec: exec as never });
+		registerSessionHooks(pi);
+		// Prime the git-context cache first via session_start so compact's clear has work to do.
+		await captured.events.get("session_start")?.[0](
+			{ reason: "startup" } as never,
+			createMockCtx({ cwd: projectDir, hasUI: false }) as never,
+		);
+		const sendBefore = (pi.sendMessage as ReturnType<typeof vi.fn>).mock.calls.length;
+		await captured.events.get("session_compact")?.[0]({} as never, createMockCtx({ cwd: projectDir }) as never);
+		// After compact, the next pi.sendMessage call (from injectGitContext) should fire because
+		// resetInjectedMarker + clearGitContextCache make takeGitContextIfChanged re-emit.
+		const sendAfter = (pi.sendMessage as ReturnType<typeof vi.fn>).mock.calls.length;
+		expect(sendAfter).toBeGreaterThan(sendBefore);
+	});
+});
+
 describe("session_shutdown hook", () => {
 	it("clears git-context cache and allows takeGitContextIfChanged to re-emit", async () => {
 		const exec = stubGitExec({ branch: "main", commit: "abc", user: "alice" });
