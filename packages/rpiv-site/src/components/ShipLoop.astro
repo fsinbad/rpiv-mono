@@ -12,10 +12,10 @@ const skills = await getCodeReviewSkills();
 		</h2>
 		<p class="cr__lede">
 			Point it at staged work, a single hash, or a whole branch.
-			<strong>Quality</strong>, <strong>Security</strong>, and
-			<strong>Dependencies</strong> are read in parallel, every cited
-			<code>file:line</code> is opened a second time, and you get back one
-			markdown artifact: a clear <code>status</code> at the top, every finding
+			<strong>Quality</strong>, <strong>security</strong>, and
+			<strong>dependencies</strong> are read in parallel. Every cited
+			<code>file:line</code> is opened a second time. You get back one markdown
+			artifact with a clear <code>status</code> at the top and every finding
 			tied to a verification mark.
 		</p>
 
@@ -217,8 +217,8 @@ const skills = await getCodeReviewSkills();
 					<div class="cr-trade__col cr-trade__col--cost">
 						<p class="mono cr-trade__label">won&rsquo;t</p>
 						<ul class="cr-trade__list">
-							<li>edit your code; it surfaces, you decide</li>
-							<li>guess at intent without an advisor pass</li>
+							<li>edit your code. It surfaces, you decide.</li>
+							<li>guess at intent. Run an advisor pass first.</li>
 						</ul>
 					</div>
 
@@ -357,7 +357,7 @@ const skills = await getCodeReviewSkills();
 							{isReview && <span class="chip chip--sage">centerpiece</span>}
 							{skill.data["disable-model-invocation"] && <span class="chip">manual only</span>}
 						</header>
-						<p class="cr__rowDesc">{skill.data.description}</p>
+						<p class="cr__rowDesc">{skill.tagline}</p>
 						{(skill.data["argument-hint"] || artifact) && (
 							<p class="mono cr__rowMeta">
 								{skill.data["argument-hint"] && <><span class="cr__metaLabel">arg</span>{skill.data["argument-hint"]}</>}

@@ -11,10 +11,10 @@ const skills = await getSecondaryFlowSkills();
 			<span class="bp-h2__line bp-h2__line--accent">research → implement, in one pass.</span>
 		</h2>
 		<p class="flows__lede">
-			The canonical six-step pipeline (discover → research → design → plan → implement → validate)
-			is right when the feature is non-trivial. <strong>Blueprint collapses design + plan into one
-			single-pass artifact</strong> when the work is small or mid-sized — the model trades two
-			deliberation rounds for momentum. Output still feeds the same implement → review loop.
+			The canonical six-step pipeline is right when the feature is non-trivial.
+			<strong>Blueprint collapses design and plan into one single-pass artifact</strong>
+			when the work is small or mid-sized. Output still feeds the same implement
+			and review loop.
 		</p>
 
 		<figure class="bp-flow" aria-label="Blueprint expedited path: research feeds blueprint, blueprint feeds implement and ship">
@@ -25,7 +25,7 @@ const skills = await getSecondaryFlowSkills();
 					<h3 class="mono bp-name">/skill:research</h3>
 				</header>
 				<p class="bp-desc">
-					Trace-quality research questions answered into a single dense artifact.
+					Research questions answered into one dense artifact.
 				</p>
 
 				{/* mini story-SVG: 3 question lines converging into 1 artifact */}
@@ -192,8 +192,8 @@ const skills = await getSecondaryFlowSkills();
 				</svg>
 
 				<p class="bp-desc bp-desc--hero">
-					One pass from a research artifact straight to an implementation plan —
-					skips the separate <code>design</code> and <code>plan</code> steps when the
+					One pass from a research artifact to an implementation plan. Skips
+					the separate <code>design</code> and <code>plan</code> steps when the
 					feature is small or mid-sized.
 				</p>
 
@@ -258,7 +258,7 @@ const skills = await getSecondaryFlowSkills();
 					<h3 class="mono bp-name">implement → review</h3>
 				</header>
 				<p class="bp-desc">
-					Phased implementation, then a verified <code>code-review</code> on the
+					Implementation in phases, then a <code>code-review</code> on the
 					committed changes.
 				</p>
 
@@ -318,7 +318,7 @@ const skills = await getSecondaryFlowSkills();
 							{isBlueprint && <span class="chip chip--sage">expedited</span>}
 							{skill.data["disable-model-invocation"] && <span class="chip">manual only</span>}
 						</header>
-						<p class="flows__rowDesc">{skill.data.description}</p>
+						<p class="flows__rowDesc">{skill.tagline}</p>
 						{(skill.data["argument-hint"] || artifact) && (
 							<p class="mono flows__rowMeta">
 								{skill.data["argument-hint"] && <><span class="flows__metaLabel">arg</span>{skill.data["argument-hint"]}</>}

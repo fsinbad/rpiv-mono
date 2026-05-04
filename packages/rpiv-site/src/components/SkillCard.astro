@@ -11,10 +11,10 @@ interface Props {
 const { skill, variant = "detail", index, artifactSite } = Astro.props;
 const {
 	name,
-	description,
 	"argument-hint": argHint,
 	"disable-model-invocation": disableInvoke,
 } = skill.data;
+const tagline = skill.tagline;
 ---
 
 <article class:list={["card", "skill", `skill--${variant}`]}>
@@ -26,7 +26,7 @@ const {
 		{disableInvoke && <span class="chip chip--ochre">manual only</span>}
 	</header>
 
-	<p class="skill__desc">{description}</p>
+	<p class="skill__desc">{tagline}</p>
 
 	{(argHint || artifactSite) && (
 		<footer class="skill__foot">

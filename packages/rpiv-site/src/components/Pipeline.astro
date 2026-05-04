@@ -9,8 +9,7 @@ const revise = await getSkill("revise");
 		<p class="kicker">§ default pipeline · 6 nodes</p>
 		<h2>A six-step chain. One artifact between each.</h2>
 		<p class="pipeline__lede">
-			Each node is a skill. The artifact one writes is the next one&rsquo;s input —
-			the chain is enforced by the description, not the runtime.
+			Each node is a skill. The artifact one writes is the next one&rsquo;s input.
 		</p>
 
 		<figure class="pipeline__strip" aria-label="discover, research, design, plan, implement, validate">
@@ -56,7 +55,7 @@ const revise = await getSkill("revise");
 								<span class="chip chip--sage">/skill:{skill.data.name}</span>
 								{skill.data["disable-model-invocation"] && <span class="chip chip--ochre">manual only</span>}
 							</header>
-							<p class="timeline__desc">{skill.data.description}</p>
+							<p class="timeline__desc">{skill.tagline}</p>
 							{(skill.data["argument-hint"] || artifact) && (
 								<ul class="timeline__meta mono">
 									{skill.data["argument-hint"] && (
@@ -86,7 +85,7 @@ const revise = await getSkill("revise");
 											<span class="timeline__auxKicker mono">aux</span>
 											<span class="chip chip--ochre">/skill:{revise.data.name}</span>
 										</header>
-										<p class="timeline__auxDesc">{revise.data.description}</p>
+										<p class="timeline__auxDesc">{revise.tagline}</p>
 										{revise.data["argument-hint"] && (
 											<p class="mono timeline__auxMeta">
 												<span class="timeline__metaLabel">arg</span>

@@ -6,10 +6,10 @@ import SumiInk from "./SumiInk.astro";
 const groups = await getAgentsByTier();
 
 const TIER_META: Record<CapabilityTier, { label: string; note: string; cap: string }> = {
-	locator:    { label: "Locators",                note: "where — no file content access",                                       cap: "find" },
-	analyzer:   { label: "Analyzers",               note: "how — reads file content (incl. git history via precedent-locator)",   cap: "read" },
+	locator:    { label: "Locators",                note: "where. No file content access.",                                       cap: "find" },
+	analyzer:   { label: "Analyzers",               note: "how. Reads file content, plus git history via precedent-locator.",     cap: "read" },
 	external:   { label: "External agents",         note: "+ web search and fetch",                                               cap: "web"  },
-	specialist: { label: "Code-review specialists", note: "row-only contract — pipe-delimited findings, never narrative",         cap: "rows" },
+	specialist: { label: "Code-review specialists", note: "Pipe-delimited findings, never prose.",                                cap: "rows" },
 };
 ---
 
@@ -18,9 +18,10 @@ const TIER_META: Record<CapabilityTier, { label: string; note: string; cap: stri
 		<p class="kicker">§ subagents · 12 cards · 4 tiers</p>
 		<h2>Specialists, not generalists.</h2>
 		<p class="agents__lede">
-			Skills do orchestration; agents do one narrow thing. Each is isolated,
+			Skills do orchestration. Agents do one narrow thing. Each is isolated,
 			each is read-only, each tier is defined by its tool allowlist. Code-review&rsquo;s
-			specialists carry row-only contracts that structurally resist narrative.
+			specialists return rows of pipe-delimited findings, never prose, so
+			verification stays mechanical.
 		</p>
 
 		<SumiInk variant="divider" />
@@ -70,7 +71,7 @@ const TIER_META: Record<CapabilityTier, { label: string; note: string; cap: stri
 						{agents.length === 1 && (
 							<aside class="rung__solo" aria-hidden="true">
 								<SumiInk variant="corner" className="rung__solo-ink" />
-								<p class="mono rung__solo-cap">— only one in tier · capability: <code>{TIER_META[tier].cap}</code></p>
+								<p class="mono rung__solo-cap">only one in tier · capability: <code>{TIER_META[tier].cap}</code></p>
 							</aside>
 						)}
 					</div>

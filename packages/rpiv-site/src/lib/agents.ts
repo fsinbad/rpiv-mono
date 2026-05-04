@@ -1,6 +1,13 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 
-export type AgentEntry = CollectionEntry<"agents">;
+type SpecEntry = CollectionEntry<"agentSpecs">;
+
+export type AgentEntry = {
+	slug: string;
+	tagline: string;
+	body: string | undefined;
+	data: SpecEntry["data"];
+};
 
 export type CapabilityTier = "locator" | "analyzer" | "external" | "specialist";
 
@@ -35,7 +42,7 @@ export const DISPATCHER_COUNT: Record<string, number> = {
 	"web-search-researcher": 5,
 };
 
-/** Per research §7: full description for specialists + already-single-sentence locator/scanner trio. */
+/** Specialists + already-single-sentence locators get the full description. Others trim to first sentence. */
 const FULL_DESCRIPTION_AGENTS = new Set([
 	"claim-verifier",
 	"diff-auditor",
@@ -46,10 +53,10 @@ const FULL_DESCRIPTION_AGENTS = new Set([
 	"test-case-locator",
 ]);
 
-/** Trim jokey multi-sentence to first sentence; silently fix two known typos in thoughts-locator. */
-export function siteDescription(agent: AgentEntry): string {
-	const { name } = agent.data;
-	let desc = agent.data.description;
+/** Fallback derivation when no visitor tagline is authored yet. Trim jokey multi-sentence to first sentence and silently fix two known typos. */
+function fallbackTagline(spec: SpecEntry): string {
+	const { name } = spec.data;
+	let desc = spec.data.description;
 	if (name === "thoughts-locator") {
 		desc = desc.replace(/reseaching/g, "researching").replace(/equivilent/g, "equivalent");
 	}
@@ -57,18 +64,32 @@ export function siteDescription(agent: AgentEntry): string {
 	return desc.split(/(?<=[.!?])\s+/, 2)[0]!;
 }
 
+/** Visitor-facing copy. Returns the authored tagline if present, otherwise a derived fallback from the spec. */
+export function siteDescription(agent: AgentEntry): string {
+	return agent.tagline;
+}
+
 export function tier(agent: AgentEntry): CapabilityTier {
-	return TIER_BY_NAME[agent.data.name] ?? "analyzer";
+	return TIER_BY_NAME[agent.slug] ?? "analyzer";
 }
 
 const TIER_ORDER: CapabilityTier[] = ["locator", "analyzer", "specialist", "external"];
 
 export async function getAgentsByTier(): Promise<Array<{ tier: CapabilityTier; agents: AgentEntry[] }>> {
-	const all = await getCollection("agents");
+	const [specs, copies] = await Promise.all([getCollection("agentSpecs"), getCollection("agents")]);
+	const all: AgentEntry[] = specs.map((spec) => {
+		const copy = copies.find((c) => c.data.slug === spec.data.name);
+		return {
+			slug: spec.data.name,
+			tagline: copy?.data.tagline ?? fallbackTagline(spec),
+			body: copy?.body,
+			data: spec.data,
+		};
+	});
 	const groups = new Map<CapabilityTier, AgentEntry[]>(TIER_ORDER.map((t) => [t, []]));
 	for (const a of all) groups.get(tier(a))!.push(a);
 	for (const list of groups.values()) {
-		list.sort((x, y) => x.data.name.localeCompare(y.data.name));
+		list.sort((x, y) => x.slug.localeCompare(y.slug));
 	}
 	return TIER_ORDER.map((t) => ({ tier: t, agents: groups.get(t)! }));
 }

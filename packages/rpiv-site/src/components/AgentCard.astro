@@ -8,13 +8,13 @@ interface Props {
 
 const { agent } = Astro.props;
 const desc = siteDescription(agent);
-const dispatched = DISPATCHER_COUNT[agent.data.name] ?? 0;
+const dispatched = DISPATCHER_COUNT[agent.slug] ?? 0;
 const tools = agent.data.tools?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
 ---
 
 <article class="card agent">
 	<header class="agent__head">
-		<h4 class="mono agent__name">{agent.data.name}</h4>
+		<h4 class="mono agent__name">{agent.slug}</h4>
 		<span class="chip" title={`dispatched by ${dispatched} skill${dispatched === 1 ? "" : "s"}`}>
 			×{dispatched}
 		</span>
