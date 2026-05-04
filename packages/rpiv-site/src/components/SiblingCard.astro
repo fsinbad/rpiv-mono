@@ -36,18 +36,13 @@ const idx = String(index).padStart(2, "0");
 
 		<p class="sibling__desc">{sibling.description}</p>
 
-		<div class="sibling__install-block">
-			<p class="mono sibling__install-label" aria-hidden="true">install</p>
-			<pre class="sibling__install" aria-label={`install command: ${sibling.installCmd}`}><code><span class="sibling__prompt" aria-hidden="true">$</span>{" "}{sibling.installCmd}</code></pre>
-		</div>
+		<pre class="sibling__install" aria-label={`install command: ${sibling.installCmd}`}><code><span class="sibling__prompt" aria-hidden="true">$</span>{" "}{sibling.installCmd}</code></pre>
 
-		{sibling.peers.length > 0 && (
-			<p class="sibling__peers mono" aria-label={`peer dependencies: ${sibling.peers.join(", ")}`}>
-				<span class="sibling__peers-label" aria-hidden="true">peers</span>
-				<span class="sibling__peers-arrow" aria-hidden="true">→</span>
-				<span class="sibling__peers-list">{sibling.peers.join(" · ")}</span>
-			</p>
-		)}
+		<p class="sibling__peers mono" aria-label={sibling.peers.length > 0 ? `peer dependencies: ${sibling.peers.join(", ")}` : "no peer dependencies"}>
+			<span class="sibling__peers-label" aria-hidden="true">peers</span>
+			<span class="sibling__peers-arrow" aria-hidden="true">→</span>
+			<span class="sibling__peers-list">{sibling.peers.length > 0 ? sibling.peers.join(" · ") : "—"}</span>
+		</p>
 
 		<footer class="sibling__foot mono">
 			<a class="sibling__cta" href={sibling.npmUrl}>
@@ -111,17 +106,19 @@ const idx = String(index).padStart(2, "0");
 		width: 100%;
 		height: auto;
 		object-fit: cover;
-		aspect-ratio: 16 / 9;
+		aspect-ratio: 16 / 7;
 		transition: opacity var(--dur-ink) var(--ease-ink);
 	}
 	.sibling__cover-link:hover .sibling__cover { opacity: 0.92; }
 
-	/* ── Body ── */
+	/* ── Body ──
+	   Each row is reserved with a min-height so cards in the same grid row
+	   align head ↔ desc ↔ install ↔ peers ↔ footer baselines. */
 	.sibling__body {
-		padding: var(--space-4) var(--space-5) var(--space-5);
+		padding: var(--space-3) var(--space-4) var(--space-2);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-3);
+		gap: var(--space-2);
 		flex: 1;
 		position: relative;
 		z-index: 1;
@@ -130,9 +127,10 @@ const idx = String(index).padStart(2, "0");
 	.sibling__head {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-2);
-		padding-bottom: var(--space-3);
+		gap: 6px;
+		padding-bottom: var(--space-2);
 		border-bottom: 1px solid var(--rule);
+		min-height: calc(var(--type-h3) * var(--leading-snug) + var(--type-tiny) + 6px);
 	}
 	.sibling__name {
 		font-size: var(--type-h3);
@@ -160,29 +158,23 @@ const idx = String(index).padStart(2, "0");
 	.sibling__desc {
 		font-family: var(--font-serif);
 		font-size: var(--type-small);
+		line-height: 1.55;
 		color: var(--text);
 		max-width: none;
 		margin: 0;
+		/* reserve exactly 3 lines so 2-line descriptions pad to match the
+		   longest 3-line ones (rpiv-ask-user-question), aligning baselines
+		   of install/peers/footer rows across all cards in a row. */
+		min-height: 62px;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
 	}
 
-	/* ── Install command — terminal pre with explicit "INSTALL" kicker ── */
-	.sibling__install-block {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-1);
-		min-width: 0;
-	}
-	.sibling__install-label {
-		font-size: var(--type-tiny);
-		text-transform: uppercase;
-		letter-spacing: 0.2em;
-		color: var(--text-distant);
-		margin: 0;
-	}
+	/* ── Install command — single-line terminal pre, no kicker ── */
 	.sibling__install {
 		font-family: var(--font-mono);
 		font-size: var(--type-tiny);
-		padding: var(--space-3);
+		padding: var(--space-2) var(--space-3);
 		margin: 0;
 		background: var(--ink);
 		border-left: 1px solid var(--ochre);
@@ -215,6 +207,8 @@ const idx = String(index).padStart(2, "0");
 		flex-wrap: wrap;
 		gap: var(--space-2);
 		align-items: baseline;
+		/* reserve 2 lines so 1-line and 2-line peer chains align across cards */
+		min-height: calc(var(--type-tiny) * 1.55 * 2);
 	}
 	.sibling__peers-label {
 		color: var(--text-distant);
@@ -231,7 +225,7 @@ const idx = String(index).padStart(2, "0");
 		align-items: center;
 		gap: var(--space-5);
 		margin-top: auto;
-		padding-top: var(--space-3);
+		padding-top: 6px;
 		border-top: 1px solid var(--rule);
 	}
 	.sibling__cta {

@@ -51,31 +51,27 @@ const { name } = Astro.props;
 
 	{name === "rpiv-args" && (
 		<svg viewBox="0 0 320 180" class="sib-info__svg" preserveAspectRatio="xMidYMid meet">
-			<g font-family="var(--font-mono)" font-size="11">
-				<!-- skill template line -->
-				<text x="40" y="58" fill="var(--text-distant)">/skill:deploy</text>
-				<text x="125" y="58" fill="var(--washi-soft)">api production</text>
+			{/* small kicker top-left — top-right is reserved for the §-index chip */}
+			<text x="20" y="26" font-family="var(--font-mono)" font-size="9" fill="var(--text-distant)" letter-spacing="0.16em">$ARGS · EXPAND</text>
 
-				<text x="40" y="92" fill="var(--washi-soft)">Deploy service </text>
-				<text x="148" y="92" fill="var(--ochre)">$1</text>
-				<text x="170" y="92" fill="var(--washi-soft)">to </text>
-				<text x="194" y="92" fill="var(--ochre)">$2</text>
-				<text x="208" y="92" fill="var(--washi-soft)">.</text>
+			<g font-family="var(--font-mono)" font-size="11" xml:space="preserve">
+				{/* invocation line — what the user types */}
+				<text x="20" y="64">
+					<tspan fill="var(--text-distant)">/skill:deploy</tspan><tspan fill="var(--washi-soft)"> api production</tspan>
+				</text>
 
-				<!-- arrow down -->
-				<g fill="none" stroke="var(--ochre)" stroke-linecap="round" opacity="0.55">
-					<path d="M156,108 L156,124" stroke-width="0.9" />
-					<path d="M152,120 L156,124 L160,120" stroke-width="0.9" />
-				</g>
+				{/* template line — placeholders */}
+				<text x="20" y="98" fill="var(--washi-soft)">Deploy service <tspan fill="var(--ochre)">$1</tspan> to <tspan fill="var(--ochre)">$2</tspan>.</text>
 
-				<text x="40" y="146" fill="var(--washi-soft)">Deploy service </text>
-				<text x="148" y="146" fill="var(--sage)">api</text>
-				<text x="170" y="146" fill="var(--washi-soft)">to </text>
-				<text x="194" y="146" fill="var(--sage)">production</text>
-				<text x="252" y="146" fill="var(--washi-soft)">.</text>
+				{/* expanded line — substituted */}
+				<text x="20" y="156" fill="var(--washi-soft)">Deploy service <tspan fill="var(--sage)">api</tspan> to <tspan fill="var(--sage)">production</tspan>.</text>
 			</g>
-			<!-- small kicker top-right -->
-			<text x="280" y="32" text-anchor="end" font-family="var(--font-mono)" font-size="9" fill="var(--text-distant)" letter-spacing="0.16em">$ARGS · expand</text>
+
+			{/* arrow centered on the visible text block (≈ x=128, midpoint of "Deploy service $1 to $2.") */}
+			<g fill="none" stroke="var(--ochre)" stroke-linecap="round" stroke-linejoin="round" opacity="0.6">
+				<path d="M128,116 L128,134" stroke-width="0.9" />
+				<path d="M124,130 L128,134 L132,130" stroke-width="0.9" />
+			</g>
 		</svg>
 	)}
 
