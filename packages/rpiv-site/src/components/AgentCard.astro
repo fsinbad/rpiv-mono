@@ -33,7 +33,7 @@ const tools = agent.data.tools?.split(",").map((t) => t.trim()).filter(Boolean) 
 
 <style>
 	.agent {
-		padding: var(--space-5);
+		padding: var(--space-4);
 		display: flex;
 		flex-direction: column;
 		height: 100%;
@@ -47,9 +47,10 @@ const tools = agent.data.tools?.split(",").map((t) => t.trim()).filter(Boolean) 
 		position: relative; z-index: 1;
 	}
 	.agent__name {
-		font-size: var(--type-h3);
+		font-size: var(--type-base);
 		margin: 0;
 		color: var(--washi);
+		word-break: break-word;
 	}
 	.agent__desc {
 		font-family: var(--font-serif);

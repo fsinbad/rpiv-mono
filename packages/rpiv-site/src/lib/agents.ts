@@ -2,7 +2,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 
 export type AgentEntry = CollectionEntry<"agents">;
 
-export type CapabilityTier = "locator" | "analyzer" | "git-analyzer" | "external" | "specialist";
+export type CapabilityTier = "locator" | "analyzer" | "external" | "specialist";
 
 const TIER_BY_NAME: Record<string, CapabilityTier> = {
 	"codebase-locator": "locator",
@@ -12,7 +12,7 @@ const TIER_BY_NAME: Record<string, CapabilityTier> = {
 	"codebase-analyzer": "analyzer",
 	"codebase-pattern-finder": "analyzer",
 	"thoughts-analyzer": "analyzer",
-	"precedent-locator": "git-analyzer",
+	"precedent-locator": "analyzer",
 	"web-search-researcher": "external",
 	"claim-verifier": "specialist",
 	"diff-auditor": "specialist",
@@ -61,7 +61,7 @@ export function tier(agent: AgentEntry): CapabilityTier {
 	return TIER_BY_NAME[agent.data.name] ?? "analyzer";
 }
 
-const TIER_ORDER: CapabilityTier[] = ["locator", "analyzer", "git-analyzer", "external", "specialist"];
+const TIER_ORDER: CapabilityTier[] = ["locator", "analyzer", "specialist", "external"];
 
 export async function getAgentsByTier(): Promise<Array<{ tier: CapabilityTier; agents: AgentEntry[] }>> {
 	const all = await getCollection("agents");
