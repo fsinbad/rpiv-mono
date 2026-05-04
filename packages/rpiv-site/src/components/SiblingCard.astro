@@ -162,12 +162,16 @@ const idx = String(index).padStart(2, "0");
 		color: var(--text);
 		max-width: none;
 		margin: 0;
-		/* reserve exactly 3 lines so 2-line descriptions pad to match the
-		   longest 3-line ones (rpiv-ask-user-question), aligning baselines
-		   of install/peers/footer rows across all cards in a row. */
-		min-height: 62px;
+		/* Reserve 3 lines so shorter descriptions pad to match the longest
+		   3-line one (rpiv-ask-user-question), aligning install/peers/footer
+		   baselines across cards in a row. Clamp to 3 lines so any future
+		   long description doesn't break the row. */
+		min-height: calc(var(--type-small) * 1.55 * 3);
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		overflow: hidden;
 	}
 
 	/* ── Install command — single-line terminal pre, no kicker ── */

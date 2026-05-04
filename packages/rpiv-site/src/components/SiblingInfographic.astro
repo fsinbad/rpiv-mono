@@ -1,5 +1,5 @@
 ---
-import type { SiblingName } from "../lib/siblings";
+import { SIBLING_NAMES, type SiblingName } from "../lib/siblings";
 
 interface Props {
 	name: SiblingName;
@@ -9,9 +9,47 @@ const { name } = Astro.props;
 
 /* All infographics share viewBox 320 × 180 (16:9) so they slot into the
    existing cover aspect ratio without any layout change in SiblingCard. */
+
+/* Exhaustiveness guard — every name in SIBLING_NAMES must have an explicit
+   case below. If not, we fall back to a typographic cover instead of an
+   empty .sib-info box. */
+const ILLUSTRATED: ReadonlySet<SiblingName> = new Set([
+	"rpiv-advisor",
+	"rpiv-args",
+	"rpiv-ask-user-question",
+	"rpiv-btw",
+	"rpiv-todo",
+	"rpiv-web-tools",
+]);
+const hasIllustration = ILLUSTRATED.has(name);
+
+/* Build-time invariant: this conditional type yields `never` when ILLUSTRATED
+   diverges from SIBLING_NAMES, surfacing a TypeScript error. */
+type _AllCovered = Exclude<SiblingName, "rpiv-advisor" | "rpiv-args" | "rpiv-ask-user-question" | "rpiv-btw" | "rpiv-todo" | "rpiv-web-tools"> extends never ? true : never;
+const _exhaustive: _AllCovered = true;
+void _exhaustive;
+
+/* Friendly short label (drop the rpiv- prefix) for the fallback cover. */
+const shortName = name.replace(/^rpiv-/, "");
 ---
 
 <div class="sib-info" aria-hidden="true">
+	{!hasIllustration && (
+		<svg viewBox="0 0 320 180" class="sib-info__svg sib-info__svg--fallback" preserveAspectRatio="xMidYMid meet">
+			{/* faint sumi-ink horizon as atmosphere */}
+			<g fill="none" stroke="var(--sage-deep)" stroke-linecap="round" opacity="0.5">
+				<path d="M30,128 q80,-12 130,-6 t130,-2" stroke-width="0.7" />
+				<path d="M40,134 q70,-6 120,-2" stroke-width="0.4" opacity="0.6" />
+			</g>
+			{/* §-style kicker */}
+			<text x="20" y="36" font-size="9" fill="var(--text-distant)" letter-spacing="0.18em">§ SIBLING</text>
+			{/* big mono name */}
+			<text x="20" y="92" font-size="26" fill="var(--washi)" letter-spacing="-0.01em">{shortName}</text>
+			{/* hairline + tiny sage tick to echo the system */}
+			<line x1="20" y1="106" x2="200" y2="106" stroke="var(--rule-strong)" stroke-width="0.6" />
+			<text x="20" y="160" font-size="9" fill="var(--sage)" letter-spacing="0.16em">@juicesharp/{name}</text>
+		</svg>
+	)}
 	{name === "rpiv-advisor" && (
 		<svg viewBox="0 0 320 180" class="sib-info__svg" preserveAspectRatio="xMidYMid meet">
 			<defs>
