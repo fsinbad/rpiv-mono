@@ -1,13 +1,11 @@
 ---
 import { ARTIFACT_WRITE_SITES, getShipLoopSkills } from "../lib/skills";
-import SkillCard from "./SkillCard.astro";
-import SumiInk from "./SumiInk.astro";
 const skills = await getShipLoopSkills();
 ---
 
 <section id="ship">
 	<div class="container">
-		<p class="kicker">§ ship loop</p>
+		<p class="kicker">§ ship loop · cycle</p>
 		<h2>review &nbsp;↔&nbsp; commit &nbsp;↔&nbsp; revise</h2>
 		<p class="ship__lede">
 			Order is your call: review staged/working before committing to catch issues at
@@ -16,35 +14,166 @@ const skills = await getShipLoopSkills();
 			claim-verifier-grounded findings and a <code>status: approved | needs_changes</code>.
 		</p>
 
-		<SumiInk variant="divider" />
+		<div class="ship">
+			<figure class="ship__cycle" aria-hidden="true">
+				{/*
+					Single ring metaphor: one continuous ink loop, three "stations" placed on it.
+					Reads instantly as a cycle. No edge-counting, no arrow soup.
+					Cycle direction is implied by two faint chevron ticks on the ring (≡ "you can travel either way").
+				*/}
+				<svg viewBox="0 0 320 320" class="ship__svg">
+					{/* Hand-drawn loop: two slightly-offset circles for sumi ink feel,
+						 plus a faint outer wash ring. Cx 160, Cy 160, R 110. */}
+					<g fill="none" stroke="var(--sage-deep)" stroke-linecap="round">
+						<circle cx="160" cy="160" r="118" stroke="var(--sage)" stroke-width="0.6" opacity="0.25" />
+						<circle cx="160" cy="160" r="110" stroke-width="1.1" opacity="0.85" />
+						<circle cx="161" cy="161" r="106" stroke-width="0.5" opacity="0.30" />
+					</g>
 
-		<ol class="ship__list">
-			{skills.map((skill) => (
-				<li>
-					<SkillCard
-						skill={skill}
-						variant="compact"
-						artifactSite={ARTIFACT_WRITE_SITES[skill.data.name] ?? undefined}
-					/>
-				</li>
-			))}
-		</ol>
+					{/* Two faint chevron ticks on the ring — bidirectional hint without arrowhead noise.
+						 Top-left chevron points clockwise; bottom-right chevron points counter-clockwise. */}
+					<g fill="none" stroke="var(--sage)" stroke-linecap="round" stroke-width="0.9" opacity="0.55">
+						<path d="M93,86 l8,-3 l-3,8" />
+						<path d="M227,234 l-8,3 l3,-8" />
+					</g>
+
+					{/* Three ink-blob stations placed on the ring at 12 / 4 / 8 o'clock.
+						 Coords: 12 o'clock = (160, 50); 4 o'clock = (255, 215); 8 o'clock = (65, 215). */}
+					{[
+						{ cx: 160, cy: 50,  name: "review" },
+						{ cx: 255, cy: 215, name: "commit" },
+						{ cx:  65, cy: 215, name: "revise" },
+					].map((n) => (
+						<g>
+							<circle cx={n.cx} cy={n.cy} r="32" fill="var(--ink)" stroke="none" />
+							<circle cx={n.cx} cy={n.cy} r="26" fill="none" stroke="var(--sage)" stroke-width="0.6" opacity="0.4" />
+							<circle cx={n.cx} cy={n.cy} r="22" fill="var(--ink-raised)" stroke="var(--sage)" stroke-width="1.1" />
+							<circle cx={n.cx} cy={n.cy} r="22" fill="var(--sage)" opacity="0.14" />
+							<text x={n.cx} y={n.cy + 4} text-anchor="middle"
+								font-family="var(--font-mono)" font-size="12"
+								fill="var(--washi)">{n.name}</text>
+						</g>
+					))}
+
+					{/* Center stays empty (ma). Tiny mono caption sits centered, low-key. */}
+					<text x="160" y="158" text-anchor="middle"
+						font-family="var(--font-mono)" font-size="9"
+						fill="var(--text-distant)" letter-spacing="0.16em">SHIP</text>
+					<text x="160" y="172" text-anchor="middle"
+						font-family="var(--font-mono)" font-size="8"
+						fill="var(--text-distant)" letter-spacing="0.08em">any entry · any direction</text>
+				</svg>
+			</figure>
+
+			<ol class="ship__rows">
+				{skills.map((skill, i) => {
+					const artifact = ARTIFACT_WRITE_SITES[skill.data.name];
+					return (
+						<li class="ship__row">
+							<span class="ship__num mono">{String(i + 1).padStart(2, "0")}</span>
+							<div>
+								<header class="ship__rowHead">
+									<span class="chip chip--sage">/skill:{skill.data.name}</span>
+									{skill.data["disable-model-invocation"] && <span class="chip chip--ochre">manual only</span>}
+								</header>
+								<p class="ship__rowDesc">{skill.data.description}</p>
+								{(skill.data["argument-hint"] || artifact) && (
+									<p class="mono ship__rowMeta">
+										{skill.data["argument-hint"] && <><span class="ship__metaLabel">arg</span>{skill.data["argument-hint"]}</>}
+										{skill.data["argument-hint"] && artifact && <span class="ship__sep">·</span>}
+										{artifact && <><span class="ship__metaLabel">→</span><code>{artifact}</code></>}
+									</p>
+								)}
+							</div>
+						</li>
+					);
+				})}
+			</ol>
+		</div>
 	</div>
 </section>
 
 <style>
+	#ship h2 { margin-bottom: var(--space-5); }
 	.ship__lede {
 		color: var(--text-quiet);
-		margin-bottom: var(--space-6);
+		margin-bottom: var(--space-7);
 		max-width: 64ch;
 	}
-	.ship__list {
-		list-style: none; padding: 0; margin: 0;
+
+	.ship {
 		display: grid;
 		grid-template-columns: 1fr;
+		gap: var(--space-7);
+		align-items: start;
+	}
+	@media (min-width: 880px) {
+		.ship {
+			grid-template-columns: 320px 1fr;
+			gap: var(--space-8);
+		}
+	}
+
+	.ship__cycle {
+		margin: 0;
+		display: flex;
+		justify-content: center;
+	}
+	.ship__svg {
+		width: 100%;
+		max-width: 320px;
+		height: auto;
+		display: block;
+	}
+
+	.ship__rows {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
 		gap: var(--space-5);
 	}
-	@media (min-width: 800px) {
-		.ship__list { grid-template-columns: repeat(3, 1fr); }
+	.ship__row {
+		display: grid;
+		grid-template-columns: 28px 1fr;
+		gap: var(--space-4);
+		padding-bottom: var(--space-5);
+		border-bottom: 1px solid var(--rule);
 	}
+	.ship__row:last-child { border-bottom: none; padding-bottom: 0; }
+	.ship__num {
+		color: var(--text-distant);
+		font-size: var(--type-tiny);
+		letter-spacing: 0.18em;
+		padding-top: 4px;
+	}
+	.ship__rowHead {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin-bottom: var(--space-3);
+	}
+	.ship__rowDesc {
+		font-family: var(--font-serif);
+		color: var(--text);
+		font-size: var(--type-small);
+		margin: 0 0 var(--space-2);
+		max-width: 64ch;
+	}
+	.ship__rowMeta {
+		font-size: var(--type-tiny);
+		color: var(--text-quiet);
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		align-items: center;
+	}
+	.ship__rowMeta code { color: var(--ochre); background: transparent; }
+	.ship__metaLabel {
+		color: var(--text-distant);
+		margin-right: var(--space-1);
+	}
+	.ship__sep { color: var(--text-distant); }
 </style>

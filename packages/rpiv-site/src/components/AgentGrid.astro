@@ -69,7 +69,10 @@ const TIER_META: Record<CapabilityTier, { label: string; note: string }> = {
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: var(--space-4);
+		align-items: stretch;
 	}
+	.agents__list > li { display: flex; }
+	.agents__list > li > .agent { flex: 1; }
 	@media (min-width: 720px)  { .agents__list { grid-template-columns: repeat(2, 1fr); } }
 	@media (min-width: 1080px) { .agents__list { grid-template-columns: repeat(3, 1fr); } }
 </style>

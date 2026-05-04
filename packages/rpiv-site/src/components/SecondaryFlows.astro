@@ -1,12 +1,35 @@
 ---
 import { ARTIFACT_WRITE_SITES, getSecondaryFlowSkills } from "../lib/skills";
-import SkillCard from "./SkillCard.astro";
 const skills = await getSecondaryFlowSkills();
+
+/* Layout knobs for the branch diagram. Spine runs left→right at y=140.
+   Six pipeline nodes evenly spaced. Branches arc out of specific spine nodes. */
+const SPINE = [
+	{ x: 80,  label: "discover" },
+	{ x: 200, label: "research" },
+	{ x: 320, label: "design" },
+	{ x: 440, label: "plan" },
+	{ x: 560, label: "implement" },
+	{ x: 680, label: "validate" },
+];
+/* Branch metadata.
+   `from` = spine index the branch arcs out of.
+   `to`   = optional second spine index the branch arcs into (for skills that bridge two spine nodes).
+   `tone` = "branch" (ochre, off-pipeline) or "extend" (sage, continues the chain). */
+const BRANCHES = [
+	{ name: "annotate-guidance",   from: 0,           side: "above", x: 60,  y: 60,  caption: "brownfield · before pipeline",          tone: "branch", labelPos: "right" },
+	{ name: "migrate-to-guidance", from: 0,           side: "below", x: 60,  y: 220, caption: "brownfield · before pipeline",          tone: "branch", labelPos: "right" },
+	{ name: "explore",             from: 2,           side: "above", x: 320, y: 60,  caption: "alt input → solutions/",                tone: "branch", labelPos: "right" },
+	{ name: "blueprint",           from: 1, to: 4,    side: "below", x: 380, y: 220, caption: "combines design + plan · feeds implement", tone: "branch", labelPos: "below" },
+	{ name: "code-review",         from: 5,           side: "above", x: 920, y: 60,  caption: "ship loop · §6",                        tone: "extend", labelPos: "left" },
+	{ name: "commit",              from: 5,           side: "below", x: 920, y: 220, caption: "ship loop · §6",                        tone: "extend", labelPos: "left" },
+];
+const SPINE_Y = 140;
 ---
 
 <section id="flows">
 	<div class="container">
-		<p class="kicker">§ secondary flows</p>
+		<p class="kicker">§ secondary flows · branches</p>
 		<h2>Off the default pipeline.</h2>
 		<p class="flows__lede">
 			The default chain is six steps. These are the entry points beside it: a
@@ -14,33 +37,177 @@ const skills = await getSecondaryFlowSkills();
 			and the brownfield pair that maps an existing repo before any other skill runs.
 		</p>
 
-		<ol class="flows__list">
-			{skills.map((skill) => (
-				<li>
-					<SkillCard
-						skill={skill}
-						variant="compact"
-						artifactSite={ARTIFACT_WRITE_SITES[skill.data.name] ?? undefined}
-					/>
-				</li>
-			))}
+		<figure class="flows__diagram" aria-hidden="true">
+			<svg viewBox="0 0 1100 280" class="flows__svg" preserveAspectRatio="xMidYMid meet">
+				<!-- spine line -->
+				<g fill="none" stroke="var(--sage-deep)" stroke-linecap="round">
+					<path d={`M${SPINE[0].x},${SPINE_Y} L${SPINE[5].x},${SPINE_Y}`} stroke-width="1" opacity="0.7" />
+					<path d={`M${SPINE[0].x + 6},${SPINE_Y + 4} L${SPINE[5].x - 6},${SPINE_Y + 4}`} stroke-width="0.5" opacity="0.25" />
+				</g>
+
+				<!-- branch arcs (drawn first, behind nodes) -->
+				{BRANCHES.map((b) => {
+					const above = b.side === "above";
+					const stroke = b.tone === "extend" ? "var(--sage)" : "var(--ochre)";
+					const arc = (sx: number, ex: number) => {
+						const ctrlY = above ? (b.y + 30) : (b.y - 30);
+						return (
+							<g fill="none" stroke={stroke} stroke-linecap="round">
+								<path d={`M${sx},${SPINE_Y} Q${(sx + ex) / 2},${ctrlY} ${ex},${b.y}`}
+									stroke-width="0.9" opacity="0.7" />
+								<path d={`M${sx + 3},${SPINE_Y - (above ? 4 : -4)} Q${(sx + ex) / 2 + 3},${ctrlY - (above ? 4 : -4)} ${ex + 1},${b.y - (above ? 4 : -4)}`}
+									stroke-width="0.5" opacity="0.28" />
+							</g>
+						);
+					};
+					return (
+						<g>
+							{arc(SPINE[b.from].x, b.x)}
+							{b.to !== undefined && arc(SPINE[b.to].x, b.x)}
+						</g>
+					);
+				})}
+
+				<!-- spine nodes -->
+				{SPINE.map((n, i) => (
+					<g>
+						<circle cx={n.x} cy={SPINE_Y} r="11" fill="var(--ink-raised)" stroke="var(--sage)" stroke-width="1" />
+						<circle cx={n.x} cy={SPINE_Y} r="11" fill="var(--sage)" opacity="0.14" />
+						<text x={n.x} y={SPINE_Y + 3.2} text-anchor="middle"
+							font-family="var(--font-mono)" font-size="9" fill="var(--washi)">{String(i + 1).padStart(2, "0")}</text>
+						<text x={n.x} y={SPINE_Y + 30} text-anchor="middle"
+							font-family="var(--font-mono)" font-size="10"
+							fill="var(--text-distant)" letter-spacing="0.04em">{n.label}</text>
+					</g>
+				))}
+
+				<!-- branch nodes -->
+				{BRANCHES.map((b) => {
+					const stroke = b.tone === "extend" ? "var(--sage)" : "var(--ochre)";
+					const wash = b.tone === "extend" ? "var(--sage)" : "var(--ochre)";
+					let labelX: number;
+					let nameY: number;
+					let captionY: number;
+					let anchor: "start" | "end" | "middle";
+					if (b.labelPos === "below") {
+						labelX = b.x;
+						nameY = b.y + 28;
+						captionY = b.y + 40;
+						anchor = "middle";
+					} else if (b.labelPos === "left") {
+						labelX = b.x - 18;
+						nameY = b.y - 2;
+						captionY = b.y + 12;
+						anchor = "end";
+					} else {
+						labelX = b.x + 18;
+						nameY = b.y - 2;
+						captionY = b.y + 12;
+						anchor = "start";
+					}
+					return (
+						<g>
+							<circle cx={b.x} cy={b.y} r="13" fill="none" stroke={stroke} stroke-width="0.7" opacity="0.4" />
+							<circle cx={b.x} cy={b.y} r="9" fill="var(--ink-raised)" stroke={stroke} stroke-width="1" />
+							<circle cx={b.x} cy={b.y} r="9" fill={wash} opacity="0.14" />
+							<text x={labelX} y={nameY} text-anchor={anchor}
+								font-family="var(--font-mono)" font-size="11" fill="var(--washi)">/skill:{b.name}</text>
+							<text x={labelX} y={captionY} text-anchor={anchor}
+								font-family="var(--font-mono)" font-size="9" fill="var(--text-distant)">{b.caption}</text>
+						</g>
+					);
+				})}
+			</svg>
+		</figure>
+
+		<ol class="flows__rows">
+			{skills.map((skill) => {
+				const artifact = ARTIFACT_WRITE_SITES[skill.data.name];
+				return (
+					<li class="flows__row">
+						<header class="flows__rowHead">
+							<span class="chip chip--ochre">/skill:{skill.data.name}</span>
+							{skill.data["disable-model-invocation"] && <span class="chip">manual only</span>}
+						</header>
+						<p class="flows__rowDesc">{skill.data.description}</p>
+						{(skill.data["argument-hint"] || artifact) && (
+							<p class="mono flows__rowMeta">
+								{skill.data["argument-hint"] && <><span class="flows__metaLabel">arg</span>{skill.data["argument-hint"]}</>}
+								{skill.data["argument-hint"] && artifact && <span class="flows__sep">·</span>}
+								{artifact && <><span class="flows__metaLabel">→</span><code>{artifact}</code></>}
+							</p>
+						)}
+					</li>
+				);
+			})}
 		</ol>
 	</div>
 </section>
 
 <style>
+	#flows h2 { margin-bottom: var(--space-5); }
 	.flows__lede {
 		color: var(--text-quiet);
-		margin-bottom: var(--space-6);
+		margin-bottom: var(--space-7);
 		max-width: 64ch;
 	}
-	.flows__list {
-		list-style: none; padding: 0; margin: 0;
+
+	.flows__diagram {
+		margin: 0 0 var(--space-8);
+		padding: var(--space-5) 0;
+		border-top: 1px solid var(--rule);
+		border-bottom: 1px solid var(--rule);
+		overflow-x: auto;
+	}
+	.flows__svg {
+		width: 100%;
+		min-width: 980px;
+		height: auto;
+		display: block;
+	}
+
+	.flows__rows {
+		list-style: none;
+		padding: 0;
+		margin: 0;
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: var(--space-5);
 	}
-	@media (min-width: 880px) {
-		.flows__list { grid-template-columns: repeat(2, 1fr); }
+	@media (min-width: 720px) {
+		.flows__rows { grid-template-columns: repeat(2, 1fr); gap: var(--space-6) var(--space-7); }
 	}
+
+	.flows__row {
+		padding-left: var(--space-4);
+		border-left: 1px solid var(--rule-strong);
+	}
+	.flows__rowHead {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin-bottom: var(--space-3);
+	}
+	.flows__rowDesc {
+		font-family: var(--font-serif);
+		color: var(--text);
+		font-size: var(--type-small);
+		margin: 0 0 var(--space-2);
+		max-width: 56ch;
+	}
+	.flows__rowMeta {
+		font-size: var(--type-tiny);
+		color: var(--text-quiet);
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		align-items: center;
+	}
+	.flows__rowMeta code { color: var(--ochre); background: transparent; }
+	.flows__metaLabel {
+		color: var(--text-distant);
+		margin-right: var(--space-1);
+	}
+	.flows__sep { color: var(--text-distant); }
 </style>

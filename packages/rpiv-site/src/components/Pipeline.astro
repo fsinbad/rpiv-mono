@@ -1,52 +1,212 @@
 ---
 import { ARTIFACT_WRITE_SITES, getPipelineSkills } from "../lib/skills";
-import SkillCard from "./SkillCard.astro";
-import SumiInk from "./SumiInk.astro";
 const pipeline = await getPipelineSkills();
 ---
 
 <section id="pipeline">
 	<div class="container">
 		<p class="kicker">§ default pipeline · 6 nodes</p>
-		<h2>discover &nbsp;→&nbsp; research &nbsp;→&nbsp; design &nbsp;→&nbsp; plan &nbsp;→&nbsp; implement &nbsp;→&nbsp; validate</h2>
+		<h2>A six-step chain. One artifact between each.</h2>
 		<p class="pipeline__lede">
 			Each node is a skill. The artifact one writes is the next one&rsquo;s input —
 			the chain is enforced by the description, not the runtime.
 		</p>
 
-		<SumiInk variant="divider" />
+		<figure class="pipeline__strip" aria-label="discover, research, design, plan, implement, validate">
+			<svg viewBox="0 0 720 80" class="pipeline__stripSvg" preserveAspectRatio="xMidYMid meet">
+				<g fill="none" stroke="var(--sage-deep)" stroke-linecap="round">
+					<path d="M68,28 L652,28" stroke-width="1" opacity="0.7" />
+					<path d="M76,32 L644,32" stroke-width="0.5" opacity="0.25" />
+				</g>
+				{pipeline.map((skill, i) => {
+					const x = 68 + i * (584 / 5);
+					return (
+						<g>
+							<circle cx={x} cy={28} r="13" fill="none" stroke="var(--sage)" stroke-width="0.7" opacity="0.4" />
+							<circle cx={x} cy={28} r="9" fill="var(--ink)" stroke="var(--sage)" stroke-width="1.1" />
+							<circle cx={x} cy={28} r="9" fill="var(--sage)" opacity="0.16" />
+							<text x={x} y={31.2} text-anchor="middle"
+								font-family="var(--font-mono)" font-size="9" fill="var(--washi)">{String(i + 1).padStart(2, "0")}</text>
+							<text x={x} y={62} text-anchor="middle"
+								font-family="var(--font-mono)" font-size="11"
+								fill="var(--text-quiet)" letter-spacing="0.04em">{skill.data.name}</text>
+						</g>
+					);
+				})}
+			</svg>
+		</figure>
 
-		<ol class="pipeline__list">
-			{pipeline.map((skill, i) => (
-				<li>
-					<SkillCard
-						skill={skill}
-						index={i + 1}
-						variant="detail"
-						artifactSite={ARTIFACT_WRITE_SITES[skill.data.name] ?? undefined}
-					/>
-				</li>
-			))}
+		<ol class="timeline">
+			{pipeline.map((skill, i) => {
+				const next = pipeline[i + 1];
+				const artifact = ARTIFACT_WRITE_SITES[skill.data.name];
+				return (
+					<li class="timeline__item">
+						<div class="timeline__rail" aria-hidden="true">
+							<svg class="timeline__node" viewBox="0 0 40 40">
+								<circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.45" />
+								<circle cx="20" cy="20" r="10.5" fill="var(--ink-raised)" stroke="currentColor" stroke-width="1.1" />
+								<circle cx="20" cy="20" r="10.5" fill="currentColor" opacity="0.16" />
+								<text x="20" y="23.5" text-anchor="middle" class="timeline__nodeNum">{String(i + 1).padStart(2, "0")}</text>
+							</svg>
+						</div>
+						<div class="timeline__content">
+							<header class="timeline__head">
+								<span class="chip chip--sage">/skill:{skill.data.name}</span>
+								{skill.data["disable-model-invocation"] && <span class="chip chip--ochre">manual only</span>}
+							</header>
+							<p class="timeline__desc">{skill.data.description}</p>
+							{(skill.data["argument-hint"] || artifact) && (
+								<ul class="timeline__meta mono">
+									{skill.data["argument-hint"] && (
+										<li>
+											<span class="timeline__metaLabel">arg</span>
+											<span>{skill.data["argument-hint"]}</span>
+										</li>
+									)}
+									{artifact && (
+										<li>
+											<span class="timeline__metaLabel">→</span>
+											<span>writes <code>{artifact}</code>
+												{next && <> &nbsp;<span class="timeline__bullet">∴</span>&nbsp; feeds <code>/skill:{next.data.name}</code></>}
+											</span>
+										</li>
+									)}
+								</ul>
+							)}
+						</div>
+					</li>
+				);
+			})}
 		</ol>
 	</div>
 </section>
 
 <style>
-	#pipeline h2 { margin-bottom: var(--space-5); }
+	#pipeline h2 { margin-bottom: var(--space-5); max-width: 32ch; }
 	.pipeline__lede {
 		color: var(--text-quiet);
 		margin-bottom: var(--space-6);
 		max-width: 64ch;
 	}
-	.pipeline__list {
+
+	.pipeline__strip {
+		margin: 0 0 var(--space-8);
+		padding: var(--space-5) 0;
+		border-top: 1px solid var(--rule);
+		border-bottom: 1px solid var(--rule);
+		overflow-x: auto;
+	}
+	.pipeline__stripSvg {
+		width: 100%;
+		min-width: 560px;
+		height: auto;
+		display: block;
+	}
+
+	.timeline {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: var(--space-5);
 	}
-	@media (min-width: 880px) {
-		.pipeline__list { grid-template-columns: repeat(2, 1fr); }
+	.timeline__item {
+		display: grid;
+		grid-template-columns: 56px 1fr;
+		gap: var(--space-5);
+		padding-bottom: var(--space-7);
+		position: relative;
+	}
+	.timeline__item:last-child { padding-bottom: 0; }
+
+	.timeline__rail {
+		position: relative;
+		display: flex;
+		justify-content: center;
+		color: var(--sage-deep);
+	}
+	/* ink rail line connecting nodes */
+	.timeline__rail::before {
+		content: "";
+		position: absolute;
+		top: 42px;
+		bottom: -16px;
+		left: 50%;
+		width: 1px;
+		background: linear-gradient(
+			to bottom,
+			var(--sage-deep) 0%,
+			var(--rule-strong) 70%,
+			transparent 100%
+		);
+		transform: translateX(-0.5px);
+		opacity: 0.7;
+	}
+	.timeline__item:last-child .timeline__rail::before { display: none; }
+
+	.timeline__node {
+		width: 44px;
+		height: 44px;
+		flex-shrink: 0;
+		position: relative;
+		z-index: 1;
+		color: var(--sage);
+	}
+	.timeline__nodeNum {
+		font-family: var(--font-mono);
+		font-size: 9px;
+		letter-spacing: 0.06em;
+		fill: var(--washi);
+	}
+
+	.timeline__content { padding-top: 6px; }
+	.timeline__head {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin-bottom: var(--space-3);
+	}
+	.timeline__desc {
+		font-family: var(--font-serif);
+		color: var(--text);
+		margin: 0 0 var(--space-4);
+		max-width: 64ch;
+	}
+	.timeline__meta {
+		list-style: none;
+		padding: var(--space-3) 0 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		font-size: var(--type-small);
+		color: var(--text-quiet);
+		border-top: 1px solid var(--rule);
+	}
+	.timeline__meta li {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+	}
+	.timeline__meta code {
+		color: var(--ochre);
+		background: transparent;
+	}
+	.timeline__metaLabel {
+		display: inline-block;
+		min-width: 18px;
+		color: var(--text-distant);
+		flex-shrink: 0;
+	}
+	.timeline__bullet {
+		color: var(--text-distant);
+	}
+
+	@media (max-width: 600px) {
+		.timeline__item {
+			grid-template-columns: 40px 1fr;
+			gap: var(--space-3);
+		}
+		.timeline__node { width: 36px; height: 36px; }
+		.timeline__rail::before { top: 36px; }
 	}
 </style>
