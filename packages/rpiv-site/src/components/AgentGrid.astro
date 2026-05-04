@@ -1,0 +1,75 @@
+---
+import { getAgentsByTier, type CapabilityTier } from "../lib/agents";
+import AgentCard from "./AgentCard.astro";
+import SumiInk from "./SumiInk.astro";
+
+const groups = await getAgentsByTier();
+
+const TIER_META: Record<CapabilityTier, { label: string; note: string }> = {
+	locator:        { label: "Locator",                  note: "WHERE — no file content access" },
+	analyzer:       { label: "Analyzer",                 note: "HOW — reads file content" },
+	"git-analyzer": { label: "Git-analyzer",             note: "+ git read for blame, log, show" },
+	external:       { label: "External",                 note: "+ web search / fetch" },
+	specialist:     { label: "Code-review specialists",  note: "row-only contract — pipe-delimited findings, never narrative" },
+};
+---
+
+<section id="agents">
+	<div class="container">
+		<p class="kicker">§ subagents · 12 cards · 5 tiers</p>
+		<h2>Specialists, not generalists.</h2>
+		<p class="agents__lede">
+			Skills do orchestration; agents do one narrow thing. Each is isolated,
+			each is read-only, each tier is defined by its tool allowlist. Code-review&rsquo;s
+			specialists carry row-only contracts that structurally resist narrative.
+		</p>
+
+		<SumiInk variant="divider" />
+
+		{groups.map(({ tier, agents }) => agents.length > 0 && (
+			<div class="agents__group">
+				<header class="agents__group-head">
+					<h3 class="mono">{TIER_META[tier].label}</h3>
+					<p class="agents__tier-note">{TIER_META[tier].note}</p>
+				</header>
+				<ol class="agents__list">
+					{agents.map((agent) => (
+						<li><AgentCard agent={agent} /></li>
+					))}
+				</ol>
+			</div>
+		))}
+	</div>
+</section>
+
+<style>
+	.agents__lede {
+		color: var(--text-quiet);
+		max-width: 64ch;
+		margin-bottom: var(--space-6);
+	}
+	.agents__group { margin-top: var(--space-7); }
+	.agents__group:first-of-type { margin-top: var(--space-5); }
+	.agents__group-head {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		margin-bottom: var(--space-4);
+		padding-bottom: var(--space-3);
+		border-bottom: 1px solid var(--rule);
+	}
+	.agents__tier-note {
+		font-size: var(--type-small);
+		color: var(--text-distant);
+		margin: 0;
+	}
+	.agents__list {
+		list-style: none;
+		padding: 0; margin: 0;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-4);
+	}
+	@media (min-width: 720px)  { .agents__list { grid-template-columns: repeat(2, 1fr); } }
+	@media (min-width: 1080px) { .agents__list { grid-template-columns: repeat(3, 1fr); } }
+</style>

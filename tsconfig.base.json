@@ -19,6 +19,8 @@
 		"**/node_modules/**",
 		"**/.pi/**",
 		"**/.rpiv/**",
-		"**/thoughts/**"
+		"**/thoughts/**",
+		"**/dist/**",
+		"packages/rpiv-site/**"
 	]
 }

@@ -1,0 +1,43 @@
+---
+import { loadSiblings } from "../lib/siblings";
+import SiblingCard from "./SiblingCard.astro";
+import SumiInk from "./SumiInk.astro";
+
+const siblings = loadSiblings();
+---
+
+<section id="siblings">
+	<div class="container">
+		<p class="kicker">§ siblings · 7 packages</p>
+		<h2>Tools, not infrastructure.</h2>
+		<p class="siblings__lede">
+			rpiv-pi registers zero tools — every tool surface lives in a sibling plugin
+			detected by a regex over <code>~/.pi/agent/settings.json</code>.
+			<code>/rpiv-setup</code> installs the missing ones in a single confirm.
+		</p>
+
+		<SumiInk variant="divider" />
+
+		<ol class="siblings__list">
+			{siblings.map((s) => (
+				<li><SiblingCard sibling={s} /></li>
+			))}
+		</ol>
+	</div>
+</section>
+
+<style>
+	.siblings__lede {
+		color: var(--text-quiet);
+		max-width: 64ch;
+		margin-bottom: var(--space-6);
+	}
+	.siblings__list {
+		list-style: none; padding: 0; margin: 0;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-5);
+	}
+	@media (min-width: 720px)  { .siblings__list { grid-template-columns: repeat(2, 1fr); } }
+	@media (min-width: 1080px) { .siblings__list { grid-template-columns: repeat(3, 1fr); } }
+</style>

@@ -1,0 +1,48 @@
+---
+import "../styles/global.css";
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const {
+	title = "rpiv-pi",
+	description = "research → design → ship — a Pi CLI plugin pipeline",
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="dark" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical} />
+
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:type" content="website" />
+
+		<link rel="sitemap" href="/sitemap-index.xml" />
+	</head>
+	<body>
+		<slot />
+
+		<footer>
+			<div class="container">
+				<p class="mono">
+					<a href="https://www.npmjs.com/package/@juicesharp/rpiv-pi">npm</a>
+					&nbsp;·&nbsp;
+					<a href="https://github.com/juicesharp/rpiv-mono">github</a>
+					&nbsp;·&nbsp;
+					<span>MIT &copy; juicesharp</span>
+				</p>
+			</div>
+		</footer>
+	</body>
+</html>

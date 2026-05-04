@@ -1,0 +1,94 @@
+---
+import { Image, type ImageMetadata } from "astro:assets";
+import type { Sibling } from "../lib/siblings";
+
+interface Props {
+	sibling: Sibling;
+}
+
+const { sibling } = Astro.props;
+
+const covers = import.meta.glob<{ default: ImageMetadata }>(
+	"../../../rpiv-*/docs/cover.png",
+	{ eager: true },
+);
+
+const coverKey = `../../../${sibling.name}/docs/cover.png`;
+const cover = covers[coverKey]?.default;
+if (!cover) {
+	throw new Error(`SiblingCard: cover not found at ${coverKey} — add packages/${sibling.name}/docs/cover.png and rebuild`);
+}
+---
+
+<article class="card sibling">
+	<a href={sibling.npmUrl} class="sibling__cover-link" aria-label={`${sibling.name} on npm`}>
+		<Image
+			src={cover}
+			alt={`${sibling.name} cover`}
+			widths={[480, 720, 1080]}
+			sizes="(max-width: 720px) 100vw, (max-width: 1080px) 50vw, 33vw"
+			format="webp"
+			class="sibling__cover"
+			loading="lazy"
+		/>
+	</a>
+
+	<header class="sibling__head">
+		<h4 class="mono sibling__name">{sibling.name}</h4>
+	</header>
+
+	<p class="sibling__desc">{sibling.description}</p>
+
+	<footer class="sibling__foot mono">
+		<a href={sibling.npmUrl}>npm</a>
+		<span class="sibling__sep" aria-hidden="true">·</span>
+		<a href={sibling.homepage}>readme</a>
+	</footer>
+</article>
+
+<style>
+	.sibling { padding: 0; overflow: hidden; }
+	.sibling::before { display: none; }
+	.sibling__cover-link {
+		display: block;
+		border-bottom: 1px solid var(--rule);
+		background: var(--ink-muted);
+	}
+	.sibling__cover {
+		display: block;
+		width: 100%;
+		height: auto;
+		object-fit: cover;
+		aspect-ratio: 16 / 9;
+		transition: opacity var(--dur-ink) var(--ease-ink);
+	}
+	.sibling__cover-link:hover .sibling__cover { opacity: 0.92; }
+	.sibling__head {
+		padding: var(--space-4) var(--space-5) 0;
+		position: relative; z-index: 1;
+	}
+	.sibling__name {
+		font-size: var(--type-h3);
+		margin: 0;
+		color: var(--washi);
+	}
+	.sibling__desc {
+		font-family: var(--font-serif);
+		font-size: var(--type-small);
+		padding: var(--space-3) var(--space-5) 0;
+		color: var(--text);
+		max-width: none;
+		margin: 0;
+		position: relative; z-index: 1;
+	}
+	.sibling__foot {
+		font-size: var(--type-small);
+		padding: var(--space-4) var(--space-5);
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		color: var(--text-distant);
+		position: relative; z-index: 1;
+	}
+	.sibling__sep { color: var(--rule-strong); }
+</style>

@@ -1,0 +1,90 @@
+---
+import { getPipelineSkills } from "../lib/skills";
+import SumiInk from "./SumiInk.astro";
+const pipeline = await getPipelineSkills();
+---
+
+<section id="top" class="hero">
+	<SumiInk variant="backdrop" />
+	<div class="container hero__inner">
+		<p class="kicker">rpiv-pi · pi extension</p>
+
+		<h1 class="hero__title">
+			research<br />
+			design<br />
+			ship
+		</h1>
+
+		<p class="hero__lede">
+			A pipeline of skills and agents for the Pi coding agent — turn a vague task
+			into research questions, into a design, into a plan, into shipped code.
+		</p>
+
+		<ol class="hero__rail" aria-label="default pipeline">
+			{pipeline.map((skill, i) => (
+				<li class="hero__node">
+					<span class="chip chip--sage">/skill:{skill.data.name}</span>
+					{i < pipeline.length - 1 && <span class="hero__arrow" aria-hidden="true">→</span>}
+				</li>
+			))}
+		</ol>
+
+		<p class="hero__cta">
+			<a href="#install" class="hero__link">install &nbsp;↓</a>
+		</p>
+	</div>
+</section>
+
+<style>
+	.hero {
+		min-height: 92dvh;
+		display: flex;
+		align-items: center;
+		padding: var(--space-10) 0 var(--space-9);
+		position: relative;
+		overflow: hidden;
+	}
+	.hero__inner { position: relative; z-index: 1; }
+	.hero__title {
+		font-size: var(--type-h1);
+		line-height: 0.95;
+		margin-bottom: var(--space-6);
+	}
+	.hero__lede {
+		font-family: var(--font-serif);
+		max-width: 56ch;
+		color: var(--text-quiet);
+		font-size: 18px;
+		line-height: var(--leading-body);
+		margin-bottom: var(--space-7);
+	}
+	.hero__rail {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-3);
+		padding: 0;
+		margin: 0 0 var(--space-7);
+	}
+	.hero__node {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-3);
+	}
+	.hero__arrow {
+		color: var(--text-distant);
+		font-family: var(--font-mono);
+	}
+	.hero__cta {
+		font-family: var(--font-mono);
+		font-size: var(--type-small);
+		margin: 0;
+	}
+	.hero__link {
+		color: var(--ochre);
+		border-bottom-color: var(--kuro);
+	}
+	@media (max-width: 720px) {
+		.hero { min-height: auto; padding: var(--space-8) 0 var(--space-7); }
+	}
+</style>

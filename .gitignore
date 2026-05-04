@@ -28,3 +28,5 @@ thoughts/
 .npm/
 coverage/
 .nyc_output/
+packages/rpiv-site/dist/
+packages/rpiv-site/.astro/

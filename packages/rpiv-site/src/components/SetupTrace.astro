@@ -1,0 +1,91 @@
+---
+const STEPS = [
+	{
+		title: "Headless guard",
+		body: "If Pi is non-interactive, /rpiv-setup notifies and returns. No settings read, no install fires.",
+	},
+	{
+		title: "Detect missing + legacy",
+		body: "Scans ~/.pi/agent/settings.json. Returns missing siblings (regex per registry entry) and legacy entries to prune. Fail-soft on file missing or JSON invalid.",
+	},
+	{
+		title: "Nothing-to-do short-circuit",
+		body: "Both lists empty → notify “All rpiv-pi sibling dependencies already installed.” and return.",
+	},
+	{
+		title: "Single confirm",
+		body: "Preview block: install-section + remove-section, each rendered only when non-empty. “Proceed?” once. Cancel returns silently.",
+	},
+	{
+		title: "Prune phase",
+		body: "Rewrites settings.json with the legacy entries removed. Fail-soft on write error.",
+	},
+	{
+		title: "Install phase",
+		body: "Serial loop, no parallelism. Each pi install <pkg> bounded by 120s SIGTERM + 5s SIGKILL. Windows uses cmd.exe shim because pi.exec runs shell:false (cannot launch the pi.cmd shim from npm install -g).",
+	},
+	{
+		title: "Report",
+		body: "✓ Installed: … / ✗ Failed: … (errors truncated to 300 chars). “Restart your Pi session…” appended only if any succeeded.",
+	},
+];
+---
+
+<section id="setup" aria-labelledby="setup-title">
+	<div class="container setup">
+		<p class="kicker">/rpiv-setup · mental model</p>
+		<h2 id="setup-title">Read-only scan, single confirm, then both prune and install in one flow.</h2>
+
+		<ol class="setup__list">
+			{STEPS.map((step, i) => (
+				<li class="setup__item">
+					<span class="setup__num mono">{String(i + 1).padStart(2, "0")}</span>
+					<div>
+						<h4 class="mono setup__title">{step.title}</h4>
+						<p class="setup__body">{step.body}</p>
+					</div>
+				</li>
+			))}
+		</ol>
+	</div>
+</section>
+
+<style>
+	#setup h2 {
+		max-width: 56ch;
+		margin-bottom: var(--space-6);
+	}
+	.setup__list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		border-left: 1px solid var(--rule);
+	}
+	.setup__item {
+		display: grid;
+		grid-template-columns: 60px 1fr;
+		gap: var(--space-4);
+		padding: var(--space-4) 0 var(--space-4) var(--space-5);
+		position: relative;
+	}
+	.setup__item + .setup__item {
+		border-top: 1px solid var(--rule);
+	}
+	.setup__num {
+		color: var(--text-distant);
+		font-size: var(--type-tiny);
+		letter-spacing: 0.18em;
+		padding-top: 4px;
+	}
+	.setup__title {
+		margin: 0 0 var(--space-2);
+		font-size: var(--type-h3);
+	}
+	.setup__body {
+		font-family: var(--font-serif);
+		color: var(--text);
+		font-size: var(--type-small);
+		margin: 0;
+		max-width: 64ch;
+	}
+</style>

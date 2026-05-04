@@ -1,0 +1,52 @@
+---
+import { ARTIFACT_WRITE_SITES, getPipelineSkills } from "../lib/skills";
+import SkillCard from "./SkillCard.astro";
+import SumiInk from "./SumiInk.astro";
+const pipeline = await getPipelineSkills();
+---
+
+<section id="pipeline">
+	<div class="container">
+		<p class="kicker">§ default pipeline · 6 nodes</p>
+		<h2>discover &nbsp;→&nbsp; research &nbsp;→&nbsp; design &nbsp;→&nbsp; plan &nbsp;→&nbsp; implement &nbsp;→&nbsp; validate</h2>
+		<p class="pipeline__lede">
+			Each node is a skill. The artifact one writes is the next one&rsquo;s input —
+			the chain is enforced by the description, not the runtime.
+		</p>
+
+		<SumiInk variant="divider" />
+
+		<ol class="pipeline__list">
+			{pipeline.map((skill, i) => (
+				<li>
+					<SkillCard
+						skill={skill}
+						index={i + 1}
+						variant="detail"
+						artifactSite={ARTIFACT_WRITE_SITES[skill.data.name] ?? undefined}
+					/>
+				</li>
+			))}
+		</ol>
+	</div>
+</section>
+
+<style>
+	#pipeline h2 { margin-bottom: var(--space-5); }
+	.pipeline__lede {
+		color: var(--text-quiet);
+		margin-bottom: var(--space-6);
+		max-width: 64ch;
+	}
+	.pipeline__list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-5);
+	}
+	@media (min-width: 880px) {
+		.pipeline__list { grid-template-columns: repeat(2, 1fr); }
+	}
+</style>

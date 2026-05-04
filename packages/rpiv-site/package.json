@@ -1,0 +1,35 @@
+{
+	"name": "@juicesharp/rpiv-site",
+	"version": "1.1.4",
+	"private": true,
+	"description": "Marketing site for rpiv-pi (rpiv-pi.com) — static Astro build, deployed to GitHub Pages",
+	"keywords": [
+		"rpiv",
+		"rpiv-pi",
+		"marketing",
+		"astro",
+		"github-pages"
+	],
+	"type": "module",
+	"license": "MIT",
+	"author": "juicesharp",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/juicesharp/rpiv-mono.git",
+		"directory": "packages/rpiv-site"
+	},
+	"homepage": "https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-site#readme",
+	"bugs": {
+		"url": "https://github.com/juicesharp/rpiv-mono/issues"
+	},
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"astro": "^5.0.0",
+		"@astrojs/sitemap": "^3.2.0"
+	}
+}

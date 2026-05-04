@@ -1,0 +1,50 @@
+---
+import { ARTIFACT_WRITE_SITES, getShipLoopSkills } from "../lib/skills";
+import SkillCard from "./SkillCard.astro";
+import SumiInk from "./SumiInk.astro";
+const skills = await getShipLoopSkills();
+---
+
+<section id="ship">
+	<div class="container">
+		<p class="kicker">§ ship loop</p>
+		<h2>review &nbsp;↔&nbsp; commit &nbsp;↔&nbsp; revise</h2>
+		<p class="ship__lede">
+			Order is your call: review staged/working before committing to catch issues at
+			the smallest blast radius, or commit first and review the resulting branch.
+			Code-review produces a Quality / Security / Dependencies artifact with
+			claim-verifier-grounded findings and a <code>status: approved | needs_changes</code>.
+		</p>
+
+		<SumiInk variant="divider" />
+
+		<ol class="ship__list">
+			{skills.map((skill) => (
+				<li>
+					<SkillCard
+						skill={skill}
+						variant="compact"
+						artifactSite={ARTIFACT_WRITE_SITES[skill.data.name] ?? undefined}
+					/>
+				</li>
+			))}
+		</ol>
+	</div>
+</section>
+
+<style>
+	.ship__lede {
+		color: var(--text-quiet);
+		margin-bottom: var(--space-6);
+		max-width: 64ch;
+	}
+	.ship__list {
+		list-style: none; padding: 0; margin: 0;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-5);
+	}
+	@media (min-width: 800px) {
+		.ship__list { grid-template-columns: repeat(3, 1fr); }
+	}
+</style>

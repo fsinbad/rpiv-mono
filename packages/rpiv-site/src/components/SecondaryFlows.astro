@@ -1,0 +1,46 @@
+---
+import { ARTIFACT_WRITE_SITES, getSecondaryFlowSkills } from "../lib/skills";
+import SkillCard from "./SkillCard.astro";
+const skills = await getSecondaryFlowSkills();
+---
+
+<section id="flows">
+	<div class="container">
+		<p class="kicker">§ secondary flows</p>
+		<h2>Off the default pipeline.</h2>
+		<p class="flows__lede">
+			The default chain is six steps. These are the entry points beside it: a
+			single-pass plan from research, an alternate input that compares approaches,
+			and the brownfield pair that maps an existing repo before any other skill runs.
+		</p>
+
+		<ol class="flows__list">
+			{skills.map((skill) => (
+				<li>
+					<SkillCard
+						skill={skill}
+						variant="compact"
+						artifactSite={ARTIFACT_WRITE_SITES[skill.data.name] ?? undefined}
+					/>
+				</li>
+			))}
+		</ol>
+	</div>
+</section>
+
+<style>
+	.flows__lede {
+		color: var(--text-quiet);
+		margin-bottom: var(--space-6);
+		max-width: 64ch;
+	}
+	.flows__list {
+		list-style: none; padding: 0; margin: 0;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--space-5);
+	}
+	@media (min-width: 880px) {
+		.flows__list { grid-template-columns: repeat(2, 1fr); }
+	}
+</style>

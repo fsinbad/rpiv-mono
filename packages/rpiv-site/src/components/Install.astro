@@ -1,0 +1,92 @@
+---
+import { loadCompat } from "../lib/compat";
+const compat = loadCompat();
+---
+
+<section id="install">
+	<div class="container install">
+		<p class="kicker">§ install</p>
+		<h2>Three steps. One restart.</h2>
+
+		<ol class="install__steps">
+			<li>
+				<span class="install__num mono">01</span>
+				<pre><code>pi install npm:@juicesharp/rpiv-pi</code></pre>
+			</li>
+			<li>
+				<span class="install__num mono">02</span>
+				<div>
+					<pre><code>/rpiv-setup</code></pre>
+					<p class="install__hint">
+						Reads <code>~/.pi/agent/settings.json</code>; previews missing siblings + any
+						legacy entries to prune; one confirm to apply.
+					</p>
+				</div>
+			</li>
+			<li>
+				<span class="install__num mono">03</span>
+				<p class="install__step-text">Restart your Pi Agent session.</p>
+			</li>
+		</ol>
+
+		<p class="install__compat mono">
+			Requires Pi <code>pi-coding-agent {compat.piCodingAgentFloor}</code>
+			&nbsp;·&nbsp; rpiv-pi <code>{compat.rpivPiVersion}</code>
+		</p>
+
+		<p class="install__byok">
+			BYOK supported (z.ai, OpenAI, Anthropic, …) —
+			<a href="https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-pi#prerequisites">
+				see README → Prerequisites
+			</a>.
+		</p>
+	</div>
+</section>
+
+<style>
+	.install h2 { margin-bottom: var(--space-6); }
+	.install__steps {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 var(--space-7);
+		display: grid;
+		gap: var(--space-5);
+	}
+	.install__steps > li {
+		display: grid;
+		grid-template-columns: 32px 1fr;
+		gap: var(--space-4);
+		align-items: start;
+	}
+	.install__num {
+		color: var(--text-distant);
+		font-size: var(--type-tiny);
+		letter-spacing: 0.18em;
+		padding-top: 8px;
+	}
+	.install__hint {
+		font-family: var(--font-serif);
+		color: var(--text-quiet);
+		font-size: var(--type-small);
+		margin: var(--space-2) 0 0;
+		max-width: 64ch;
+	}
+	.install__step-text {
+		font-family: var(--font-serif);
+		margin: 0;
+	}
+	.install__compat {
+		font-size: var(--type-small);
+		color: var(--text-distant);
+		padding: var(--space-3) 0;
+		border-top: 1px solid var(--rule);
+		border-bottom: 1px solid var(--rule);
+		margin-bottom: var(--space-4);
+	}
+	.install__byok {
+		font-family: var(--font-serif);
+		color: var(--text-quiet);
+		font-size: var(--type-small);
+		margin: 0;
+	}
+</style>

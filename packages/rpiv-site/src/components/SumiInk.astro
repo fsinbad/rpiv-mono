@@ -1,0 +1,81 @@
+---
+interface Props {
+	variant: "corner" | "divider" | "backdrop";
+	className?: string;
+}
+const { variant, className } = Astro.props;
+---
+
+{variant === "corner" && (
+	<svg class:list={["sumi", "sumi--corner", className]} viewBox="0 0 220 180" aria-hidden="true">
+		<g fill="none" stroke="currentColor" stroke-linecap="round">
+			<path d="M14 122 q26 -64 90 -76 q56 -10 100 22" stroke-width="1.2" opacity="0.55" />
+			<path d="M30 138 q44 -28 96 -22 q40 4 70 22" stroke-width="0.7" opacity="0.35" />
+			<circle cx="178" cy="44" r="2.2" opacity="0.6" />
+			<circle cx="58"  cy="98" r="1.4" opacity="0.45" />
+		</g>
+	</svg>
+)}
+
+{variant === "divider" && (
+	<svg class:list={["sumi", "sumi--divider", className]} viewBox="0 0 800 32" aria-hidden="true" preserveAspectRatio="none">
+		<path
+			d="M4 18 q120 -16 280 -8 t340 6 q90 4 172 -2"
+			fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity="0.4"
+		/>
+		<path
+			d="M40 22 q160 -10 360 -2"
+			fill="none" stroke="currentColor" stroke-width="0.5" stroke-linecap="round" opacity="0.22"
+		/>
+	</svg>
+)}
+
+{variant === "backdrop" && (
+	<svg class:list={["sumi", "sumi--backdrop", className]} viewBox="0 0 600 600" aria-hidden="true">
+		<defs>
+			<radialGradient id="ink-blur" cx="50%" cy="50%" r="50%">
+				<stop offset="0%"  stop-color="currentColor" stop-opacity="0.18" />
+				<stop offset="60%" stop-color="currentColor" stop-opacity="0.04" />
+				<stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+			</radialGradient>
+		</defs>
+		<circle cx="380" cy="220" r="180" fill="url(#ink-blur)" />
+		<circle cx="180" cy="420" r="120" fill="url(#ink-blur)" opacity="0.6" />
+		<g fill="none" stroke="currentColor" stroke-linecap="round">
+			<path d="M120 420 q60 -120 220 -160 q140 -32 240 80" stroke-width="1.4" opacity="0.32" />
+			<path d="M160 460 q60 -50 180 -60" stroke-width="0.7" opacity="0.18" />
+		</g>
+	</svg>
+)}
+
+<style>
+	.sumi { display: block; color: var(--sage); }
+	.sumi--corner {
+		position: absolute;
+		top: var(--space-5);
+		right: var(--space-5);
+		width: 200px;
+		height: auto;
+		opacity: 0.7;
+		pointer-events: none;
+	}
+	.sumi--divider {
+		display: block;
+		width: 100%;
+		height: 32px;
+		color: var(--text-distant);
+		margin: var(--space-5) 0;
+	}
+	.sumi--backdrop {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		color: var(--ochre);
+		pointer-events: none;
+		z-index: -1;
+	}
+	@media (max-width: 720px) {
+		.sumi--corner { width: 140px; top: var(--space-4); right: var(--space-4); }
+	}
+</style>
