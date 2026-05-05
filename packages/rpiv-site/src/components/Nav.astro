@@ -66,6 +66,9 @@ import { VERSION } from "../lib/version";
 	   Hairline divider + half-em ochre tick echo the .nav__cta border and the
 	   ScrollIndicator hanko seal — one chromatic event, no badge geometry. */
 	.nav__version {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
 		font-size: var(--type-tiny);
 		letter-spacing: 0.14em;
 		font-variant-numeric: tabular-nums;
@@ -74,17 +77,15 @@ import { VERSION } from "../lib/version";
 		text-decoration: none;
 		padding: 0 var(--space-2);
 		border-left: 1px solid var(--rule);
-		align-self: baseline;
+		line-height: 1;
 		transition: color var(--dur-ink) var(--ease-ink);
 	}
 	.nav__version::before {
 		content: "";
-		display: inline-block;
+		display: block;
 		width: 1px;
-		height: 0.5em;
-		margin-right: var(--space-2);
+		height: 0.7em;
 		background: var(--ochre);
-		vertical-align: -1px;
 		opacity: 0.7;
 	}
 	.nav__version:hover { color: var(--washi); }
