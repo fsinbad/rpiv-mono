@@ -1,5 +1,6 @@
 ---
 import { getPipelineSkills } from "../lib/skills";
+import { VERSION } from "../lib/version";
 import SumiInk from "./SumiInk.astro";
 const pipeline = await getPipelineSkills();
 ---
@@ -19,6 +20,9 @@ const pipeline = await getPipelineSkills();
 				</li>
 			))}
 		</ol>
+		<p class="colophon__edition mono" aria-label={`edition v${VERSION}`}>
+			edition · <span class="colophon__edition-num">v{VERSION}</span>
+		</p>
 	</div>
 </aside>
 
@@ -67,6 +71,20 @@ const pipeline = await getPipelineSkills();
 	}
 	.colophon__arrow {
 		color: var(--text-distant);
+	}
+	/* Edition mark — quiet echo of the nav__version masthead imprint. Tracked
+	   uppercase + tabular numerics, ochre on the version word so the only
+	   chromatic event in the block agrees with the rail's chip ochre. */
+	.colophon__edition {
+		margin: var(--space-5) 0 0;
+		font-size: var(--type-tiny);
+		letter-spacing: 0.22em;
+		text-transform: uppercase;
+		color: var(--text-distant);
+	}
+	.colophon__edition-num {
+		color: var(--ochre);
+		font-variant-numeric: tabular-nums;
 	}
 	@media (max-width: 720px) {
 		.colophon { padding: var(--space-7) 0 var(--space-5); }

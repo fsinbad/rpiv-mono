@@ -1,7 +1,18 @@
+---
+import { VERSION } from "../lib/version";
+---
+
 <header class="nav" data-nav>
 	<div class="container nav__inner">
 		<div class="nav__head">
 			<a href="#top" class="nav__brand mono">rpiv-pi</a>
+			<a
+				class="nav__version mono"
+				href={`https://www.npmjs.com/package/@juicesharp/rpiv-pi/v/${VERSION}`}
+				aria-label={`released version v${VERSION} on npm`}
+				target="_blank"
+				rel="noopener"
+			>v{VERSION}</a>
 			<span class="nav__counter mono" aria-hidden="true">
 				<span class="nav__counter-rule"></span>
 				<span class="nav__counter-num" data-nav-counter>—</span>
@@ -49,6 +60,34 @@
 		border-bottom: none;
 	}
 	.nav__brand:hover { color: var(--sage); }
+
+	/* Version imprint — masthead-style edition mark sitting between brand and
+	   counter. Tabular numerics so 1.1.5 → 1.1.10 stays aligned across builds.
+	   Hairline divider + half-em ochre tick echo the .nav__cta border and the
+	   ScrollIndicator hanko seal — one chromatic event, no badge geometry. */
+	.nav__version {
+		font-size: var(--type-tiny);
+		letter-spacing: 0.14em;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-distant);
+		border-bottom: none;
+		text-decoration: none;
+		padding: 0 var(--space-2);
+		border-left: 1px solid var(--rule);
+		align-self: baseline;
+		transition: color var(--dur-ink) var(--ease-ink);
+	}
+	.nav__version::before {
+		content: "";
+		display: inline-block;
+		width: 1px;
+		height: 0.5em;
+		margin-right: var(--space-2);
+		background: var(--ochre);
+		vertical-align: -1px;
+		opacity: 0.7;
+	}
+	.nav__version:hover { color: var(--washi); }
 
 	/* Section counter — mobile-only flourish that echoes
 	   ScrollIndicator's `.indicator__foot` (tabular numerals + 0.14em
@@ -177,6 +216,13 @@
 		}
 		.nav__counter { display: inline-flex; }
 
+		/* Mobile masthead row is baseline-flex; the hairline divider reads
+		   cluttered against the brand at this density. Drop it. */
+		.nav__version {
+			border-left: none;
+			padding-left: 0;
+		}
+
 		.nav__cta {
 			grid-area: cta;
 			align-self: center;
@@ -210,6 +256,11 @@
 	   below ~440px. Reflow to a 3-column / 2-row plate, still equal-width,
 	   still anchored to the same active-tick rhythm. */
 	@media (max-width: 480px) {
+		/* Sub-480 the masthead row gets tight (brand + counter + version + CTA
+		   on one line). Drop the version off-screen and let the colophon
+		   carry it. CTA is non-negotiable; the version is. */
+		.nav__version { display: none; }
+
 		.nav__links {
 			grid-template-columns: repeat(3, 1fr);
 			row-gap: var(--space-3);
