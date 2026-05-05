@@ -7,6 +7,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Guidance injection now frames the injected `architecture.md` payload as a non-task reference with an explicit "consult only when relevant" trigger, reducing the chance the agent treats it as an instruction to act on.
+- Skill descriptions across the skill library rewritten for the Pi matcher's discovery heuristic — clearer trigger phrases and crisper one-line summaries so the right skill surfaces for the right prompt.
+
 ## [1.1.4] - 2026-05-03
 
 ## [1.1.3] - 2026-05-03

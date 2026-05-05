@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation
+- README: documented the `web_search` and `web_fetch` tool schemas so consumers can see the parameter surface without reading the source.
+
 ## [1.1.4] - 2026-05-03
 
 ## [1.1.3] - 2026-05-03
