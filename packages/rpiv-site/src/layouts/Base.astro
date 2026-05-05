@@ -12,7 +12,10 @@ const {
 	description = "A pipeline of skills, subagents, and extensions for the Pi coding agent.",
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
-const ogImage = new URL("/og-v2.jpg", Astro.site).toString();
+// Square logo for X cards. X has been suppressing `summary_large_image` previews
+// for low-engagement domains while `summary` cards still render. Other surfaces
+// (LinkedIn / Slack / Discord) read the same `og:image` fine at this size.
+const ogImage = new URL("/og-square.png", Astro.site).toString();
 
 const jsonLd = {
 	"@context": "https://schema.org",
@@ -75,12 +78,12 @@ const jsonLd = {
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
 		<meta property="og:image" content={ogImage} />
-		<meta property="og:image:type" content="image/jpeg" />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="1024" />
+		<meta property="og:image:height" content="1024" />
 		<meta property="og:image:alt" content="rpiv-pi · research → design → ship" />
 
-		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:site" content="@juicesharp" />
 		<meta name="twitter:creator" content="@juicesharp" />
 		<meta name="twitter:title" content={title} />
