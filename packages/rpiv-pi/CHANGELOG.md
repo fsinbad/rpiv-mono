@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-pi` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.5] - 2026-05-05
 
 ### Changed
 - Guidance injection now frames the injected `architecture.md` payload as a non-task reference with an explicit "consult only when relevant" trigger, reducing the chance the agent treats it as an instruction to act on.
