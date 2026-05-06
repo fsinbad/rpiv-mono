@@ -7,7 +7,7 @@
 - Total test cases: {N}
 - Estimated full regression: ~{X} minutes
 - Last updated: {YYYY-MM-DD}
-- Git commit: {commit-hash}
+- Commit: {commit-hash}
 
 ## Portal Summary
 

@@ -56,16 +56,16 @@ This is NOT a discovery sweep. Focus on DEPTH (how things work, what patterns to
    - Use **codebase-pattern-finder** to find existing implementations to model after — the primary template for code shape
    - Use **codebase-analyzer** to understand HOW integration points work in detail
    - Use **integration-scanner** to map the wiring surface — inbound refs, outbound deps, config/DI/event registration
-   - Use **precedent-locator** to find similar past changes in git history — what commits introduced comparable features, what broke, and what lessons apply to this design. Only when `git_commit` is available (not `no-commit`); otherwise skip and note "git history unavailable" in Verification Notes.
+   - Use **precedent-locator** to find similar past changes in git history — what commits introduced comparable features, what broke, and what lessons apply to this design. Only when `commit` is available (not `no-commit`); otherwise skip and note "git history unavailable" in Verification Notes.
 
    **Novel work** (new libraries, first-time patterns, no existing codebase precedent):
    - Add **web-search-researcher** for external documentation, API references, and community patterns
    - Instruct it to return LINKS with findings — include those links in the final design artifact
 
    Agent prompts should focus on (labeled by target agent):
-   - **codebase-pattern-finder**: "Find the implementation pattern I should model after for [feature type]"
-   - **codebase-analyzer**: "How does [integration point] work in detail"
-   - **integration-scanner**: "What connects to [component] — inbound refs, outbound deps, config"
+   - **codebase-pattern-finder**: "Find the implementation pattern I should model after for {feature type}"
+   - **codebase-analyzer**: "How does {integration point} work in detail"
+   - **integration-scanner**: "What connects to {component} — inbound refs, outbound deps, config"
 
    NOT: "Find all files related to X" — that's discovery's job, upstream of this skill.
 
@@ -123,11 +123,11 @@ Use the grounded-questions-one-at-a-time pattern. Use a **❓ Question:** prefix
 
 **Question patterns by ambiguity type:**
 
-- **Pattern conflict**: "Found 2 patterns for [X]: [pattern A] at `file:line` and [pattern B] at `file:line`. They differ in [specific way]. Which should the new [feature] follow?"
-- **Missing pattern**: "No existing [pattern type] in the codebase. Options: (A) [approach] modeled after [external reference], (B) [approach] extending [existing code at file:line]. Which fits the project's direction?"
-- **Scope boundary**: "The [research/description] mentions both [feature A] and [feature B]. Should this design cover both, or just [feature A] with [feature B] deferred?"
-- **Integration choice**: "[Feature] can wire into [point A] at `file:line` or [point B] at `file:line`. [Point A] matches the [existing pattern] pattern. Agree, or prefer [point B]?"
-- **Novel approach**: "No existing [X] in the project. Options: (A) [library/pattern] — [evidence/rationale], (B) [library/pattern] — [evidence/rationale]. Which fits?"
+- **Pattern conflict**: "Found 2 patterns for {X}: {pattern A} at `file:line` and {pattern B} at `file:line`. They differ in {specific way}. Which should the new {feature} follow?"
+- **Missing pattern**: "No existing {pattern type} in the codebase. Options: (A) {approach} modeled after {external reference}, (B) {approach} extending {existing code at file:line}. Which fits the project's direction?"
+- **Scope boundary**: "The {research/description} mentions both {feature A} and {feature B}. Should this design cover both, or just {feature A} with {feature B} deferred?"
+- **Integration choice**: "{Feature} can wire into {point A} at `file:line` or {point B} at `file:line`. {Point A} matches the {existing pattern} pattern. Agree, or prefer {point B}?"
+- **Novel approach**: "No existing {X} in the project. Options: (A) {library/pattern} — {evidence/rationale}, (B) {library/pattern} — {evidence/rationale}. Which fits?"
 
 **Critical rules:**
 - Ask ONE question at a time. Wait for the answer before asking the next.
@@ -160,19 +160,19 @@ Use the grounded-questions-one-at-a-time pattern. Use a **❓ Question:** prefix
 **After all ambiguities are resolved**, present a brief design summary (under 15 lines):
 
 ```
-Design: [feature name]
-Approach: [1-2 sentence summary of chosen architecture]
+Design: {feature name}
+Approach: {1-2 sentence summary of chosen architecture}
 
 Decisions:
-- [Decision 1]: [choice] — modeled after `file:line`
-- [Decision 2]: [choice]
-- [Decision 3]: [choice]
+- {Decision 1}: {choice} — modeled after `file:line`
+- {Decision 2}: {choice}
+- {Decision 3}: {choice}
 
-Scope: [what's in] | Not building: [what's out]
-Files: [N] new, [M] modified
+Scope: {what's in} | Not building: {what's out}
+Files: {N} new, {M} modified
 ```
 
-Use the `ask_user_question` tool to confirm before proceeding. Question: "[Summary from design brief above]. Ready to proceed to decomposition?". Header: "Design". Options: "Proceed (Recommended)" (Decompose into vertical slices, then generate code slice-by-slice); "Adjust decisions" (Revisit one or more architectural decisions above); "Change scope" (Add or remove items from the building/not-building lists).
+Use the `ask_user_question` tool to confirm before proceeding. Question: "{Summary from design brief above}. Ready to proceed to decomposition?". Header: "Design". Options: "Proceed (Recommended)" (Decompose into vertical slices, then generate code slice-by-slice); "Adjust decisions" (Revisit one or more architectural decisions above); "Change scope" (Add or remove items from the building/not-building lists).
 
 ## Step 6: Feature Decomposition
 
@@ -181,17 +181,17 @@ After the design summary is confirmed, decompose the feature into vertical slice
 1. **Decompose holistically** — define ALL slices, dependencies, and ordering before generating any code:
 
    ```
-   Feature Breakdown: [feature name]
+   Feature Breakdown: {feature name}
 
-   Slice 1: [name] — [what this slice delivers]
+   Slice 1: {name} — {what this slice delivers}
      Files: path/to/file.ext (NEW), path/to/file.ext (MODIFY)
      Depends on: nothing (foundation)
 
-   Slice 2: [name] — [what this slice delivers]
+   Slice 2: {name} — {what this slice delivers}
      Files: path/to/file.ext (NEW), path/to/file.ext (MODIFY)
      Depends on: Slice 1
 
-   Slice 3: [name] — [what this slice delivers]
+   Slice 3: {name} — {what this slice delivers}
      Files: path/to/file.ext (NEW)
      Depends on: Slice 2
    ```
@@ -202,10 +202,10 @@ After the design summary is confirmed, decompose the feature into vertical slice
    - Sequential: each builds on the previous (never parallel)
    - Foundation first: types/interfaces always Slice 1
 
-3. **Confirm decomposition** using the `ask_user_question` tool. Question: "[N] slices for [feature]. Slice 1: [name] (foundation). Slices 2-N: [brief]. Approve decomposition?". Header: "Slices". Options: "Approve (Recommended)" (Proceed to slice-by-slice code generation); "Adjust slices" (Reorder, merge, or split slices before generating); "Change scope" (Add or remove files from the decomposition).
+3. **Confirm decomposition** using the `ask_user_question` tool. Question: "{N} slices for {feature}. Slice 1: {name} (foundation). Slices 2-N: {brief}. Approve decomposition?". Header: "Slices". Options: "Approve (Recommended)" (Proceed to slice-by-slice code generation); "Adjust slices" (Reorder, merge, or split slices before generating); "Change scope" (Add or remove files from the decomposition).
 
 4. **Create skeleton artifact** — immediately after decomposition is approved:
-   - Determine metadata: filename `thoughts/shared/designs/YYYY-MM-DD_HH-MM-SS_topic.md`, repository name from git root, branch and commit from the git context injected at the start of the session (fallbacks: "no-branch" / "no-commit"), designer from the injected User (fallback: "unknown")
+   - Determine metadata: filename `thoughts/shared/designs/YYYY-MM-DD_HH-MM-SS_topic.md`, repository name from git root, branch and commit from the git context injected at the start of the session (fallbacks: "no-branch" / "no-commit"), author from the injected User (fallback: "unknown")
    - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Write skeleton using the Write tool with `status: in-progress` in frontmatter
    - **Include all prose sections filled** from Steps 1-5: Summary, Requirements, Current State Analysis, Scope, Decisions, Desired End State, File Map, Ordering Constraints, Verification Notes, Performance Considerations, Migration Notes, Pattern References, Developer Context, References
@@ -215,8 +215,8 @@ After the design summary is confirmed, decompose the feature into vertical slice
 
    **Artifact template sections** (all required in skeleton):
 
-   - **Frontmatter**: date, designer, git_commit, branch, repository, topic, tags, `status: in-progress`, research_source, last_updated, last_updated_by
-   - **# Design: [Feature Name]**
+   - **Frontmatter**: date, author, commit, branch, repository, topic, tags, `status: in-progress`, parent, last_updated, last_updated_by
+   - **# Design: {Feature Name}**
    - **## Summary**: 2-3 sentences — what we're building and the chosen architectural approach. Settled decision, not a discussion.
    - **## Requirements**: Bullet list from ticket, research, or developer input.
    - **## Current State Analysis**: What exists now, what's missing, key constraints. Include `### Key Discoveries` with `file:line` references, patterns to follow, constraints to work within.
@@ -231,7 +231,7 @@ After the design summary is confirmed, decompose the feature into vertical slice
    - **## Migration Notes**: If applicable — existing data, schema changes, rollback strategy, backwards compatibility. Empty if not applicable.
    - **## Pattern References**: `path/to/similar.ext:line-range` — what pattern to follow and why.
    - **## Developer Context**: Record questions exactly as asked during checkpoint, including `file:line` evidence. For iterative variant: also record micro-checkpoint interactions from Step 7c.
-   - **## Design History**: Slice approval/revision log. `- Slice N: [name] — pending/approved as generated/revised: [what changed]`. plan ignores this section.
+   - **## Design History**: Slice approval/revision log. `- Slice N: {name} — pending/approved as generated/revised: {what changed}`. plan ignores this section.
    - **## References**: Research artifacts, tickets, similar implementations.
 
    **Architecture format in skeleton**:
@@ -265,9 +265,9 @@ Before presenting to the developer, cross-check this slice and produce a structu
 
 ```
 Self-verify Slice N:
-- Decisions: [OK / VIOLATION: decision X — fix applied]
-- Cross-slice: [OK / CONFLICT: file X has inconsistent types — fix applied]
-- Research: [OK / WARNING: constraint Y not satisfied — fix applied]
+- Decisions: {OK / VIOLATION: decision X — fix applied}
+- Cross-slice: {OK / CONFLICT: file X has inconsistent types — fix applied}
+- Research: {OK / WARNING: constraint Y not satisfied — fix applied}
 ```
 
 If violations found: fix in-place before presenting. Include the self-verify summary in the 7c checkpoint presentation.
@@ -285,7 +285,7 @@ Present a **condensed review** of the slice — NOT the full generated code. The
 
 **If the developer asks to see full code**, show it inline — exception, not default.
 
-Use the `ask_user_question` tool to confirm. Question: "Slice [N/M]: [slice name] — [files affected]. [1-line summary]. Approve?". Header: "Slice [N]". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice [N+1]); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition).
+Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name} — {files affected}. {1-line summary}. Approve?". Header: "Slice {N}". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice {N+1}); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition).
 
 **Checkpoint cadence**: Slices 1-2: always individual. Slices 3+: individual if (a) mid-generation agent spawn was needed, (b) MODIFY touches an undiscussed file, or (c) self-verify fixed a violation.
 Otherwise batch 2-3 slices (max 3).
@@ -296,7 +296,7 @@ Otherwise batch 2-3 slices (max 3).
 1. For each file in this slice, Edit the skeleton artifact to replace the empty code fence under that file's Architecture heading with the full generated code from 7a
 2. If a later slice contributes to a file already filled by an earlier slice: **rewrite the entire code fence** with the merged result (do not append alongside existing code)
 3. After merge, verify: no duplicate function definitions, imports deduplicated, exports list complete
-4. Update the Design History section: `- Slice N: [name] — approved as generated`
+4. Update the Design History section: `- Slice N: {name} — approved as generated`
 - Proceed to next slice
 
 **Revise**: Update code per developer feedback. Re-run self-verify (7b). Re-present the same slice (7c). The artifact is NOT touched — only "Approve" writes to the artifact.
@@ -310,16 +310,16 @@ After all slices are complete, review cross-slice consistency:
 
 1. **Present integration summary** (under 15 lines):
    ```
-   Integration: [feature name] — [N] slices complete
+   Integration: {feature name} — {N} slices complete
 
-   Slices: [brief list of slice names and file counts]
-   Cross-slice: [types consistent / imports valid / wiring complete]
-   Research constraints: [all satisfied / N violations noted]
+   Slices: {brief list of slice names and file counts}
+   Cross-slice: {types consistent / imports valid / wiring complete}
+   Research constraints: {all satisfied / N violations noted}
    ```
 
 2. **Verify research constraints**: Check each Precedent & Lesson and Verification Note from the research artifact against the generated code. List satisfaction status.
 
-3. **Confirm using the `ask_user_question` tool**. Question: "[N] slices complete, [M] files total. Cross-slice consistency verified. Proceed to design artifact?". Header: "Verify". Options: "Proceed (Recommended)" (Finalize the design artifact (verify completeness, update status)); "Revisit slice" (Reopen a specific slice for revision — Edit the artifact after); "Add missing" (A file or integration point is missing — add to artifact).
+3. **Confirm using the `ask_user_question` tool**. Question: "{N} slices complete, {M} files total. Cross-slice consistency verified. Proceed to design artifact?". Header: "Verify". Options: "Proceed (Recommended)" (Finalize the design artifact (verify completeness, update status)); "Revisit slice" (Reopen a specific slice for revision — Edit the artifact after); "Add missing" (A file or integration point is missing — add to artifact).
 
 ## Step 9: Finalize Design Artifact
 
@@ -342,23 +342,23 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
 1. **Present the design artifact location**:
    ```
    Design artifact written to:
-   `thoughts/shared/designs/[filename].md`
+   `thoughts/shared/designs/{filename}.md`
 
-   [N] architectural decisions fixed, [M] new files designed, [K] existing files modified.
-   [S] slices generated, [R] revisions during generation.
+   {N} architectural decisions fixed, {M} new files designed, {K} existing files modified.
+   {S} slices generated, {R} revisions during generation.
 
    Please review and let me know:
    - Are the architectural decisions correct?
    - Does the code match what you envision?
    - Any missing integration points or edge cases?
 
-   When ready, run `/skill:plan thoughts/shared/designs/[filename].md` to sequence into phases.
+   When ready, run `/skill:plan thoughts/shared/designs/{filename}.md` to sequence into phases.
    ```
 
 2. **Handle follow-up changes**:
    - Use the Edit tool to update the design artifact in-place
    - Update frontmatter: `last_updated` and `last_updated_by`
-   - Add `last_updated_note: "Updated [brief description]"` to frontmatter
+   - Add `last_updated_note: "Updated {brief description}"` to frontmatter
    - If the change affects decisions, update both the Decisions section AND the Architecture code
    - If new ambiguities arise, return to Step 5 (developer checkpoint)
 

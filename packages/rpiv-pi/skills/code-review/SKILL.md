@@ -48,7 +48,7 @@ Every Wave-2 agent prompt contains EXACTLY: (a) `Known Context:` followed by the
    - **Working-tree branch** (`staged` / `working`, no `$RANGE`): `git diff --cached --name-only` / `git diff --name-only`; `git diff --cached --stat` / `git diff --stat`; `git diff --cached -U30` / `git diff -U30`. Commit-message context is N/A. `FP_FLAG` is not applicable.
    - **Patch-size fallback**: `-U30` produces ~2–3× the size of `-U0`. If the resulting patch exceeds ~1MB, drop to `-U10` for this run; never use `-U0` — it defeats the skill's design.
 
-3. **Bail-out**: if `ChangedFiles` is empty, print `No changes in scope [scope]. Exiting.` and STOP. Do not write an artifact.
+3. **Bail-out**: if `ChangedFiles` is empty, print `No changes in scope {scope}. Exiting.` and STOP. Do not write an artifact.
 
 4. **Derive scope + flags** (orchestrator-side, used in later steps):
    - `InScopeFiles` — used by the Step 6 pre-filter. `ChangedFiles` reflects *tree-reachability* (inflated on branches that back-merged the default branch — each post-merge first-parent commit inherits the merge's tree, so `--name-only` includes every file the merge resolved); `InScopeFiles` reflects *commits' own diffs* and is what the developer actually authored. Derivation:
@@ -73,7 +73,7 @@ Spawn ALL of the following in parallel at T=0 in a **single message with multipl
 
 **Agent — Integration map:**
 - subagent_type: `integration-scanner`
-- Prompt: "Map inbound references, outbound dependencies, and infrastructure wiring for the following changed files: [ChangedFiles, one per line]. Flag any auth-boundary crossings (middleware, guards, interceptors, authorize-style decorators) and config/DI/event registration touching these paths. Do NOT analyse code quality — connections only, in your standard output format."
+- Prompt: "Map inbound references, outbound dependencies, and infrastructure wiring for the following changed files: {ChangedFiles, one per line}. Flag any auth-boundary crossings (middleware, guards, interceptors, authorize-style decorators) and config/DI/event registration touching these paths. Do NOT analyse code quality — connections only, in your standard output format."
 
 **Agent — Precedents** (always): use the `precedent-locator` prompt defined in Step 3 below — dispatch it here, not in Wave-2. Input it needs: `ChangedFiles` only.
 
@@ -86,7 +86,7 @@ Spawn ALL of the following in parallel at T=0 in a **single message with multipl
   Peer-mirror check.
 
   PeerPairs (orchestrator-computed):
-  [list of (new_file, peer_file) tuples]
+  {list of (new_file, peer_file) tuples}
 
   For each pair, Read BOTH files in full. Enumerate the peer's PUBLIC surface as rows:
   - every public method / exported function
@@ -119,23 +119,23 @@ While these agents run, the orchestrator produces the rest of the Discovery Map 
 ```
 ## Discovery Map
 
-Review type: [ReviewType]
-Scope: [scope argument]
-Commit/range: [git ref]
-Manifest changed: [yes|no]
-Lockstep self-review: [yes|no]
+Review type: {ReviewType}
+Scope: {scope argument}
+Commit/range: {git ref}
+Manifest changed: {yes|no}
+Lockstep self-review: {yes|no}
 
-Changed files ([N]):
+Changed files ({N}):
 
-  ## [cluster — shared directory prefix]
-    path/file.ext (+A -B) [role-tag] — top 1–3 symbols touched
+  ## {cluster — shared directory prefix}
+    path/file.ext (+A -B) {role-tag} — top 1–3 symbols touched
     ...
 
-Auth-boundary crossings: [integration-scanner, file:line]
-Inbound refs (files with ≥3 consumers): [integration-scanner]
-Outbound deps: [integration-scanner]
-Wiring/config: [integration-scanner]
-Peer mirrors: [peer-mirror agent output verbatim — Missing/Diverged rows only; Mirrored and Intentionally-absent rows are summarised as counts]
+Auth-boundary crossings: {integration-scanner, file:line}
+Inbound refs (files with ≥3 consumers): {integration-scanner}
+Outbound deps: {integration-scanner}
+Wiring/config: {integration-scanner}
+Peer mirrors: {peer-mirror agent output verbatim — Missing/Diverged rows only; Mirrored and Intentionally-absent rows are summarised as counts}
 ```
 
 **Clustering**: group files by longest shared directory prefix yielding clusters of 2+ files; singletons form their own cluster labelled with the filename. Emerges from the repo — no framework assumptions.
@@ -221,7 +221,7 @@ Spawn Quality + Security in parallel using the Agent tool. Each receives the `##
 
 **Dependencies lens** (`codebase-analyzer`, only when `ManifestChanged`; otherwise SKIP and omit `### Dependencies` in artifact):
   ```
-  Lockstep self-review: [yes|no]
+  Lockstep self-review: {yes|no}
 
   Identify the ecosystem from touched manifests (npm, Cargo, Go modules, PyPI/Poetry, Bundler, NuGet, Maven/Gradle, …). Parse the changed manifest(s) and list:
   1. Added deps: `name@version` with `file:line`.
@@ -237,7 +237,7 @@ Spawn Quality + Security in parallel using the Agent tool. Each receives the `##
 
 **Precedents lens** (`precedent-locator`):
   ```
-  Code review of [scope]. Changed files: [ChangedFiles].
+  Code review of {scope}. Changed files: {ChangedFiles}.
   Find similar past changes touching these files or nearby. Per precedent: commit hash, blast radius, follow-up fixes within 30 days, one-sentence takeaway. Distil composite lessons.
   ```
 
@@ -246,7 +246,7 @@ Spawn Quality + Security in parallel using the Agent tool. Each receives the `##
   Look up CVEs / GitHub Advisories / OSS Index entries for the target versions. Return LINKS. Per vulnerability: severity (Critical/High/Moderate/Low), affected range, whether bumped-to version is fixed.
 
   Dependencies:
-  [name@version per line — orchestrator-extracted]
+  {name@version per line — orchestrator-extracted}
   ```
 
 **Wait for Quality + Security to complete** before proceeding. Precedents / Dependencies / CVE from Wave-1 may still be running; gather them before Step 5, not before Step 4.
@@ -265,8 +265,8 @@ Once Wave-2 (Quality + Security) completes, dispatch 4a and 4b as parallel agent
 
 Otherwise spawn ONE `codebase-analyzer` in parallel with 4b:
   ```
-  Coherence rows (Quality — Predicate-set coherence): [paste verbatim]
-  Gating predicates in diff: [`file:line` list]
+  Coherence rows (Quality — Predicate-set coherence): {paste verbatim}
+  Gating predicates in diff: {`file:line` list}
 
   Per predicate, return: `predicate file:line | inputs | promise (what TRUE/matching branch implies) | consumer file:line | consumer filter | fulfils? | gap`.
 
@@ -285,10 +285,10 @@ Do NOT wait — 4b (Interaction Sweep) dispatches in the same message as 4a; 4c 
 
 Otherwise spawn ONE `codebase-analyzer` in parallel with 4a:
   ```
-  Quality Evidence: [verbatim]
-  Security Evidence: [verbatim]
-  Predicate-set coherence rows (verbatim from Quality's table — full Step 4a output is NOT required and is NOT awaited): [verbatim | "not applicable"]
-  Precedents: [verbatim if Wave-1 finished; else "deferred to Step 5"]
+  Quality Evidence: {verbatim}
+  Security Evidence: {verbatim}
+  Predicate-set coherence rows (verbatim from Quality's table — full Step 4a output is NOT required and is NOT awaited): {verbatim | "not applicable"}
+  Precedents: {verbatim if Wave-1 finished; else "deferred to Step 5"}
 
   Group evidence by shared entity, state machine, workflow, data flow path, API boundary, background process, or producer-consumer contract.
 
@@ -314,11 +314,11 @@ Otherwise spawn ONE `codebase-analyzer` in parallel with 4a:
 
 No agent dispatch. Compute inline while 4a / 4b run:
 
-1. **Coverage map** — parse Quality + Security outputs; for each finding row extract its `file:line` citation and map `file → [finding-id]`. Files with ≥1 row are covered; files with none are uncovered.
+1. **Coverage map** — parse Quality + Security outputs; for each finding row extract its `file:line` citation and map `file → {finding-id}`. Files with ≥1 row are covered; files with none are uncovered.
 2. **In-scope filter** — keep files tagged `[boundary]`, `[persistence]`, `[code]`, or `[hub]` AND whose diff delta (sum of added + removed lines) is ≥ 5. Drop `[test]` and `[config]` entirely; drop files with tiny deltas.
 3. **Emit gap findings** — walk uncovered in-scope files in role-tag priority `[boundary]` → `[persistence]` → `[hub]` → `[code]`. For each, open its diff region in `.git/code-review-patch.diff` and pick ONE risk-bearing line (first non-comment `+` line, or the function-declaration header if a whole function was added). Emit:
 
-   `G<ordinal> — file:line — \`<verbatim line>\` — [role-tag] — <risk class in 3-6 words>`
+   `G<ordinal> — file:line — \`<verbatim line>\` — {role-tag} — <risk class in 3-6 words>`
 
    Risk-bearing behavior class (diff introduces one of): state mutation | I/O (DB/network/file) | error path | conditional on mutable state | concurrent/shared-state access | public API surface change. Maximum **5** gap findings; stop once reached. Citation contract applies.
 
@@ -330,7 +330,7 @@ No agent dispatch. Compute inline while 4a / 4b run:
 
 **Resolution integrity check** (load-bearing): when Precedents returns a commit that claims to resolve or supersede a current finding, run `git merge-base --is-ancestor <precedent-hash> <TIP>` before accepting the resolution.
   - Ancestor: the precedent IS in the reviewed branch; mark the finding `resolved-by: <hash>` and demote its severity to 💭 (kept for context).
-  - Not ancestor: the precedent is on a different branch / not merged; treat it as **context only**. Do NOT mark the finding resolved; annotate the precedent's row in `## Precedents` third column `NOT ancestor of [TIP] (context only)`.
+  - Not ancestor: the precedent is on a different branch / not merged; treat it as **context only**. Do NOT mark the finding resolved; annotate the precedent's row in `## Precedents` third column `NOT ancestor of {TIP} (context only)`.
   - Orchestrator unable to run git (e.g., `staged` / `working` scope with no commit): skip the check and annotate `resolution: unverified`.
 
 1. **Compile and classify evidence** per lens:
@@ -373,7 +373,7 @@ Before writing the artifact, spawn ONE `claim-verifier` whose sole job is to gro
   Verify each finding below against the actual repository state. You have Read access to the whole tree.
 
   Findings (verbatim from Step 5):
-  [paste the full reconciled severity map — each finding with its file:line citation, verbatim line quote per the citation contract, and severity tier]
+  {paste the full reconciled severity map — each finding with its file:line citation, verbatim line quote per the citation contract, and severity tier}
 
   For EACH finding:
   1. `grep -n` the verbatim quote in the cited file. Absent → Falsified. Present at a different line → rewrite the citation to the actual line, then continue. Present at cited line → continue.
@@ -410,7 +410,7 @@ Before writing the artifact, spawn ONE `claim-verifier` whose sole job is to gro
 ## Step 7: Write the Review Document
 
 1. **Determine metadata**:
-   - Filename: `thoughts/shared/reviews/YYYY-MM-DD_HH-MM-SS_[scope-kebab].md`
+   - Filename: `thoughts/shared/reviews/YYYY-MM-DD_HH-MM-SS_{scope-kebab}.md`
    - Repository: git root basename (fallback: cwd basename).
    - Branch + commit: from git-context injected at session start, or `git branch --show-current` / `git rev-parse --short HEAD` (fallback: `no-branch` / `no-commit`).
    - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
@@ -435,31 +435,31 @@ Before writing the artifact, spawn ONE `claim-verifier` whose sole job is to gro
 
 **Advisor prose**, when advisor ran, is pasted verbatim as a blockquote at the top of `## Recommendation`, not as a standalone section.
 
-**Template shape**: Read the full template at `templates/review.md` (house pattern per `.rpiv/guidance/skills/architecture.md:66` — `templates/` subfolder, runtime-read, never inlined). At emission time: Read `templates/review.md`, fill every `[placeholder]` with reconciled-and-verified values from Steps 5 and 6, apply the section-omission rules above (delete the whole section AND its trailing separator line when its input is empty), strip the leading `<!-- -->` comment, and Write the result to the target path.
+**Template shape**: Read the full template at `templates/review.md` (house pattern per `.rpiv/guidance/skills/architecture.md:66` — `templates/` subfolder, runtime-read, never inlined). At emission time: Read `templates/review.md`, fill every `{placeholder}` with reconciled-and-verified values from Steps 5 and 6, apply the section-omission rules above (delete the whole section AND its trailing separator line when its input is empty), strip the leading `<!-- -->` comment, and Write the result to the target path.
 
 ## Step 8: Present Summary
 
 ```
 Review written to:
-`thoughts/shared/reviews/[filename].md`
+`thoughts/shared/reviews/{filename}.md`
 
-Severity:     [C] critical · [I] important · [S] suggestions
-Lenses:       [Q] quality · [Se] security · [D] dependencies
-Verification: [V] verified · [W] weakened · [F] falsified (dropped)
-Advisor:      [adjudicated | inline]
-Status:       [approved | needs_changes | requesting_changes]
+Severity:     {C} critical · {I} important · {S} suggestions
+Lenses:       {Q} quality · {Se} security · {D} dependencies
+Verification: {V} verified · {W} weakened · {F} falsified (dropped)
+Advisor:      {adjudicated | inline}
+Status:       {approved | needs_changes | requesting_changes}
 
 Top items:
-1. [ID] — `file:line` — [headline]
-2. [ID] — `file:line` — [headline]
-3. [ID] — `file:line` — [headline]
+1. {ID} — `file:line` — {headline}
+2. {ID} — `file:line` — {headline}
+3. {ID} — `file:line` — {headline}
 
 Ask follow-ups.
 ```
 
 ## Step 9: Handle Follow-ups
 
-- If the user asks for deeper analysis of a specific finding, spawn a targeted `codebase-analyzer` on that area (1 agent max) and append a `## Follow-up [ISO 8601 timestamp]` section using the Edit tool. The section heading's timestamp is the append-time record — no frontmatter update needed.
+- If the user asks for deeper analysis of a specific finding, spawn a targeted `codebase-analyzer` on that area (1 agent max) and append a `## Follow-up {ISO 8601 timestamp}` section using the Edit tool. The section heading's timestamp is the append-time record — no frontmatter update needed.
 - Never rewrite prior findings; only append. Retired IDs (Falsified in Step 6) stay retired; follow-ups introduce new IDs with the same lens-prefix scheme (next ordinal).
 
 ## Important Notes

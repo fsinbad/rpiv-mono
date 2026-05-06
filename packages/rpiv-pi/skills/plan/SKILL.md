@@ -48,20 +48,20 @@ Read the Ordering Constraints and File Map from the design artifact. Apply phasi
 Present phase outline and get developer feedback BEFORE writing details:
 
 ```
-Here's my proposed plan structure based on the design at [path]:
+Here's my proposed plan structure based on the design at {path}:
 
 ## Implementation Phases:
-1. [Phase name] - [what it accomplishes] ([N] files)
-2. [Phase name] - [what it accomplishes] ([N] files)
-3. [Phase name] - [what it accomplishes] ([N] files)
+1. {Phase name} - {what it accomplishes} ({N} files)
+2. {Phase name} - {what it accomplishes} ({N} files)
+3. {Phase name} - {what it accomplishes} ({N} files)
 
-Phases [2] and [3] can run in parallel after Phase 1.
-Total: [N] files across [M] phases.
+Phases {2} and {3} can run in parallel after Phase 1.
+Total: {N} files across {M} phases.
 
 Does this phasing make sense? Should I adjust the order or granularity?
 ```
 
-Use the `ask_user_question` tool to confirm the phase structure. Question: "[N] phases, [M] total files. Does this structure work?". Header: "Phases". Options: "Proceed (Recommended)" (Write the detailed plan with code blocks and success criteria); "Adjust phases" (Split, merge, or reorder phases before writing); "Change scope" (Add or remove files from the plan).
+Use the `ask_user_question` tool to confirm the phase structure. Question: "{N} phases, {M} total files. Does this structure work?". Header: "Phases". Options: "Proceed (Recommended)" (Write the detailed plan with code blocks and success criteria); "Adjust phases" (Split, merge, or reorder phases before writing); "Change scope" (Add or remove files from the plan).
 
 Get feedback on structure before writing details.
 
@@ -86,45 +86,45 @@ After structure approval, write the plan **incrementally** — skeleton first, t
 
 ```markdown
 ---
-date: [Current date and time with timezone in ISO format]
-planner: [User from injected git context]
-git_commit: [Current commit hash]
-branch: [Current branch name]
-repository: [Repository name]
-topic: "[Feature/Task Name]"
+date: {Current date and time with timezone in ISO format}
+author: {User from injected git context}
+commit: {Current commit hash}
+branch: {Current branch name}
+repository: {Repository name}
+topic: "{Feature/Task Name}"
 tags: [plan, relevant-component-names]
 status: ready
-design_source: "[path to design artifact]"
-last_updated: [Same ISO timestamp as `date:` above]
-last_updated_by: [User from injected git context]
+parent: "{path to design artifact}"
+last_updated: {Same ISO timestamp as `date:` above}
+last_updated_by: {User from injected git context}
 ---
 
-# [Feature/Task Name] Implementation Plan
+# {Feature/Task Name} Implementation Plan
 
 ## Overview
 
-[Brief description of what we're implementing and why. Reference design artifact.]
+{Brief description of what we're implementing and why. Reference design artifact.}
 
 ## Desired End State
 
-[From design artifact's Desired End State / Summary — what "done" looks like and how to verify it]
+{From design artifact's Desired End State / Summary — what "done" looks like and how to verify it}
 
 ## What We're NOT Doing
 
-[From design artifact's Scope → Not Building]
+{From design artifact's Scope → Not Building}
 
-## Phase 1: [Descriptive Name]
+## Phase 1: {Descriptive Name}
 
 ### Overview
-[What this phase accomplishes]
+{What this phase accomplishes}
 
 ### Changes Required:
 
-#### 1. [Component/File Group]
+#### 1. {Component/File Group}
 **File**: `path/to/file.ext`
-**Changes**: [Summary of changes]
+**Changes**: {Summary of changes}
 
-```[language]
+```{language}
 // Code from design artifact's Architecture section
 ```
 
@@ -136,39 +136,39 @@ last_updated_by: [User from injected git context]
 - [ ] Tests pass: `pnpm test`
 
 #### Manual Verification:
-- [ ] [From design's Verification Notes — specific visual/behavioral check]
-- [ ] [Component-specific verification]
+- [ ] {From design's Verification Notes — specific visual/behavioral check}
+- [ ] {Component-specific verification}
 
 ---
 
-## Phase 2: [Descriptive Name]
+## Phase 2: {Descriptive Name}
 
-[Similar structure with both automated and manual success criteria...]
+{Similar structure with both automated and manual success criteria...}
 
 ---
 
 ## Testing Strategy
 
 ### Automated:
-- [Standard project checks from success criteria]
+- {Standard project checks from success criteria}
 
 ### Manual Testing Steps:
-1. [From design's Verification Notes — converted to step-by-step]
-2. [Another verification step]
+1. {From design's Verification Notes — converted to step-by-step}
+2. {Another verification step}
 
 ## Performance Considerations
 
-[From design artifact — copied directly]
+{From design artifact — copied directly}
 
 ## Migration Notes
 
-[From design artifact — copied directly. If applicable: schema changes, data migration, rollback strategy, backwards compatibility. Empty if not applicable.]
+{From design artifact — copied directly. If applicable: schema changes, data migration, rollback strategy, backwards compatibility. Empty if not applicable.}
 
 ## References
 
-- Design: `thoughts/shared/designs/[file].md`
-- Research: `thoughts/shared/research/[file].md`
-- Original ticket: `thoughts/me/tickets/[file].md`
+- Design: `thoughts/shared/designs/{file}.md`
+- Research: `thoughts/shared/research/{file}.md`
+- Original ticket: `thoughts/me/tickets/{file}.md`
 ```
 
 ## Step 4: Review
@@ -176,16 +176,16 @@ last_updated_by: [User from injected git context]
 1. **Present the plan location**:
    ```
    Implementation plan written to:
-   `thoughts/shared/plans/[filename].md`
+   `thoughts/shared/plans/{filename}.md`
 
-   [N] phases, [M] total file changes.
+   {N} phases, {M} total file changes.
 
    Please review:
    - Are the phases properly scoped for worktree execution?
    - Are the success criteria specific enough?
    - Any phase that should be split or merged?
 
-   When ready, run `/skill:implement thoughts/shared/plans/[filename].md Phase 1`
+   When ready, run `/skill:implement thoughts/shared/plans/{filename}.md Phase 1`
    ```
 
 2. **Iterate based on feedback** — be ready to:
@@ -268,7 +268,7 @@ last_updated_by: [User from injected git context]
 **Convert design's Verification Notes to success criteria:**
 - Prose warnings → specific automated commands or manual steps
 - "Test production builds" → `pnpm build && verify in built app`
-- "Verify scrollbar appearance" → `[ ] Open [component], scroll, observe slim scrollbar`
+- "Verify scrollbar appearance" → `[ ] Open {component}, scroll, observe slim scrollbar`
 - "Do NOT use X" → `grep -r "X" src/ should return 0 matches`
 
 ## Important Notes

@@ -6,7 +6,7 @@
 - Total test cases: 6
 - Estimated execution: ~35 minutes
 - Last generated: 2026-03-31
-- Git commit: abc1234
+- Commit: abc1234
 
 ## Smoke Test Subset
 | Priority | TC ID | Title | Est. Time |

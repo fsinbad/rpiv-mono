@@ -1,16 +1,16 @@
 ```markdown
 # Project Overview
-[1-2 sentences: what it is, tech stack]
+{1-2 sentences: what it is, tech stack}
 
 # Architecture
-[monorepo structure tree + dependency flow diagram]
-[process architecture if applicable]
+{monorepo structure tree + dependency flow diagram}
+{process architecture if applicable}
 
 # Commands
-[key commands table — always bare, never wrapped in <important if>]
+{key commands table — always bare, never wrapped in <important if>}
 
 # Business Context
-[1-2 sentences if applicable]
+{1-2 sentences if applicable}
 ```
 
 The sections above (Overview, Architecture, Commands, Business Context) are foundational — they stay bare because they're relevant to virtually every task.
@@ -43,4 +43,4 @@ Good root conditions — things that span multiple layers:
 </important>
 ```
 
-Each block should contain only rules that share the same trigger condition. If a codebase has 3 distinct convention areas, that's 3 blocks — not 1 block with a broad condition. Layer-specific checklists (adding a controller, adding a repository) go in the subfolder architecture.md using `<important if="you are adding a new [entity] to this layer">`.
+Each block should contain only rules that share the same trigger condition. If a codebase has 3 distinct convention areas, that's 3 blocks — not 1 block with a broad condition. Layer-specific checklists (adding a controller, adding a repository) go in the subfolder architecture.md using `<important if="you are adding a new {entity} to this layer">`.

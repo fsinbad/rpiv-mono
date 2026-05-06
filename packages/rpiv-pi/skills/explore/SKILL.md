@@ -60,10 +60,10 @@ Present the candidate set and default dimensions to the developer before per-can
 1. **Show candidates and dimensions:**
 
    ```
-   ## Candidates for: [Topic]
+   ## Candidates for: {Topic}
 
-   1. [Candidate A] — [one-line what it is]
-   2. [Candidate B] — [one-line what it is]
+   1. {Candidate A} — {one-line what it is}
+   2. {Candidate B} — {one-line what it is}
    ...
 
    Dimensions (default 6; drop any that don't apply):
@@ -71,7 +71,7 @@ Present the candidate set and default dimensions to the developer before per-can
    - migration-cost · verification-cost · novelty
    ```
 
-2. **Confirm via the `ask_user_question` tool with the following question:** "[N] candidates, [D] dimensions. Begin per-candidate fit dispatch?". Header: "Candidates". Options: "Proceed (Recommended)" (Begin per-candidate fit dispatch with all [N] candidates and all [D] dimensions); "Adjust candidates or dimensions" (Rename, add, or drop candidates; drop dimensions that don't apply); "Re-generate candidates" (Candidates look wrong — re-run Step 2 with adjusted scope).
+2. **Confirm via the `ask_user_question` tool with the following question:** "{N} candidates, {D} dimensions. Begin per-candidate fit dispatch?". Header: "Candidates". Options: "Proceed (Recommended)" (Begin per-candidate fit dispatch with all {N} candidates and all {D} dimensions); "Adjust candidates or dimensions" (Rename, add, or drop candidates; drop dimensions that don't apply); "Re-generate candidates" (Candidates look wrong — re-run Step 2 with adjusted scope).
 
 3. **Handle developer input:**
 
@@ -95,13 +95,13 @@ Skip either agent for a candidate when no dimension of that anchor-type was kept
 **Per-candidate prompt shape** (use the same outer template, fill in candidate name and kept dimensions):
 
 ```
-Candidate: [name] — [one-line what it is]
-Topic: [topic from Step 1]
+Candidate: {name} — {one-line what it is}
+Topic: {topic from Step 1}
 
-Score this single candidate on the following dimensions, each with concrete evidence ([file:line] for codebase, doc/source link for external). Report findings as one section per dimension.
+Score this single candidate on the following dimensions, each with concrete evidence ({file:line} for codebase, doc/source link for external). Report findings as one section per dimension.
 
 Dimensions for this run:
-- [dimension name] — [one-line of what to look for]
+- {dimension name} — {one-line of what to look for}
 - ...
 
 Do NOT compare against other candidates; another agent handles each one separately. Focus on depth of evidence for THIS candidate.
@@ -120,13 +120,13 @@ Wait for ALL agents to complete before proceeding.
 
 ### Step 6: Determine Metadata and Filename
 
-- Filename format: `thoughts/shared/solutions/YYYY-MM-DD_HH-MM-SS_[topic].md`
+- Filename format: `thoughts/shared/solutions/YYYY-MM-DD_HH-MM-SS_{topic}.md`
   - YYYY-MM-DD_HH-MM-SS: Current date and time (e.g., 2025-10-11_14-30-22)
-  - [topic]: Brief kebab-case description
+  - {topic}: Brief kebab-case description
 - Repository name: from git root basename, or current directory basename if not a git repo
 - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly)
 - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
-- Researcher: use the User from the git context injected at the start of the session (fallback: "unknown")
+- Author: use the User from the git context injected at the start of the session (fallback: "unknown")
 - If metadata unavailable: use "unknown" for commit/branch
 
 ### Step 7: Generate Solutions Document
@@ -136,94 +136,94 @@ Wait for ALL agents to complete before proceeding.
 
   ```markdown
   ---
-  date: [Current date and time with timezone in ISO format]
-  researcher: [Researcher name]
-  git_commit: [Current commit hash]
-  branch: [Current branch name]
-  repository: [Repository name]
-  topic: "[Feature/Problem]"
+  date: {Current date and time with timezone in ISO format}
+  author: {Author name}
+  commit: {Current commit hash}
+  branch: {Current branch name}
+  repository: {Repository name}
+  topic: "{Feature/Problem}"
   confidence: high | medium | low
   complexity: low | medium | high
   status: ready | awaiting_input | blocked
   tags: [solutions, component-names]
-  last_updated: [Same ISO timestamp as `date:` above]
-  last_updated_by: [Researcher name]
+  last_updated: {Same ISO timestamp as `date:` above}
+  last_updated_by: {Author name}
   ---
 
-  # Solution Analysis: [Feature/Problem]
+  # Solution Analysis: {Feature/Problem}
 
-  **Date**: [Current date and time with timezone from step 6]
-  **Researcher**: [Researcher name from step 6]
-  **Git Commit**: [Current commit hash from step 6]
-  **Branch**: [Current branch name from step 6]
-  **Repository**: [Repository name]
+  **Date**: {Current date and time with timezone from step 6}
+  **Author**: {Author name from step 6}
+  **Commit**: {Current commit hash from step 6}
+  **Branch**: {Current branch name from step 6}
+  **Repository**: {Repository name}
 
   ## Research Question
-  [Original user query]
+  {Original user query}
 
   ## Summary
-  **Problem**: [What we're solving]
-  **Recommended**: [Option name] - [One sentence why]
-  **Effort**: [Low/Med/High] ([N days])
-  **Confidence**: [High/Med/Low]
+  **Problem**: {What we're solving}
+  **Recommended**: {Option name} - {One sentence why}
+  **Effort**: {Low/Med/High} ({N days})
+  **Confidence**: {High/Med/Low}
 
   ## Problem Statement
 
   **Requirements:**
-  - [Requirement 1]
-  - [Requirement 2]
+  - {Requirement 1}
+  - {Requirement 2}
 
   **Constraints:**
-  - [Hard constraint - must respect]
-  - [Soft constraint - should consider]
+  - {Hard constraint - must respect}
+  - {Soft constraint - should consider}
 
   **Success criteria:**
-  - [What "done" looks like]
+  - {What "done" looks like}
 
   ## Current State
 
   **Existing implementation:**
-  [What exists with file:line references]
+  {What exists with file:line references}
 
   **Relevant patterns:**
-  - [Pattern 1]: `file.ext:line` - Used in [N] places
-  - [Pattern 2]: `file.ext:line` - Used in [N] places
+  - {Pattern 1}: `file.ext:line` - Used in {N} places
+  - {Pattern 2}: `file.ext:line` - Used in {N} places
 
   **Integration points:**
-  - `file.ext:line` - [Where feature hooks in]
-  - `file.ext:line` - [Another integration point]
+  - `file.ext:line` - {Where feature hooks in}
+  - `file.ext:line` - {Another integration point}
 
   ## Solution Options
 
-  ### Option 1: [Name]
+  ### Option 1: {Name}
   **How it works:**
-  [2-3 sentence description + implementation approach]
+  {2-3 sentence description + implementation approach}
 
   **Pros:**
-  - [Advantage with evidence from codebase]
-  - [Advantage with evidence]
+  - {Advantage with evidence from codebase}
+  - {Advantage with evidence}
 
   **Cons:**
-  - [Disadvantage with impact]
+  - {Disadvantage with impact}
 
-  **Complexity:** [Low/Med/High] (~[N] days)
-  - Files to create: [N] (~[X] lines)
-  - Files to modify: [N] (~[X] lines)
-  - Risk level: [Low/Med/High]
+  **Complexity:** {Low/Med/High} (~{N} days)
+  - Files to create: {N} (~{X} lines)
+  - Files to modify: {N} (~{X} lines)
+  - Risk level: {Low/Med/High}
 
-  ### Option 2: [Alternative Name]
-  [Same structure as Option 1]
+  ### Option 2: {Alternative Name}
+  {Same structure as Option 1}
 
-  ### Option 3: [Another Alternative]
-  [Same structure as Option 1]
+  ### Option 3: {Another Alternative}
+  {Same structure as Option 1}
 
   ## Comparison
 
   | Criteria | Option 1 | Option 2 | Option 3 |
   |----------|----------|----------|----------|
-  | Complexity | [L/M/H] | [L/M/H] | [L/M/H] |
-  | Codebase fit | [H/M/L] | [H/M/L] | [H/M/L] |
-  | Risk | [L/M/H] | [L/M/H] | [L/M/H] |
+  | Complexity | {L/M/H} | {L/M/H} | {L/M/H} |
+  | Codebase fit | {H/M/L} | {H/M/L} | {H/M/L} |
+  | Risk | {L/M/H} | {L/M/H} | {L/M/H} |
 
   ## Recommendation
 
@@ -231,81 +231,81 @@ Wait for ALL agents to complete before proceeding.
 
   **(A) When ≥1 candidate clears the fit filter:**
 
-  **Selected:** [Option N]
+  **Selected:** {Option N}
 
   **Rationale:**
-  - [Key reason with evidence]
-  - [Key reason with evidence]
+  - {Key reason with evidence}
+  - {Key reason with evidence}
   - ...
 
   **Why not alternatives:**
-  - Option X: [Reason]
+  - Option X: {Reason}
 
   **Trade-offs:**
-  - Accepting [limitation] for [benefit]
+  - Accepting {limitation} for {benefit}
 
   **Implementation approach:**
-  1. [Phase 1] - [What to build]
+  1. {Phase 1} - {What to build}
   2. ...
 
   **Integration points:**
-  - `file.ext:line` - [Specific change]
-  - `file.ext:line` - [Specific change]
+  - `file.ext:line` - {Specific change}
+  - `file.ext:line` - {Specific change}
 
   **Patterns to follow:**
-  - [Pattern]: `file.ext:line`
+  - {Pattern}: `file.ext:line`
 
   **Risks:**
-  - [Risk]: [Mitigation]
+  - {Risk}: {Mitigation}
 
   **(B) When every candidate fails the fit filter:**
 
   **No-fit:** every candidate surfaced a blocking concern on at least one kept dimension.
 
   **Per-candidate blockers:**
-  - [Option 1]: [blocking dimension] — [evidence with file:line or doc link]
-  - [Option 2]: [blocking dimension] — [evidence]
+  - {Option 1}: {blocking dimension} — {evidence with file:line or doc link}
+  - {Option 2}: {blocking dimension} — {evidence}
   - ...
 
   **Recommended next step:**
-  - [Re-scope the question] — [how the topic should narrow/widen so candidates can clear]
-  - OR [Expand the candidate pool] — [what new candidate sources to enumerate; e.g., named ecosystem option not surfaced by Step 2]
+  - {Re-scope the question} — {how the topic should narrow/widen so candidates can clear}
+  - OR {Expand the candidate pool} — {what new candidate sources to enumerate; e.g., named ecosystem option not surfaced by Step 2}
 
   **Frontmatter overrides:** set `confidence: low` and `status: blocked`.
 
   ## Scope Boundaries
-  - [What we're building]
-  - [What we're NOT doing]
+  - {What we're building}
+  - {What we're NOT doing}
 
   ## Testing Strategy
 
   **Unit tests:**
-  - [Key test scenario 1]
+  - {Key test scenario 1}
   - ...
 
   **Integration tests:**
-  - [End-to-end scenario 1]
+  - {End-to-end scenario 1}
   - ...
 
   **Manual verification:**
-  - [ ] [Manual test 1]
+  - [ ] {Manual test 1}
   - [ ] ...
 
   ## Open Questions
   **Resolved during research:**
-  - [Question that was answered] - [Answer with evidence from file:line]
+  - {Question that was answered} - {Answer with evidence from file:line}
 
   **Requires user input:**
-  - [Business or design question] - [Default assumption for planning]
+  - {Business or design question} - {Default assumption for planning}
 
   **Blockers:**
-  - [Critical unknown that prevents implementation] - [How to unblock]
+  - {Critical unknown that prevents implementation} - {How to unblock}
 
   ## References
 
-  - `thoughts/shared/research/[file].md` - [Context]
-  - `src/file.ext:line` - [Similar implementation]
-  - `thoughts/shared/[file].md` - [Historical decision]
+  - `thoughts/shared/research/{file}.md` - {Context}
+  - `src/file.ext:line` - {Similar implementation}
+  - `thoughts/shared/{file}.md` - {Historical decision}
   ```
 
 ### Step 8: Present Findings
@@ -318,7 +318,7 @@ Wait for ALL agents to complete before proceeding.
 
 - If user has questions, append to same document
 - Update frontmatter: `last_updated` and `last_updated_by`
-- Add section: `## Follow-up Analysis [timestamp]`
+- Add section: `## Follow-up Analysis {timestamp}`
 - Spawn additional agents as needed
 
 ## Important Notes

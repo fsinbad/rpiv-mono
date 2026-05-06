@@ -6,7 +6,7 @@ priority: high
 type: functional
 status: draft
 tags: ["auth", "login", "magic-link", "customer-portal", "happy-path"]
-generated_at_commit: abc1234
+commit: abc1234
 ---
 
 # Customer magic-link login

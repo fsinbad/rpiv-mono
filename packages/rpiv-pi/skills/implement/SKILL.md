@@ -37,14 +37,14 @@ If you encounter a mismatch:
 - STOP and think deeply about why the plan can't be followed
 - Present the issue clearly:
   ```
-  Issue in Phase [N]:
-  Expected: [what the plan says]
-  Found: [actual situation]
-  Why this matters: [explanation]
+  Issue in Phase {N}:
+  Expected: {what the plan says}
+  Found: {actual situation}
+  Why this matters: {explanation}
 
   ```
 
-  Use the `ask_user_question` tool to resolve the mismatch. Question: "[Brief summary of the mismatch]". Header: "Mismatch". Options: "Follow the plan" (Adapt the plan's approach to the current code state); "Skip this change" (Move on without this change — it may not be needed); "Update the plan" (The plan needs to be revised before continuing).
+  Use the `ask_user_question` tool to resolve the mismatch. Question: "{Brief summary of the mismatch}". Header: "Mismatch". Options: "Follow the plan" (Adapt the plan's approach to the current code state); "Skip this change" (Move on without this change — it may not be needed); "Update the plan" (The plan needs to be revised before continuing).
 
 ## Verification Approach
 

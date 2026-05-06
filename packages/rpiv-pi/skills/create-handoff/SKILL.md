@@ -20,7 +20,7 @@ Use the following information to understand how to create your document:
      - Repository name: from git root basename, or current directory basename if not a git repo
      - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly)
      - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
-     - Researcher: use the User from the git context injected at the start of the session (fallback: "unknown")
+     - Author: use the User from the git context injected at the start of the session (fallback: "unknown")
      - If metadata unavailable: use "unknown" for commit/branch
     - Examples:
         - `thoughts/shared/handoffs/2025-01-08_13-55-22_create-context-compaction.md`
@@ -31,17 +31,17 @@ using the above conventions, write your document. use the defined filepath, and 
 Use the following template structure:
 ```markdown
 ---
-date: [Current date and time with timezone in ISO format]
-researcher: [Researcher name from thoughts status]
-git_commit: [Current commit hash]
-branch: [Current branch name]
-repository: [Repository name]
-topic: "[Feature/Task Name] [Work Type]" # Customize work type: Implementation Strategy, Bug Fix, Research, Feature Implementation, etc.
+date: {Current date and time with timezone in ISO format}
+author: {Author name from thoughts status}
+commit: {Current commit hash}
+branch: {Current branch name}
+repository: {Repository name}
+topic: "{Feature/Task Name} {Work Type}" # Customize work type: Implementation Strategy, Bug Fix, Research, Feature Implementation, etc.
 tags: [implementation, strategy, relevant-component-names]
 status: complete
-last_updated: [Same ISO timestamp as `date:` above]
-last_updated_by: [Researcher name]
-type: [work_type] # Options: implementation_strategy, bug_fix, research, refactoring, feature_development, etc.
+last_updated: {Same ISO timestamp as `date:` above}
+last_updated_by: {Author name}
+type: {work_type} # Options: implementation_strategy, bug_fix, research, refactoring, feature_development, etc.
 ---
 
 # Handoff: {very concise description}

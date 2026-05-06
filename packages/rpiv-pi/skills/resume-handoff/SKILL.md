@@ -71,37 +71,37 @@ Then wait for the user's input.
 
 1. **Present comprehensive analysis**:
    ```
-   I've analyzed the handoff from [date] by [researcher]. Here's the current situation:
+   I've analyzed the handoff from {date} by {author}. Here's the current situation:
 
    **Original Tasks:**
-   - [Task 1]: [Status from handoff] → [Current verification]
-   - [Task 2]: [Status from handoff] → [Current verification]
+   - {Task 1}: {Status from handoff} → {Current verification}
+   - {Task 2}: {Status from handoff} → {Current verification}
 
    **Key Learnings Validated:**
-   - [Learning with file:line reference] - [Still valid/Changed]
-   - [Pattern discovered] - [Still applicable/Modified]
+   - {Learning with file:line reference} - {Still valid/Changed}
+   - {Pattern discovered} - {Still applicable/Modified}
 
    **Recent Changes Status:**
-   - [Change 1] - [Verified present/Missing/Modified]
-   - [Change 2] - [Verified present/Missing/Modified]
+   - {Change 1} - {Verified present/Missing/Modified}
+   - {Change 2} - {Verified present/Missing/Modified}
 
    **Artifacts Reviewed:**
-   - [Document 1]: [Key takeaway]
-   - [Document 2]: [Key takeaway]
+   - {Document 1}: {Key takeaway}
+   - {Document 2}: {Key takeaway}
 
    **Recommended Next Actions:**
    Based on the handoff's action items and current state:
-   1. [Most logical next step based on handoff]
-   2. [Second priority action]
-   3. [Additional tasks discovered]
+   1. {Most logical next step based on handoff}
+   2. {Second priority action}
+   3. {Additional tasks discovered}
 
    **Potential Issues Identified:**
-   - [Any conflicts or regressions found]
-   - [Missing dependencies or broken code]
+   - {Any conflicts or regressions found}
+   - {Missing dependencies or broken code}
 
    ```
 
-   Use the `ask_user_question` tool to confirm the approach. Question: "[Summary of recommended next action]. Proceed?". Header: "Resume". Options: "Proceed (Recommended)" (Begin with [recommended action 1]); "Adjust approach" (Change the order or scope of next steps); "Re-analyze" (The codebase has changed — re-verify state first).
+   Use the `ask_user_question` tool to confirm the approach. Question: "{Summary of recommended next action}. Proceed?". Header: "Resume". Options: "Proceed (Recommended)" (Begin with {recommended action 1}); "Adjust approach" (Change the order or scope of next steps); "Re-analyze" (The codebase has changed — re-verify state first).
 
 ### Step 3: Create Action Plan
 
@@ -114,9 +114,9 @@ Then wait for the user's input.
    ```
    I've created a task list based on the handoff and current analysis:
 
-   [Show todo list]
+   {Show todo list}
 
-   Ready to begin with the first task: [task description]?
+   Ready to begin with the first task: {task description}?
    ```
 
 ### Step 4: Begin Implementation
@@ -191,17 +191,17 @@ Then wait for the user's input.
 User: /skill:resume-handoff thoughts/shared/handoffs/2025-01-08_14-30-15_webhook-validation.md
 Assistant: Let me read and analyze that handoff document...
 
-[Reads handoff completely]
-[Spawns research agents]
-[Waits for completion]
-[Reads identified files]
+{Reads handoff completely}
+{Spawns research agents}
+{Waits for completion}
+{Reads identified files}
 
-I've analyzed the handoff from [date]. Here's the current situation...
+I've analyzed the handoff from {date}. Here's the current situation...
 
-[Presents analysis]
+{Presents analysis}
 
 Shall I proceed with implementing the webhook validation fix, or would you like to adjust the approach?
 
 User: Yes, proceed with the webhook validation
-Assistant: [Creates todo list and begins implementation]
+Assistant: {Creates todo list and begins implementation}
 ```

@@ -1,13 +1,20 @@
 ```markdown
 ---
+date: {YYYY-MM-DD}
+author: {User from injected git context}
+commit: {commit-hash}
+branch: {Current branch name}
+repository: {Repository name}
+topic: "{Feature Name}"
+tags: [test-cases, outline, {module}, {feature-slug}]
+status: pending | partial | generated
 feature: "{Feature Name}"
 module: {MOD}
 portal: {Portal Name}
 slug: {feature-slug}
-status: pending | partial | generated
-generated: {YYYY-MM-DD}
-git_commit: {commit-hash}
 tc_count: 0
+last_updated: {YYYY-MM-DD}
+last_updated_by: {User from injected git context}
 ---
 
 ## Routes
@@ -39,5 +46,5 @@ A: {Developer's answer}
 - Checkpoint History records dated Q&A pairs from developer checkpoints
 - If a feature has no frontend routes (e.g., widget), list the component entry point instead
 - If status is "partial", add an `## Existing Test Cases` section listing TC IDs found by the test-case-locator agent
-- git_commit records which commit was analyzed during outline generation — used for staleness detection by consuming skills
+- commit records which commit was analyzed during outline generation — used for staleness detection by consuming skills
 - tc_count starts at 0 and is updated by write-test-cases when TCs are created

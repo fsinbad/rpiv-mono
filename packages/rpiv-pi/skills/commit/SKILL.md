@@ -40,7 +40,7 @@ You are tasked with creating git commits for repository changes.
 3. **Present your plan to the user:**
    - List the files you plan to add for each commit
    - Show the commit message(s) you'll use
-   - Use the `ask_user_question` tool to confirm the commit plan. Question: "[N] commit(s) with [M] files. Proceed?". Header: "Commit". Options: "Commit (Recommended)" (Create the commit(s) as planned); "Adjust" (Change the grouping or commit messages); "Review files" (Show me the full diff before committing).
+   - Use the `ask_user_question` tool to confirm the commit plan. Question: "{N} commit(s) with {M} files. Proceed?". Header: "Commit". Options: "Commit (Recommended)" (Create the commit(s) as planned); "Adjust" (Change the grouping or commit messages); "Review files" (Show me the full diff before committing).
 
 4. **Execute upon confirmation:**
    - Use `git add` with specific files (never use `-A` or `.`)

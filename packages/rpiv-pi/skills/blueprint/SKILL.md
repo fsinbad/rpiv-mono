@@ -62,9 +62,9 @@ This is NOT a discovery sweep. Focus on DEPTH (how things work, what patterns to
    - Instruct it to return LINKS with findings — include those links in the final design artifact
 
    Agent prompts should focus on (labeled by target agent):
-   - **codebase-pattern-finder**: "Find the implementation pattern I should model after for [feature type]"
+   - **codebase-pattern-finder**: "Find the implementation pattern I should model after for {feature type}"
 
-   NOT: "Find all files related to X" — that's discovery's job, upstream of this skill. NOT: "Analyze [component] integration" — the integration surface is in research's `## Integration Points`; if a specific anchor needs deeper inspection, defer to the on-demand `codebase-analyzer` dispatch in Step 5 (correction path) or Step 7a (mid-generation gap).
+   NOT: "Find all files related to X" — that's discovery's job, upstream of this skill. NOT: "Analyze {component} integration" — the integration surface is in research's `## Integration Points`; if a specific anchor needs deeper inspection, defer to the on-demand `codebase-analyzer` dispatch in Step 5 (correction path) or Step 7a (mid-generation gap).
 
 2. **Read all key files identified by agents** into the main context — especially the pattern templates you'll model after.
 
@@ -120,11 +120,11 @@ Use the grounded-questions-one-at-a-time pattern. Use a **❓ Question:** prefix
 
 **Question patterns by ambiguity type:**
 
-- **Pattern conflict**: "Found 2 patterns for [X]: [pattern A] at `file:line` and [pattern B] at `file:line`. They differ in [specific way]. Which should the new [feature] follow?"
-- **Missing pattern**: "No existing [pattern type] in the codebase. Options: (A) [approach] modeled after [external reference], (B) [approach] extending [existing code at file:line]. Which fits the project's direction?"
-- **Scope boundary**: "The [research/description] mentions both [feature A] and [feature B]. Should this design cover both, or just [feature A] with [feature B] deferred?"
-- **Integration choice**: "[Feature] can wire into [point A] at `file:line` or [point B] at `file:line`. [Point A] matches the [existing pattern] pattern. Agree, or prefer [point B]?"
-- **Novel approach**: "No existing [X] in the project. Options: (A) [library/pattern] — [evidence/rationale], (B) [library/pattern] — [evidence/rationale]. Which fits?"
+- **Pattern conflict**: "Found 2 patterns for {X}: {pattern A} at `file:line` and {pattern B} at `file:line`. They differ in {specific way}. Which should the new {feature} follow?"
+- **Missing pattern**: "No existing {pattern type} in the codebase. Options: (A) {approach} modeled after {external reference}, (B) {approach} extending {existing code at file:line}. Which fits the project's direction?"
+- **Scope boundary**: "The {research/description} mentions both {feature A} and {feature B}. Should this design cover both, or just {feature A} with {feature B} deferred?"
+- **Integration choice**: "{Feature} can wire into {point A} at `file:line` or {point B} at `file:line`. {Point A} matches the {existing pattern} pattern. Agree, or prefer {point B}?"
+- **Novel approach**: "No existing {X} in the project. Options: (A) {library/pattern} — {evidence/rationale}, (B) {library/pattern} — {evidence/rationale}. Which fits?"
 
 **Critical rules:**
 - Ask ONE question at a time. Wait for the answer before asking the next.
@@ -157,19 +157,19 @@ Use the grounded-questions-one-at-a-time pattern. Use a **❓ Question:** prefix
 **After all ambiguities are resolved**, present a brief design summary (under 15 lines):
 
 ```
-Design: [feature name]
-Approach: [1-2 sentence summary of chosen architecture]
+Design: {feature name}
+Approach: {1-2 sentence summary of chosen architecture}
 
 Decisions:
-- [Decision 1]: [choice] — modeled after `file:line`
-- [Decision 2]: [choice]
-- [Decision 3]: [choice]
+- {Decision 1}: {choice} — modeled after `file:line`
+- {Decision 2}: {choice}
+- {Decision 3}: {choice}
 
-Scope: [what's in] | Not building: [what's out]
-Files: [N] new, [M] modified
+Scope: {what's in} | Not building: {what's out}
+Files: {N} new, {M} modified
 ```
 
-Use the `ask_user_question` tool to confirm before proceeding. Question: "[Summary from design brief above]. Ready to proceed to decomposition?". Header: "Design". Options: "Proceed (Recommended)" (Decompose into vertical slices, then generate code slice-by-slice); "Adjust decisions" (Revisit one or more architectural decisions above); "Change scope" (Add or remove items from the building/not-building lists).
+Use the `ask_user_question` tool to confirm before proceeding. Question: "{Summary from design brief above}. Ready to proceed to decomposition?". Header: "Design". Options: "Proceed (Recommended)" (Decompose into vertical slices, then generate code slice-by-slice); "Adjust decisions" (Revisit one or more architectural decisions above); "Change scope" (Add or remove items from the building/not-building lists).
 
 ## Step 6: Feature Decomposition
 
@@ -178,17 +178,17 @@ After the design summary is confirmed, decompose the feature into vertical slice
 1. **Decompose holistically** — define ALL slices, dependencies, and ordering before generating any code:
 
    ```
-   Feature Breakdown: [feature name]
+   Feature Breakdown: {feature name}
 
-   Slice 1: [name] — [what this slice delivers]
+   Slice 1: {name} — {what this slice delivers}
      Files: path/to/file.ext (NEW), path/to/file.ext (MODIFY)
      Depends on: nothing (foundation)
 
-   Slice 2: [name] — [what this slice delivers]
+   Slice 2: {name} — {what this slice delivers}
      Files: path/to/file.ext (NEW), path/to/file.ext (MODIFY)
      Depends on: Slice 1
 
-   Slice 3: [name] — [what this slice delivers]
+   Slice 3: {name} — {what this slice delivers}
      Files: path/to/file.ext (NEW)
      Depends on: Slice 2
    ```
@@ -199,30 +199,30 @@ After the design summary is confirmed, decompose the feature into vertical slice
    - Sequential: each builds on the previous (never parallel)
    - Foundation first: types/interfaces always Slice 1
 
-3. **Confirm decomposition** using the `ask_user_question` tool. Question: "[N] slices for [feature]. Slice 1: [name] (foundation). Slices 2-N: [brief]. Approve decomposition?". Header: "Slices". Options: "Approve (Recommended)" (Proceed to slice-by-slice code generation); "Adjust slices" (Reorder, merge, or split slices before generating); "Change scope" (Add or remove files from the decomposition).
+3. **Confirm decomposition** using the `ask_user_question` tool. Question: "{N} slices for {feature}. Slice 1: {name} (foundation). Slices 2-N: {brief}. Approve decomposition?". Header: "Slices". Options: "Approve (Recommended)" (Proceed to slice-by-slice code generation); "Adjust slices" (Reorder, merge, or split slices before generating); "Change scope" (Add or remove files from the decomposition).
 
 4. **Create skeleton artifact** — immediately after decomposition is approved:
-   - Determine metadata: filename `thoughts/shared/plans/YYYY-MM-DD_HH-MM-SS_topic.md`, repository name from git root, branch and commit from the git context injected at the start of the session (fallbacks: "no-branch" / "no-commit"), planner from the injected User (fallback: "unknown")
+   - Determine metadata: filename `thoughts/shared/plans/YYYY-MM-DD_HH-MM-SS_topic.md`, repository name from git root, branch and commit from the git context injected at the start of the session (fallbacks: "no-branch" / "no-commit"), author from the injected User (fallback: "unknown")
    - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Write skeleton using the Write tool with `status: in-progress` in frontmatter
    - **Include all prose sections filled** from Steps 1-5: Overview, Requirements, Current State Analysis, Desired End State, What We're NOT Doing, Decisions, Ordering Constraints, Verification Notes, Performance Considerations, Migration Notes, Pattern References, Developer Context, References
-   - **Phase sections**: one `## Phase N: [slice name]` heading per slice from the decomposition (in slice order), each with `### Overview`, `### Changes Required:` (one `#### N. path/to/file.ext` subsection per file with empty code fence + NEW/MODIFY label), and `### Success Criteria:` (Automated + Manual placeholders — filled in Step 9)
+   - **Phase sections**: one `## Phase N: {slice name}` heading per slice from the decomposition (in slice order), each with `### Overview`, `### Changes Required:` (one `#### N. path/to/file.ext` subsection per file with empty code fence + NEW/MODIFY label), and `### Success Criteria:` (Automated + Manual placeholders — filled in Step 9)
    - **Plan History section**: list all phases with `— pending` status
    - This is the living artifact — all subsequent writes use the Edit tool
 
    **Artifact template sections** (all required in skeleton):
 
-   - **Frontmatter**: date, planner, git_commit, branch, repository, topic, tags, `status: in-progress`, research_source, phase_count, unresolved_phase_count (initialized to phase_count, decrements as each phase's code is approved in Step 7d), last_updated, last_updated_by
-   - **# [Feature Name] Implementation Plan**
+   - **Frontmatter**: date, author, commit, branch, repository, topic, tags, `status: in-progress`, parent, phase_count, unresolved_phase_count (initialized to phase_count, decrements as each phase's code is approved in Step 7d), last_updated, last_updated_by
+   - **# {Feature Name} Implementation Plan**
    - **## Overview**: 2-3 sentences — what we're building and the chosen architectural approach. Settled decision, not a discussion.
    - **## Requirements**: Bullet list from ticket, research, or developer input.
    - **## Current State Analysis**: What exists now, what's missing, key constraints. Include `### Key Discoveries` with `file:line` references, patterns to follow, constraints to work within.
    - **## Desired End State**: Usage examples showing the feature in use from a consumer's perspective — concrete code, not prose.
    - **## What We're NOT Doing**: Developer-stated exclusions AND likely scope-creep vectors (alternative architectures not chosen, nearby code that looks related but shouldn't be touched).
    - **## Decisions**: `###` per decision. Complex: Ambiguity → Explored (Option A/B with `file:line` + pro/con) → Decision. Simple: just state decision with evidence.
-   - **## Phase N: [slice name]** (one per slice, in slice order):
+   - **## Phase N: {slice name}** (one per slice, in slice order):
      - `### Overview`: one sentence describing what this phase delivers + parallelism note from `Depends on:` (e.g., "Depends on Phase 1; can run in parallel with Phase 3.").
-     - `### Changes Required:` — one `#### N. path/to/file.ext` subsection per file in this slice. Each subsection has `**File**: path`, `**Changes**: [NEW | MODIFY — summary]`, and an empty code fence (filled in Step 7d). NEW files get full implementation. MODIFY files get only modified/added code — no "Current" block, the original is on disk.
+     - `### Changes Required:` — one `#### N. path/to/file.ext` subsection per file in this slice. Each subsection has `**File**: path`, `**Changes**: {NEW | MODIFY — summary}`, and an empty code fence (filled in Step 7d). NEW files get full implementation. MODIFY files get only modified/added code — no "Current" block, the original is on disk.
      - `### Success Criteria:` with `#### Automated Verification:` and `#### Manual Verification:` subsections, each containing `- [ ] TBD` placeholder bullets (filled in Step 9 from Verification Notes).
    - **## Ordering Constraints**: What must come before what. What can run in parallel. (Carries the cross-phase view; per-phase parallelism note also lives in each Phase Overview.)
    - **## Verification Notes**: Carry forward from research — known risks, build/test warnings, precedent lessons. Format as verifiable checks (commands, grep patterns, visual inspection). Step 9 converts these to per-phase Success Criteria.
@@ -230,12 +230,12 @@ After the design summary is confirmed, decompose the feature into vertical slice
    - **## Migration Notes**: If applicable — existing data, schema changes, rollback strategy, backwards compatibility. Empty if not applicable.
    - **## Pattern References**: `path/to/similar.ext:line-range` — what pattern to follow and why.
    - **## Developer Context**: Record questions exactly as asked during checkpoint, including `file:line` evidence. Also record micro-checkpoint interactions from Step 7c.
-   - **## Plan History**: Phase approval/revision log. `- Phase N: [name] — pending/approved as generated/revised: [what changed]`. implement ignores this section.
+   - **## Plan History**: Phase approval/revision log. `- Phase N: {name} — pending/approved as generated/revised: {what changed}`. implement ignores this section.
    - **## References**: Research artifacts, tickets, similar implementations.
 
    **Phase Changes Required format in skeleton**:
-   - **NEW files**: `#### N. path/to/file.ext` + `**File**: path` + `**Changes**: NEW — [purpose]` + empty code fence (filled with full implementation in Step 7d)
-   - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**: path` + `**Changes**: MODIFY — [summary]` + empty code fence (filled with only the modified code in Step 7d — no "Current" block, the original is on disk)
+   - **NEW files**: `#### N. path/to/file.ext` + `**File**: path` + `**Changes**: NEW — {purpose}` + empty code fence (filled with full implementation in Step 7d)
+   - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**: path` + `**Changes**: MODIFY — {summary}` + empty code fence (filled with only the modified code in Step 7d — no "Current" block, the original is on disk)
 
 ## Step 7: Generate Slices (Iterative)
 
@@ -266,9 +266,9 @@ Before presenting to the developer, cross-check this slice and produce a structu
 
 ```
 Self-verify Slice N:
-- Decisions: [OK / VIOLATION: decision X — fix applied]
-- Cross-slice: [OK / CONFLICT: file X has inconsistent types — fix applied]
-- Research: [OK / WARNING: constraint Y not satisfied — fix applied]
+- Decisions: {OK / VIOLATION: decision X — fix applied}
+- Cross-slice: {OK / CONFLICT: file X has inconsistent types — fix applied}
+- Research: {OK / WARNING: constraint Y not satisfied — fix applied}
 ```
 
 If violations found: fix in-place before presenting. Include the self-verify summary in the 7c checkpoint presentation.
@@ -286,17 +286,17 @@ Present a **condensed review** of the slice — NOT the full generated code. The
 
 **If the developer asks to see full code**, show it inline — exception, not default.
 
-Use the `ask_user_question` tool to confirm. Question: "Slice [N/M]: [slice name] — [files affected]. [1-line summary]. Approve?". Header: "Slice [N]". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice [N+1]); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition).
+Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name} — {files affected}. {1-line summary}. Approve?". Header: "Slice {N}". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice {N+1}); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition).
 
 **Checkpoint cadence**: One slice per checkpoint. Present each slice individually, regardless of slice count.
 
 ### 7d. Incorporate feedback
 
 **Approve**: Lock this slice's code and **Edit the artifact immediately**:
-1. For each file in this slice, Edit the skeleton artifact to replace the empty code fence under that file's `#### N. path/...` subsection inside this slice's `## Phase N: [slice name]` section with the full generated code from 7a
+1. For each file in this slice, Edit the skeleton artifact to replace the empty code fence under that file's `#### N. path/...` subsection inside this slice's `## Phase N: {slice name}` section with the full generated code from 7a
 2. If a later slice contributes to a file already filled by an earlier phase: emit a NEW `#### N. path/to/file.ext` subsection inside the later phase with only that phase's incremental changes (do NOT mutate the earlier phase's code fence — implement runs phases sequentially and the codebase state evolves between them). Each phase's code fence is the change set for that phase, applied on top of the codebase state after the previous phase.
 3. After fill, verify within this phase: no duplicate function definitions inside the same code fence, imports deduplicated, exports list complete
-4. Update the Plan History section: `- Phase N: [name] — approved as generated`
+4. Update the Plan History section: `- Phase N: {name} — approved as generated`
 5. Decrement frontmatter `unresolved_phase_count` by 1
 - Proceed to next slice
 
@@ -311,16 +311,16 @@ After all phases are complete, review cross-phase consistency:
 
 1. **Present integration summary** (under 15 lines):
    ```
-   Integration: [feature name] — [N] phases complete
+   Integration: {feature name} — {N} phases complete
 
-   Phases: [brief list of phase names and file counts]
-   Cross-phase: [types consistent / imports valid / wiring complete]
-   Research constraints: [all satisfied / N violations noted]
+   Phases: {brief list of phase names and file counts}
+   Cross-phase: {types consistent / imports valid / wiring complete}
+   Research constraints: {all satisfied / N violations noted}
    ```
 
 2. **Verify research constraints**: Check each Precedent & Lesson and Verification Note from the research artifact against the generated code. List satisfaction status.
 
-3. **Confirm using the `ask_user_question` tool**. Question: "[N] phases complete, [M] files total. Cross-phase consistency verified. Proceed to finalize?". Header: "Verify". Options: "Proceed (Recommended)" (Finalize the plan artifact (fill Success Criteria, update status)); "Revisit phase" (Reopen a specific phase for revision — Edit the artifact after); "Add missing" (A file or integration point is missing — add to artifact).
+3. **Confirm using the `ask_user_question` tool**. Question: "{N} phases complete, {M} files total. Cross-phase consistency verified. Proceed to finalize?". Header: "Verify". Options: "Proceed (Recommended)" (Finalize the plan artifact (fill Success Criteria, update status)); "Revisit phase" (Reopen a specific phase for revision — Edit the artifact after); "Add missing" (A file or integration point is missing — add to artifact).
 
 ## Step 9: Finalize Plan Artifact
 
@@ -361,31 +361,31 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
 5. **Verify template completeness**: Ensure all sections from the template reference in Step 6 are present and filled. Edit to fix any gaps.
 
 6. **Phase Changes Required format reminder**:
-   - **NEW files**: `#### N. path/to/file.ext` + `**File**` + `**Changes**: NEW — [purpose]` + full implementation code block
-   - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**` + `**Changes**: MODIFY — [summary]` + code block with only the modified/added code (no "Current" block — the original is on disk, implement reads it)
+   - **NEW files**: `#### N. path/to/file.ext` + `**File**` + `**Changes**: NEW — {purpose}` + full implementation code block
+   - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**` + `**Changes**: MODIFY — {summary}` + code block with only the modified/added code (no "Current" block — the original is on disk, implement reads it)
 
 ## Step 10: Review & Iterate
 
 1. **Present the plan artifact location**:
    ```
    Implementation plan written to:
-   `thoughts/shared/plans/[filename].md`
+   `thoughts/shared/plans/{filename}.md`
 
-   [N] architectural decisions fixed, [P] phases generated, [M] new files, [K] existing files modified.
-   [R] revisions during generation.
+   {N} architectural decisions fixed, {P} phases generated, {M} new files, {K} existing files modified.
+   {R} revisions during generation.
 
    Please review and let me know:
    - Are the architectural decisions correct?
    - Does the code match what you envision?
    - Any missing integration points or edge cases?
 
-   When ready, run `/skill:implement thoughts/shared/plans/[filename].md Phase 1` to start execution (or omit `Phase 1` to run all phases sequentially).
+   When ready, run `/skill:implement thoughts/shared/plans/{filename}.md Phase 1` to start execution (or omit `Phase 1` to run all phases sequentially).
    ```
 
 2. **Handle follow-up changes**:
    - Use the Edit tool to update the plan artifact in-place
    - Update frontmatter: `last_updated` and `last_updated_by`
-   - Add `last_updated_note: "Updated [brief description]"` to frontmatter
+   - Add `last_updated_note: "Updated {brief description}"` to frontmatter
    - If the change affects decisions, update both the Decisions section AND the affected `## Phase N` code
    - If new ambiguities arise, return to Step 5 (developer checkpoint)
 

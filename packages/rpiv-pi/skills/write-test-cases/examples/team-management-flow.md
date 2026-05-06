@@ -6,7 +6,7 @@ priority: high
 type: functional
 status: draft
 tags: ["team", "invitation", "onboarding", "roles", "happy-path"]
-generated_at_commit: abc1234
+commit: abc1234
 ---
 
 # Invite and onboard new team member

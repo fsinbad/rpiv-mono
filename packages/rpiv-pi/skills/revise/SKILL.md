@@ -44,7 +44,7 @@ When this command is invoked:
 
    **If plan file provided but NO feedback**:
    ```
-   I've found the plan at [path]. What changes would you like to make?
+   I've found the plan at {path}. What changes would you like to make?
 
    For example:
    - "Add a phase for migration handling"
@@ -103,21 +103,21 @@ Before making changes, confirm your understanding:
 
 ```
 Based on your feedback, I understand you want to:
-- [Change 1 with specific detail]
-- [Change 2 with specific detail]
+- {Change 1 with specific detail}
+- {Change 2 with specific detail}
 
 My research found:
-- [Relevant code pattern or constraint]
-- [Important discovery that affects the change]
+- {Relevant code pattern or constraint}
+- {Important discovery that affects the change}
 
 I plan to update the plan by:
-1. [Specific modification to make]
-2. [Another modification]
+1. {Specific modification to make}
+2. {Another modification}
 
 Does this align with your intent?
 ```
 
-Use the `ask_user_question` tool to confirm before editing. Question: "[Summary of planned modifications]. Proceed with these edits?". Header: "Changes". Options: "Proceed (Recommended)" (Apply the planned changes to the existing plan); "Adjust approach" (Modify what will be changed before editing); "Show me first" (Show the exact text changes before applying).
+Use the `ask_user_question` tool to confirm before editing. Question: "{Summary of planned modifications}. Proceed with these edits?". Header: "Changes". Options: "Proceed (Recommended)" (Apply the planned changes to the existing plan); "Adjust approach" (Modify what will be changed before editing); "Show me first" (Show the exact text changes before applying).
 
 ### Step 4: Update the Plan
 
@@ -145,15 +145,15 @@ Use the `ask_user_question` tool to confirm before editing. Question: "[Summary 
 
 1. **Present the changes made**:
    ```
-   I've updated the plan at `thoughts/shared/plans/[filename].md`
+   I've updated the plan at `thoughts/shared/plans/{filename}.md`
 
    Changes made:
-   - [Specific change 1]
-   - [Specific change 2]
+   - {Specific change 1}
+   - {Specific change 2}
 
    The updated plan now:
-   - [Key improvement]
-   - [Another improvement]
+   - {Key improvement}
+   - {Another improvement}
 
    Would you like any further adjustments?
    ```
@@ -233,7 +233,7 @@ When spawning research agents:
 **Scenario 1: User provides everything upfront**
 ```
 User: /skill:revise thoughts/shared/plans/2025-10-16_09-00-00_feature.md - add phase for error handling
-Assistant: [Reads plan, researches error handling patterns, updates plan]
+Assistant: {Reads plan, researches error handling patterns, updates plan}
 ```
 
 **Scenario 2: User provides just plan file**
@@ -241,7 +241,7 @@ Assistant: [Reads plan, researches error handling patterns, updates plan]
 User: /skill:revise thoughts/shared/plans/2025-10-16_09-00-00_feature.md
 Assistant: I've found the plan. What changes would you like to make?
 User: Split Phase 2 into two phases - one for backend, one for frontend
-Assistant: [Proceeds with update]
+Assistant: {Proceeds with update}
 ```
 
 **Scenario 3: User provides no arguments**
@@ -251,7 +251,7 @@ Assistant: Which plan would you like to update? Please provide the path...
 User: thoughts/shared/plans/2025-10-16_09-00-00_feature.md
 Assistant: I've found the plan. What changes would you like to make?
 User: Add more specific success criteria
-Assistant: [Proceeds with update]
+Assistant: {Proceeds with update}
 ```
 
 **Scenario 4: User passes a review artifact instead of a plan**
@@ -259,5 +259,5 @@ Assistant: [Proceeds with update]
 User: /skill:revise thoughts/shared/reviews/2025-10-16_10-00-00_feature.md
 Assistant: `revise` updates implementation plans, not review artifacts. Please provide the target plan path plus the changes to make.
 User: /skill:revise thoughts/shared/plans/2025-10-16_09-00-00_feature.md "Address the review findings by splitting Phase 2 and adding validation coverage"
-Assistant: [Proceeds with update]
+Assistant: {Proceeds with update}
 ```

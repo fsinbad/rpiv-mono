@@ -47,8 +47,8 @@ Goal: identify which questions the codebase can answer so you don't ask the deve
 1. Extract anchor terms from the input — feature names, component names, file paths, command names, config keys mentioned by the user.
 2. Run focused `grep` / `find` / `ls` for those anchors. Cap at 5-8 sweeps. This is NOT a discovery sweep — that's `research`'s job downstream. Goal here is just enough grounding to recognize which branches of the decision tree have evidence-based answers.
 3. If 1-2 specific seams genuinely need depth beyond grep, spawn at most 2 agents in parallel using the Agent tool:
-   - **codebase-locator** — "Find ALL files implementing/calling/configuring [specific component]; report function names, class/type names, and import paths."
-   - **codebase-analyzer** (only when one seam needs end-to-end tracing) — "Trace how [specific integration point] works in detail. Cite `file:line` for each step."
+   - **codebase-locator** — "Find ALL files implementing/calling/configuring {specific component}; report function names, class/type names, and import paths."
+   - **codebase-analyzer** (only when one seam needs end-to-end tracing) — "Trace how {specific integration point} works in detail. Cite `file:line` for each step."
    Do NOT dispatch breadth-discovery agents (`scope-tracer`, broad locator sweeps, integration-scanner) — those duplicate research's job. The boundary: probe, not discovery.
 4. Read any clearly-relevant files surfaced by the sweep or agents (≤5 files in main context, files <300 lines fully, larger files first 150 lines).
 5. Build a short internal map: `{ branch → evidence }` for every branch you can pre-answer. These become evidence-based Decisions in Step 5, NOT interview questions in Step 4.
@@ -137,7 +137,7 @@ Compile interview output into the FRD:
 Intent captured to:
 `thoughts/shared/discover/<YYYY-MM-DD_HH-MM-SS>_<topic>.md`
 
-[N] requirements, [M] decisions, [K] open questions.
+{N} requirements, {M} decisions, {K} open questions.
 
 When ready, run `/skill:research thoughts/shared/discover/<YYYY-MM-DD_HH-MM-SS>_<topic>.md` to ground the intent in codebase reality.
 The FRD's Decisions block is translated into research's Developer Context and inherited by design.

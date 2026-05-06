@@ -27,7 +27,7 @@ The migration relocates files from in-place `CLAUDE.md` to `.rpiv/guidance/{path
      ```
      ## Migration Plan
 
-     Found [N] CLAUDE.md files to migrate:
+     Found {N} CLAUDE.md files to migrate:
 
      | Source | Target | Lines |
      |--------|--------|-------|
@@ -67,8 +67,8 @@ The migration relocates files from in-place `CLAUDE.md` to `.rpiv/guidance/{path
      | src/core/CLAUDE.md | .rpiv/guidance/src/core/architecture.md | 78 | 1 |
      | ... | ... | ... | ... |
 
-     Total: [N] files migrated
-     [Originals deleted: yes/no]
+     Total: {N} files migrated
+     {Originals deleted: yes/no}
      ```
 
 4. **Post-migration:**

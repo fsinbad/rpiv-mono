@@ -53,7 +53,7 @@ You are a specialist at finding CONNECTIONS to and from a component or area. You
 CRITICAL: Use EXACTLY this format. Never use markdown tables. Use relative paths (strip the workspace root prefix).
 
 ```
-## Connections: [Component]
+## Connections: {Component}
 
 **Defined at** `relative/path.ext:line`
 
@@ -62,7 +62,7 @@ CRITICAL: Use EXACTLY this format. Never use markdown tables. Use relative paths
 
 ### Used by
 
-**Direct** — [key structural insight] at `site.ext:line`:
+**Direct** — {key structural insight} at `site.ext:line`:
 
   source.ext:line
   ├── consumer-a.ext:line — how it uses the target
@@ -71,7 +71,7 @@ CRITICAL: Use EXACTLY this format. Never use markdown tables. Use relative paths
 
 **Indirect / cross-process** — consumers that don't import the target but receive its output through IPC, events, or config.
 
-**Tests**: [count] files, pattern: `[Name].test.ts`. [One-line note on how tests use it.]
+**Tests**: {count} files, pattern: `{Name}.test.ts`. {One-line note on how tests use it.}
 
 ### Wiring & Config
 - `file.ext:line` — registration, export, or config detail

@@ -6,8 +6,8 @@
 - Module: {module abbreviation}
 - Total test cases: {N}
 - Estimated execution: ~{X} minutes
-- Last generated: {YYYY-MM-DD}
-- Git commit: {commit-hash}
+- Last updated: {YYYY-MM-DD}
+- Commit: {commit-hash}
 
 ## Smoke Test Subset
 {Minimum set of TCs that cover critical paths — run these for quick sanity checks}
@@ -60,4 +60,4 @@
 
 **Gaps section** flags areas the skill identified but chose not to generate TCs for — either explicitly excluded during checkpoint or insufficient code detail for generation.
 
-**Git commit** tracks which code version was analyzed. Compare against current HEAD to detect when regression suite may be stale.
+**Commit** tracks which code version was analyzed. Compare against current HEAD to detect when regression suite may be stale.

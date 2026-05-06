@@ -6,7 +6,7 @@ priority: high
 type: functional
 status: draft
 tags: ["orders", "checkout", "payment", "happy-path"]
-generated_at_commit: abc1234
+commit: abc1234
 ---
 
 # Place order with physical products

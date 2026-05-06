@@ -26,11 +26,11 @@ Use the current working directory as the target project by default. If the user 
 
    **Agent A — Project tree mapping:**
    - subagent_type: `codebase-locator`
-   - Prompt: "Map the full project tree structure for [target directory]. List all directories and their contents, respecting .gitignore. Focus on source code directories, configuration files, and build artifacts. Return a complete tree view."
+   - Prompt: "Map the full project tree structure for {target directory}. List all directories and their contents, respecting .gitignore. Focus on source code directories, configuration files, and build artifacts. Return a complete tree view."
 
    **Agent B — Architecture and conventions:**
    - subagent_type: `codebase-locator`
-   - Prompt: "Identify the architectural layout of [target directory] from path shape and manifest files — NO content analysis. Detect: (1) Architecture pattern inferred from folder shape — clean-arch via Domain/Application/Infrastructure dirs; MVC via Controllers/Models/Views; monorepo via packages/* + workspaces; microservices via services/* with individual manifests; hexagonal via ports/adapters. (2) Main layers/modules — top-level source directories + their names. (3) Frameworks and languages from manifest files (package.json dependencies, *.csproj TargetFramework, pyproject.toml, go.mod, Cargo.toml) and file extensions. (4) Build system from build-config filenames (vite/webpack/tsup/esbuild configs, Makefile, nx.json, turbo.json, dotnet .sln). For each main layer/module, check sub-directory composition. If sub-directories with distinct names/roles exist, flag each as a CLAUDE.md target candidate with: (a) path, (b) role inferred from folder name (controllers/, services/, entities/, components/, stores/, etc.), (c) file count via ls, (d) how its sub-directory composition differs from sibling layers. Use grep/find/ls only. Do not read file contents. Pass 2 runs codebase-analyzer + codebase-pattern-finder per target folder for deep analysis."
+   - Prompt: "Identify the architectural layout of {target directory} from path shape and manifest files — NO content analysis. Detect: (1) Architecture pattern inferred from folder shape — clean-arch via Domain/Application/Infrastructure dirs; MVC via Controllers/Models/Views; monorepo via packages/* + workspaces; microservices via services/* with individual manifests; hexagonal via ports/adapters. (2) Main layers/modules — top-level source directories + their names. (3) Frameworks and languages from manifest files (package.json dependencies, *.csproj TargetFramework, pyproject.toml, go.mod, Cargo.toml) and file extensions. (4) Build system from build-config filenames (vite/webpack/tsup/esbuild configs, Makefile, nx.json, turbo.json, dotnet .sln). For each main layer/module, check sub-directory composition. If sub-directories with distinct names/roles exist, flag each as a CLAUDE.md target candidate with: (a) path, (b) role inferred from folder name (controllers/, services/, entities/, components/, stores/, etc.), (c) file count via ls, (d) how its sub-directory composition differs from sibling layers. Use grep/find/ls only. Do not read file contents. Pass 2 runs codebase-analyzer + codebase-pattern-finder per target folder for deep analysis."
 
    - While agents run, read .gitignore yourself to understand exclusion rules
 
@@ -55,21 +55,21 @@ Use the current working directory as the target project by default. If the user 
      ```
      ## Proposed CLAUDE.md Locations
 
-     Architecture detected: [pattern name]
+     Architecture detected: {pattern name}
 
      ### Will create CLAUDE.md in:
      - `/` (root) — Project overview (compact)
      - `/src/core/` — Core domain layer
      - `/src/services/` — Service layer
-     - [etc.]
+     - {etc.}
 
      ### Will skip:
      - `/src/core/entities/` — Entity grouping, same pattern as parent
-     - [etc.]
+     - {etc.}
 
      Does this look right? Should I add or remove any locations?
      ```
-   - Use the `ask_user_question` tool with the following question: "[N] CLAUDE.md targets across [M] layers. Proceed with analysis?". Options: "Proceed (Recommended)" (Analyze all proposed folders and write CLAUDE.md files); "Add folders" (I want to add more folders to the target list); "Remove folders" (Some proposed folders should be skipped).
+   - Use the `ask_user_question` tool with the following question: "{N} CLAUDE.md targets across {M} layers. Proceed with analysis?". Options: "Proceed (Recommended)" (Analyze all proposed folders and write CLAUDE.md files); "Add folders" (I want to add more folders to the target list); "Remove folders" (Some proposed folders should be skipped).
    - Adjust the target list based on user feedback
 
 4. **Pass 2 — Analyze each layer (parallel analyzer agents):**
@@ -79,11 +79,11 @@ Use the current working directory as the target project by default. If the user 
 
    **Analyzer agent:**
    - subagent_type: `codebase-analyzer`
-   - Prompt: "Analyze [folder path] in detail. Determine: 1) What is this layer's responsibility? 2) What are its dependencies (what does it import/use)? 3) Who consumes it (what imports/uses it)? 4) What are the key architectural boundaries and constraints? 5) What is the module structure — list DIRECTORIES with their roles, base types, and naming conventions. Use architectural annotations (e.g., 'one repo per entity', 'one controller per resource') instead of listing individual filenames. The structure should remain valid when non-architectural files are added. 6) What naming conventions are used (prefixes, suffixes, base classes)?"
+   - Prompt: "Analyze {folder path} in detail. Determine: 1) What is this layer's responsibility? 2) What are its dependencies (what does it import/use)? 3) Who consumes it (what imports/uses it)? 4) What are the key architectural boundaries and constraints? 5) What is the module structure — list DIRECTORIES with their roles, base types, and naming conventions. Use architectural annotations (e.g., 'one repo per entity', 'one controller per resource') instead of listing individual filenames. The structure should remain valid when non-architectural files are added. 6) What naming conventions are used (prefixes, suffixes, base classes)?"
 
    **Pattern finder agent:**
    - subagent_type: `codebase-pattern-finder`
-   - Prompt: "Find all distinct code patterns used in [folder path]. For each pattern found: 1) Name the pattern with a descriptive heading (e.g., 'Repository Boundary (CRITICAL: Plain Types, NOT Result<T>)'). 2) Provide an IDIOMATIC code example — a generalized, representative version that shows the pattern's essential shape (constructor, key method signatures, return types, error handling). Do NOT copy-paste a single file verbatim; instead synthesize the typical usage across the layer. 3) Add inline comments highlighting important conventions (e.g., '// DB int → boolean', '// throws on error — service wraps in Result'). 4) If the pattern involves a boundary between layers, show both sides. 5) Identify any repeatable workflows for adding new elements to this layer — backend entities (repositories, services, controllers) AND frontend elements (components, services, pages/routes, directives). For example: creating a new repository requires extending BaseRepository + registering in factory; adding a new Angular component requires extending BaseComponent + adding to routes + creating the template. Return these as step-by-step checklists. Return patterns with full code block examples."
+   - Prompt: "Find all distinct code patterns used in {folder path}. For each pattern found: 1) Name the pattern with a descriptive heading (e.g., 'Repository Boundary (CRITICAL: Plain Types, NOT Result<T>)'). 2) Provide an IDIOMATIC code example — a generalized, representative version that shows the pattern's essential shape (constructor, key method signatures, return types, error handling). Do NOT copy-paste a single file verbatim; instead synthesize the typical usage across the layer. 3) Add inline comments highlighting important conventions (e.g., '// DB int → boolean', '// throws on error — service wraps in Result'). 4) If the pattern involves a boundary between layers, show both sides. 5) Identify any repeatable workflows for adding new elements to this layer — backend entities (repositories, services, controllers) AND frontend elements (components, services, pages/routes, directives). For example: creating a new repository requires extending BaseRepository + registering in factory; adding a new Angular component requires extending BaseComponent + adding to routes + creating the template. Return these as step-by-step checklists. Return patterns with full code block examples."
 
    - Emit 1 analyzer + 1 pattern finder per folder as separate `Agent(...)` calls in the same tool-use batch
    - For the root CLAUDE.md, use findings from ALL folders to create the overview
@@ -111,7 +111,7 @@ Use the current working directory as the target project by default. If the user 
    Dependencies: Core (outbound), Controllers (inbound)
    Workflows detected: "Add new service" (4 steps)
 
-   [etc.]
+   {etc.}
    ```
 
    Then ask grounded questions — **one at a time**, waiting for the developer's answer before asking the next. Ask as many as the findings warrant — one per significant ambiguity or discovery gap. Use a **❓ Question:** prefix. Each question must reference real findings and pull NEW information from the developer — not confirm what you already found, and not ask about cosmetic issues (typos, formatting) or absences the developer can't add context to.
@@ -161,7 +161,7 @@ Use the current working directory as the target project by default. If the user 
      - Subfolder: Use the **Subfolder CLAUDE.md Template** (detailed, max 100 lines)
      - Root folder (LAST): Use the **Root CLAUDE.md Template** (compact overview). Draft root only after all subfolder files are finalized — this ensures the deduplication rule can be applied and cross-layer checklists can accurately reference subfolder content
    - Enforce the 100-line limit on subfolder files — code examples are essential but keep them concise
-   - If the pattern-finder identified repeatable "add new entity" workflows, include them as `<important if="you are adding a new [entity] to this layer">` conditional sections
+   - If the pattern-finder identified repeatable "add new entity" workflows, include them as `<important if="you are adding a new {entity} to this layer">` conditional sections
    - If testing patterns were detected, include them as `<important if="you are writing or modifying tests for this layer">` conditional sections
    - Conditional sections are optional — only include when the pattern-finder found clear evidence of a repeatable workflow
    - Conditions must be narrow and action-specific (NOT "you are writing code" — too broad)
@@ -191,9 +191,9 @@ Use the current working directory as the target project by default. If the user 
    After fixing all violations, re-scan the corrected drafts to confirm every check passes. Only proceed to writing when all checks are clean. Present a brief summary of what was fixed:
    ```
    ## Self-review results
-   - [file]: removed 2 utility deps (moment, xlsx-js-style)
-   - [file]: grouped Module Structure from 11 → 6 entries
-   - [file]: added "Adding a New Service" conditional
+   - {file}: removed 2 utility deps (moment, xlsx-js-style)
+   - {file}: grouped Module Structure from 11 → 6 entries
+   - {file}: added "Adding a New Service" conditional
    - Root: no violations found
    ```
 
@@ -209,9 +209,9 @@ Use the current working directory as the target project by default. If the user 
      | CLAUDE.md | 45 | Root project overview |
      | src/core/CLAUDE.md | 78 | Core domain layer |
      | src/services/CLAUDE.md | 65 | Service layer |
-     | [etc.] | | |
+     | {etc.} | | |
 
-     Total: [N] files created/updated
+     Total: {N} files created/updated
 
      Please review the files and let me know if you'd like any adjustments.
      ```

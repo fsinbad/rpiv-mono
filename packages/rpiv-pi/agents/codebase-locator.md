@@ -59,7 +59,7 @@ First, think deeply about the most effective search patterns for the requested f
 Structure your findings like this:
 
 ```
-## File Locations for [Feature/Topic]
+## File Locations for {Feature/Topic}
 
 ### Implementation Files
 - `src/services/feature.js:23-45` - Core order processing (handleOrder, processPayment)

@@ -1,30 +1,30 @@
-<!-- Emitted by code-review SKILL.md Step 7. Placeholders in [brackets] are filled at emission; section-omission rules live inline in SKILL.md. -->
+<!-- Emitted by code-review SKILL.md Step 7. Placeholders in {braces} are filled at emission; section-omission rules live inline in SKILL.md. -->
 ---
 template_version: 2
-date: [ISO 8601 w/ tz]
-reviewer: [User]
-repository: [Repo]
-branch: [Branch]
-commit: [Short hash]
-review_type: [commit | pr | staged | working]
-scope: "[What was reviewed]"
-scope_strategy: [first-parent | explicit-range | working-tree]
-in_scope_files_count: [N]
-status: [approved | needs_changes | requesting_changes]
-severity: { critical: [C], important: [I], suggestion: [S] }
-verification: { verified: [V], weakened: [W], falsified: [F] }
-blockers_count: [B]
+date: {Current date and time with timezone in ISO format}
+author: {User from injected git context}
+repository: {Repository name}
+branch: {Current branch name}
+commit: {Current commit hash}
+review_type: {commit | pr | staged | working}
+scope: "{What was reviewed}"
+scope_strategy: {first-parent | explicit-range | working-tree}
+in_scope_files_count: {N}
+status: {approved | needs_changes | requesting_changes}
+severity: { critical: {C}, important: {I}, suggestion: {S} }
+verification: { verified: {V}, weakened: {W}, falsified: {F} }
+blockers_count: {B}
 tags: [code-review, relevant-components]
 ---
 
-# Code Review — [Scope]
+# Code Review — {Scope}
 
-**Commit:** `[hash]` · **Status:** `[status]` · **Findings:** [C]🔴 · [I]🟡 · [S]🔵 · **Verification:** [V]✓ / [W]− / [F]✗
+**Commit:** `{hash}` · **Status:** `{status}` · **Findings:** {C}🔴 · {I}🟡 · {S}🔵 · **Verification:** {V}✓ / {W}− / {F}✗
 
 ## Top Blockers
 
-1. **[ID]** — [one-line headline]
-2. **[ID]** — [one-line headline]
+1. **{ID}** — {one-line headline}
+2. **{ID}** — {one-line headline}
 
 ---
 
@@ -41,68 +41,68 @@ Annotate    [precedent-weighted]   [cascade: <kind>]   [subsumed-by <ID>]
 
 ## 🔴 Critical
 
-### [ID] 🔴 [short headline] `[annotation?]`
+### {ID} 🔴 {short headline} `{annotation?}`
 
 **Where**
-`[file:line]`
+`{file:line}`
 
 **Code**
-```[lang]
-[verbatim line(s) from the file]
+```{lang}
+{verbatim line(s) from the file}
 ```
 
 **Why**
-[1–2 sentences: mechanism, not symptom]
+{1–2 sentences: mechanism, not symptom}
 
 **Fix**
-[one sentence, imperative]
+{one sentence, imperative}
 
 **Alt**
-[optional: alternative fix]
+{optional: alternative fix}
 
 ---
 
 ## 🟡 Important
 
-### [ID] 🟡 [short headline] `[annotation?]`
+### {ID} 🟡 {short headline} `{annotation?}`
 
 **Where**
-`[file:line]`
+`{file:line}`
 
 **Code**
-```[lang]
-[verbatim line(s)]
+```{lang}
+{verbatim line(s)}
 ```
 
 **Why**
-[mechanism]
+{mechanism}
 
 **Fix**
-[action]
+{action}
 
 ---
 
 ## 🔵 Suggestions
 
-### [ID] 🔵 [short headline]
+### {ID} 🔵 {short headline}
 
 **Where**
-`[file:line]`
+`{file:line}`
 
 **Fix**
-[action]
+{action}
 
 ---
 
 ## 💭 Discussion
 
-### [ID] 💭 [question / architectural concern]
+### {ID} 💭 {question / architectural concern}
 
 **Where**
-`[file:line]`
+`{file:line}`
 
 **Why**
-[what the reviewer wants the author to consider]
+{what the reviewer wants the author to consider}
 
 ---
 
@@ -110,13 +110,13 @@ Annotate    [precedent-weighted]   [cascade: <kind>]   [subsumed-by <ID>]
 
 | Peer            | Mirrored | Missing | Diverged | Intentional |
 | --------------- | -------: | ------: | -------: | ----------: |
-| `[peer file]`   |      [M] |    [Mi] |      [D] |         [A] |
+| `{peer file}`   |      {M} |    {Mi} |      {D} |         {A} |
 
-**Missing/Diverged rows drive:** [finding IDs]
+**Missing/Diverged rows drive:** {finding IDs}
 
 **Key divergences from peer**
-- [divergence one]
-- [divergence two]
+- {divergence one}
+- {divergence two}
 
 ---
 
@@ -124,7 +124,7 @@ Annotate    [precedent-weighted]   [cascade: <kind>]   [subsumed-by <ID>]
 
 | Consumer        | Change           | Findings |
 | --------------- | ---------------- | -------- |
-| `[file:line]`   | [change class]   | [IDs]    |
+| `{file:line}`   | {change class}   | {IDs}    |
 
 ---
 
@@ -132,11 +132,11 @@ Annotate    [precedent-weighted]   [cascade: <kind>]   [subsumed-by <ID>]
 
 | Commit    | Subject          | Follow-ups                                              |
 | --------- | ---------------- | ------------------------------------------------------- |
-| `[hash]`  | [commit subject] | [30d follow-ups, or "NOT ancestor of [TIP]", or note]   |
+| `{hash}`  | {commit subject} | {30d follow-ups, or "NOT ancestor of {TIP}", or note}   |
 
 **Recurring lessons (most → least frequent)**
 
-1. [composite lesson]
+1. {composite lesson}
 2. ...
 
 ---
@@ -147,6 +147,6 @@ Annotate    [precedent-weighted]   [cascade: <kind>]   [subsumed-by <ID>]
 
 | # | ID     | Action                      | Alt / Note        |
 | - | ------ | --------------------------- | ----------------- |
-| 1 | [ID]   | [action, one sentence]      | [alternative]     |
-| 2 | [ID]   | [action]                    | —                 |
-| 3 | [ID]   | [action]                    | —                 |
+| 1 | {ID}   | {action, one sentence}      | {alternative}     |
+| 2 | {ID}   | {action}                    | —                 |
+| 3 | {ID}   | {action}                    | —                 |

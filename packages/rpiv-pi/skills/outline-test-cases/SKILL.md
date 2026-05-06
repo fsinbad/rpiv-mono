@@ -44,7 +44,7 @@ Check for existing outline data:
 Report detected mode:
 ```
 [Fresh]: No existing outline found. Will run full discovery.
-[Incremental]: Found [N] existing feature outlines from [generated date]. Will re-discover with prior context and highlight changes.
+[Incremental]: Found {N} existing feature outlines from {generated date}. Will re-discover with prior context and highlight changes.
 ```
 
 ### Step 2: Discover features
@@ -158,31 +158,31 @@ After all questions are answered, present the proposed feature list:
 ```
 ## Proposed Feature Outline
 
-Framework detected: [framework name]
-Applications found: [N] ([app names])
-Total backend endpoints: ~[N] across [M] controllers
+Framework detected: {framework name}
+Applications found: {N} ({app names})
+Total backend endpoints: ~{N} across {M} controllers
 
 ---
-### [Portal Name] ([N] features)
+### {Portal Name} ({N} features)
 
-1. [Feature Name] — [N] routes, [M] API endpoints
-   Slug: [feature-slug] | Module: [MOD]
-   Sub-features: [list if decomposed, or "none"]
-2. [Feature Name] — [N] routes, [M] API endpoints
-   Slug: [feature-slug] | Module: [MOD]
-[etc.]
+1. {Feature Name} — {N} routes, {M} API endpoints
+   Slug: {feature-slug} | Module: {MOD}
+   Sub-features: {list if decomposed, or "none"}
+2. {Feature Name} — {N} routes, {M} API endpoints
+   Slug: {feature-slug} | Module: {MOD}
+{etc.}
 
 ### Already Covered (will skip):
-- [Feature] — [N] existing TCs in .rpiv/test-cases/[slug]/
+- {Feature} — {N} existing TCs in .rpiv/test-cases/{slug}/
 
 ### Backend-Only Endpoints (no frontend exposure):
-- [Controller/endpoint group] — [reason: platform API / webhook / deprecated]
+- {Controller/endpoint group} — {reason: platform API / webhook / deprecated}
 
 ---
-Create outline for [total] features?
+Create outline for {total} features?
 ```
 
-Use the `ask_user_question` tool with the following question: "Create outline for [total] features across [N] portals?". Options: "Create outline (Recommended)" (Write _meta.md files and folder structure for all features above); "Add or remove features" (Adjust the feature list before creating); "Reclassify" (Move backend-only endpoints into the main feature list or vice versa).
+Use the `ask_user_question` tool with the following question: "Create outline for {total} features across {N} portals?". Options: "Create outline (Recommended)" (Write _meta.md files and folder structure for all features above); "Add or remove features" (Adjust the feature list before creating); "Reclassify" (Move backend-only endpoints into the main feature list or vice versa).
 
 Handle any final additions, removals, reclassifications, or slug/module overrides.
 
@@ -191,37 +191,37 @@ Handle any final additions, removals, reclassifications, or slug/module override
 Present the diff results from Step 3 with previous decisions:
 
 ```
-## Outline Update ([N] features, last run [generated date])
+## Outline Update ({N} features, last run {generated date})
 
-Unchanged ([N]):
-- [Feature Name] — [slug] | [MOD]
-[etc.]
+Unchanged ({N}):
+- {Feature Name} — {slug} | {MOD}
+{etc.}
 
-New ([N]):
-- [Feature Name] — [N] routes, [M] API endpoints (not in previous outline)
-[etc.]
+New ({N}):
+- {Feature Name} — {N} routes, {M} API endpoints (not in previous outline)
+{etc.}
 
-Removed ([N]):
-- [Feature Name] — was [slug] | [MOD] (no longer found in codebase)
-[etc.]
+Removed ({N}):
+- {Feature Name} — was {slug} | {MOD} (no longer found in codebase)
+{etc.}
 
-Changed ([N]):
-- [Feature Name] — [what changed: "3 new endpoints", "route path changed", etc.]
-[etc.]
+Changed ({N}):
+- {Feature Name} — {what changed: "3 new endpoints", "route path changed", etc.}
+{etc.}
 
 Previous decisions:
-- [Q&A pair 1 rephrased as single-line decision statement]
-- [Q&A pair 2 rephrased as single-line decision statement]
+- {Q&A pair 1 rephrased as single-line decision statement}
+- {Q&A pair 2 rephrased as single-line decision statement}
 
 ```
 
-Use the `ask_user_question` tool with the following question: "[N] unchanged, [M] new, [K] removed features. Apply updates?". Options: "Apply updates (Recommended)" (Update _meta.md files and create new feature folders); "Adjust changes" (Modify the proposed new/removed/changed features); "Re-run discovery" (Something looks wrong — re-scan the codebase).
+Use the `ask_user_question` tool with the following question: "{N} unchanged, {M} new, {K} removed features. Apply updates?". Options: "Apply updates (Recommended)" (Update _meta.md files and create new feature folders); "Adjust changes" (Modify the proposed new/removed/changed features); "Re-run discovery" (Something looks wrong — re-scan the codebase).
 
 Rephrase each Q&A pair into a concise decision statement (e.g., `**Q:** "Is the bulk-import capability tested separately?" **A:** "No, internal only"` becomes `"Bulk-import — internal only, excluded from scope"`).
 
 **If no changes detected** (all features unchanged):
 - Present the unchanged list and previous decisions
-- Use the `ask_user_question` tool with the following question: "No changes detected since [date]. Still accurate?". Options: "Confirmed" (Outline is still accurate — no updates needed); "Force re-scan" (Re-run discovery anyway to verify).
+- Use the `ask_user_question` tool with the following question: "No changes detected since {date}. Still accurate?". Options: "Confirmed" (Outline is still accurate — no updates needed); "Force re-scan" (Re-run discovery anyway to verify).
 
 **For new/changed/removed features**, ask grounded questions ONE at a time (same approach as Fresh mode) targeting only the differences. Unchanged features need only batch confirmation.
 
@@ -257,11 +257,11 @@ After all questions are answered, present the full feature list summary (same fo
    |--------|--------|--------|--------|-----------|--------|
    | users/ | USR | Admin | 5 | 20 | pending |
    | reports/ | RPT | Admin | 2 | 15 | pending |
-   | [etc.] | | | | | |
+   | {etc.} | | | | | |
 
    Output: `.rpiv/test-cases/`
-   Total: [N] feature folders + [N] _meta.md files + 1 README.md
-   Phantom features skipped: [list or "none"]
+   Total: {N} feature folders + {N} _meta.md files + 1 README.md
+   Phantom features skipped: {list or "none"}
 
    Note: this outline is a starting point based on code analysis — re-run or add features manually as the project evolves.
 
@@ -276,7 +276,7 @@ After all questions are answered, present the full feature list summary (same fo
    - Append new Q&A pairs to `## Checkpoint History` under a new date header (`### YYYY-MM-DD`)
    - Update `## Scope Decisions` if changed during checkpoint
    - Update `## Domain Context` if changed
-   - Update frontmatter `generated` date to current date
+   - Update frontmatter `date` to current date
 
 2. **Add new feature folders** for newly discovered features:
    - Create directory + write new `_meta.md` from template (same as Fresh mode Step 5.2)
@@ -286,19 +286,19 @@ After all questions are answered, present the full feature list summary (same fo
    - Append removal note to `## Checkpoint History`
    - Inform the user which folders were flagged so they can decide whether to delete
 
-4. **Update root `README.md`** — update feature table and `Generated:` line using Edit
+4. **Update root `README.md`** — update feature table and `Last updated:` line using Edit
 
 5. **Present summary:**
    ```
    ## Test Case Outline Updated
 
-   Unchanged: [N] features
-   Updated: [N] _meta.md files (routes/endpoints refreshed)
-   Added: [N] new feature folders
-   Removed: [N] features flagged (folders preserved)
+   Unchanged: {N} features
+   Updated: {N} _meta.md files (routes/endpoints refreshed)
+   Added: {N} new feature folders
+   Removed: {N} features flagged (folders preserved)
 
    Changes:
-   - [List of what changed: "Added payments feature", "Flagged legacy-reports as removed", "Updated scope for users", etc.]
+   - {List of what changed: "Added payments feature", "Flagged legacy-reports as removed", "Updated scope for users", etc.}
 
    Output: `.rpiv/test-cases/`
 
@@ -315,7 +315,7 @@ After all questions are answered, present the full feature list summary (same fo
 - **Reclassify phantoms**: Create folder + `_meta.md` for the reclassified feature, update `README.md`
 - **Re-run**: If codebase changed significantly, re-run — the skill will detect existing outlines and run incremental discovery
 - **Adjust metadata**: Edit specific `_meta.md` files using the Edit tool
-- On follow-up updates: update `_meta.md` frontmatter `generated` field and `README.md` `Generated:` line to reflect the current date
+- On follow-up updates: update `_meta.md` frontmatter `date` field and `README.md` `Last updated:` line to reflect the current date
 
 ## Framework Detection Reference
 

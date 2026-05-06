@@ -7,7 +7,7 @@
 - Applications: {N} ({app names})
 - Total features: {N} outlined
 - Backend endpoints: ~{N} across {M} controllers
-- Generated: {YYYY-MM-DD} | Branch: `{branch}` | Commit: `{commit}`
+- Last updated: {YYYY-MM-DD} | Branch: `{branch}` | Commit: `{commit}`
 
 ## Features by Portal
 

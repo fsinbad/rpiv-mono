@@ -47,7 +47,7 @@ Input: `$ARGUMENTS`
 
 7. **Report scoped status:**
    ```
-   [Scoped]: ran scope-tracer. [N] questions in [G] groups, [M] shared files.
+   [Scoped]: ran scope-tracer. {N} questions in {G} groups, {M} shared files.
    ```
 
 ## Step 2: Dispatch Analysis Agents
@@ -64,31 +64,31 @@ Each agent receives the dense question paragraph(s) directly as its prompt. The 
 
 For standalone questions (no grouping):
 ```
-Research topic: [topic from frontmatter]
+Research topic: {topic from frontmatter}
 
 Answer the following research question thoroughly with file:line references. Read the files mentioned, trace the code paths described, and provide a complete analysis.
 
-[Full dense question paragraph]
+{Full dense question paragraph}
 
 Provide your analysis with exact file:line references. Focus on DEPTH — trace the actual code, don't just locate it.
 ```
 
 For grouped questions:
 ```
-Research topic: [topic from frontmatter]
+Research topic: {topic from frontmatter}
 
 Answer the following related research questions thoroughly with file:line references. These questions share overlapping code paths — use your cross-question context to provide deeper, more connected analysis.
 
-Question 1: [Full dense question paragraph]
+Question 1: {Full dense question paragraph}
 
-Question 2: [Full dense question paragraph]
+Question 2: {Full dense question paragraph}
 
 For each question, provide your analysis with exact file:line references. Note connections between the questions where the same code serves multiple roles. Focus on DEPTH — trace the actual code, don't just locate it.
 ```
 
 **Precedent sweep (git-gated):**
 
-When `git_commit` is available (not `no-commit`), spawn one `precedent-locator` agent alongside the question agents with prompt: "Find similar past changes involving [list key files from Discovery Summary]. Search git log for commits that touched these files, similar commit messages, and follow-up fixes. Research topic: [original query]."
+When `commit` is available (not `no-commit`), spawn one `precedent-locator` agent alongside the question agents with prompt: "Find similar past changes involving {list key files from Discovery Summary}. Search git log for commits that touched these files, similar commit messages, and follow-up fixes. Research topic: {original query}."
 
 Findings go into Precedents & Lessons. Otherwise skip and note "git history unavailable" there.
 
@@ -123,10 +123,10 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
 
    **Question patterns by finding type:**
 
-   - **Pattern conflict**: "Found 2 implementations of [X] — which is canonical?" with options citing `file:line` + occurrence count
-   - **Scope boundary**: "Question [N] references files [A,B,C] but analysis shows [D] is the real integration point. Extend scope?" with yes/no + "describe what I missed"
-   - **Priority override**: "Questions Q1 and Q2 have competing implications for [area]. Which is load-bearing?" with options
-   - **Integration ambiguity**: "Found no connection between [X] and [Y]. Is there an indirect path?" (free-text — can't predict the answer)
+   - **Pattern conflict**: "Found 2 implementations of {X} — which is canonical?" with options citing `file:line` + occurrence count
+   - **Scope boundary**: "Question {N} references files {A,B,C} but analysis shows {D} is the real integration point. Extend scope?" with yes/no + "describe what I missed"
+   - **Priority override**: "Questions Q1 and Q2 have competing implications for {area}. Which is load-bearing?" with options
+   - **Integration ambiguity**: "Found no connection between {X} and {Y}. Is there an indirect path?" (free-text — can't predict the answer)
 
    **Choosing question format:**
 
@@ -149,17 +149,17 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
 
 3. **Present compiled scan** (under 30 lines):
    ```
-   Task: [one-line summary]
-   Scope: [N files across M layers, K integration points]
+   Task: {one-line summary}
+   Scope: {N files across M layers, K integration points}
 
-   [Layer name] — [key files and what they do]
-   [Layer name] — [key files and what they do]
-   Integration — [N inbound, M outbound, K wiring. Top concern if any]
-   History — [N relevant docs. Key insight if any]
+   {Layer name} — {key files and what they do}
+   {Layer name} — {key files and what they do}
+   Integration — {N inbound, M outbound, K wiring. Top concern if any}
+   History — {N relevant docs. Key insight if any}
 
-   Best template: [implementation to model after]
-   Precedents — [N similar changes found. Top lesson if any]
-   Inconsistencies: [count] found ([short names])
+   Best template: {implementation to model after}
+   Precedents — {N similar changes found. Top lesson if any}
+   Inconsistencies: {count} found ({short names})
    ```
 
    Wait for the developer's response before proceeding.
@@ -186,47 +186,47 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
 ## Step 4: Write Research Document
 
 1. **Determine metadata:**
-   - Filename: `thoughts/shared/research/YYYY-MM-DD_HH-MM-SS_[topic].md`
+   - Filename: `thoughts/shared/research/YYYY-MM-DD_HH-MM-SS_{topic}.md`
      - YYYY-MM-DD_HH-MM-SS: Current date and time
      - topic: Brief kebab-case description
    - Repository name: from git root basename, or current directory basename if not a git repo
    - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly)
    - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
-   - Researcher: use the User from the git context injected at the start of the session (fallback: "unknown")
+   - Author: use the User from the git context injected at the start of the session (fallback: "unknown")
    - If metadata unavailable: use "unknown" for commit/branch
 
 2. **Write the research document** — this document is compressed context for a new session. Include everything the planner needs to make architectural decisions without re-researching:
 
    ```markdown
    ---
-   date: [Current date and time with timezone in ISO format]
-   researcher: [User from injected git context]
-   git_commit: [Current commit hash]
-   branch: [Current branch name]
-   repository: [Repository name]
-   topic: "[User's Research Topic]"
+   date: {Current date and time with timezone in ISO format}
+   author: {User from injected git context}
+   commit: {Current commit hash}
+   branch: {Current branch name}
+   repository: {Repository name}
+   topic: "{User's Research Topic}"
    tags: [research, codebase, relevant-component-names]
    status: complete
-   last_updated: [Same ISO timestamp as `date:` above]
-   last_updated_by: [User from injected git context]
+   last_updated: {Same ISO timestamp as `date:` above}
+   last_updated_by: {User from injected git context}
    ---
 
-   # Research: [User's Research Topic]
+   # Research: {User's Research Topic}
 
    ## Research Question
-   [Original user query from questions artifact]
+   {Original user query from questions artifact}
 
    ## Summary
-   [High-level findings answering the user's question]
+   {High-level findings answering the user's question}
 
    ## Detailed Findings
 
-   ### [Component/Area 1]
+   ### {Component/Area 1}
    - Finding with reference (`file.ext:line`)
    - Connection to other components
    - Implementation details
 
-   ### [Component/Area 2]
+   ### {Component/Area 2}
    ...
 
    ## Code References
@@ -234,24 +234,24 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
    - `another/file.ts:45-67` — Description of the code block
 
    ## Integration Points
-   [All connections to the researched area. Enumerate each consumer, dependency, and wiring point with file:line. Source from the questions artifact's Discovery Summary + new connections found by analysis agents.]
+   {All connections to the researched area. Enumerate each consumer, dependency, and wiring point with file:line. Source from the questions artifact's Discovery Summary + new connections found by analysis agents.}
 
    ### Inbound References
-   - `path/to/consumer.ext:line` — [What references the component and how]
+   - `path/to/consumer.ext:line` — {What references the component and how}
 
    ### Outbound Dependencies
-   - `path/to/dependency.ext:line` — [What the component depends on]
+   - `path/to/dependency.ext:line` — {What the component depends on}
 
    ### Infrastructure Wiring
-   - `path/to/config.ext:line` — [DI, routes, events, jobs, middleware]
+   - `path/to/config.ext:line` — {DI, routes, events, jobs, middleware}
 
    ## Architecture Insights
-   [Patterns, conventions, and design decisions discovered]
+   {Patterns, conventions, and design decisions discovered}
 
    ## Precedents & Lessons
-   [N] similar past changes analyzed.
+   {N} similar past changes analyzed.
 
-   ### Precedent: [what was added/changed]
+   ### Precedent: {what was added/changed}
    **Commit(s)**: `hash` — "message" (YYYY-MM-DD)
    **Blast radius**: N files across M layers
      layer/ — what changed
@@ -262,33 +262,33 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
    **Lessons from docs**:
    - thoughts/path/to/doc.md — key lesson extracted
 
-   **Takeaway**: [one sentence — what to watch out for]
+   **Takeaway**: {one sentence — what to watch out for}
 
    ### Composite Lessons
-   - [Composite lesson 1 — most recurring pattern first, with relevant `commit hash` inline]
-   - [Composite lesson 2]
+   - {Composite lesson 1 — most recurring pattern first, with relevant `commit hash` inline}
+   - {Composite lesson 2}
 
    ## Historical Context (from thoughts/)
-   [Links only — one line per doc, no summaries of their contents]
-   - `thoughts/shared/something.md` — [one-line description of what this doc covers]
+   {Links only — one line per doc, no summaries of their contents}
+   - `thoughts/shared/something.md` — {one-line description of what this doc covers}
    ## Developer Context
-   **Q (`file.ext:line`): [Question grounded in specific code reference]**
-   A: [Developer's answer]
+   **Q (`file.ext:line`): {Question grounded in specific code reference}**
+   A: {Developer's answer}
 
    ## Related Research
-   - [Links to other research documents]
+   - {Links to other research documents}
 
    ## Open Questions
-   [Only questions NOT resolved during checkpoint]
+   {Only questions NOT resolved during checkpoint}
    ```
 
 ## Step 5: Present and Chain
 
 ```
 Research document written to:
-`thoughts/shared/research/[filename].md`
+`thoughts/shared/research/{filename}.md`
 
-[N] questions answered, [M] findings across [K] files.
+{N} questions answered, {M} findings across {K} files.
 
 Please review and let me know if you have follow-up questions.
 
@@ -301,8 +301,8 @@ When ready, choose your next step:
 
 - If the user has follow-up questions, append to the same research document
 - Update frontmatter: `last_updated` and `last_updated_by`
-- Add `last_updated_note: "Added follow-up research for [brief description]"` to frontmatter
-- Add section: `## Follow-up Research [timestamp]`
+- Add `last_updated_note: "Added follow-up research for {brief description}"` to frontmatter
+- Add section: `## Follow-up Research {timestamp}`
 - Spawn new analysis agents as needed
 
 ## Important Notes

@@ -7,7 +7,7 @@ priority: high|medium|low
 type: functional|regression|smoke|e2e|edge-case
 status: draft
 tags: ["{tag1}", "{tag2}"]
-generated_at_commit: {commit-hash}
+commit: {commit-hash}
 ---
 
 # {Title}
@@ -45,7 +45,7 @@ generated_at_commit: {commit-hash}
 - Known issues: {documented bugs or limitations affecting this flow}
 ```
 
-**Frontmatter fields** align with what `test-case-locator` greps for (`id`, `title`, `priority`, `status`, `type`, `tags`). Always populate all fields — the locator agent extracts them for coverage reporting. The `generated_at_commit` field tracks which code version was analyzed to produce this TC — used for staleness detection on regeneration.
+**Frontmatter fields** align with what `test-case-locator` greps for (`id`, `title`, `priority`, `status`, `type`, `tags`). Always populate all fields — the locator agent extracts them for coverage reporting. The `commit` field tracks which code version was analyzed to produce this TC — used for staleness detection on regeneration.
 
 **Steps table rules:**
 - Actions use imperative verbs from the user's perspective: Navigate, Click, Enter, Select, Submit, Drag, Upload, Scroll

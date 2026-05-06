@@ -54,8 +54,8 @@ If starting fresh or need more context:
    - **general-purpose** agent — Verify implementation follows established codebase patterns (pattern-finder role)
 
    Example agent prompts:
-   - "Analyze [component] and verify it implements [plan requirement] correctly"
-   - "Find patterns similar to [new code] and check if conventions are followed"
+   - "Analyze {component} and verify it implements {plan requirement} correctly"
+   - "Find patterns similar to {new code} and check if conventions are followed"
 
    Also gather evidence directly:
    ```bash
@@ -94,12 +94,12 @@ For each phase in the plan:
 Create comprehensive validation summary:
 
 ```markdown
-## Validation Report: [Plan Name]
+## Validation Report: {Plan Name}
 
 ### Implementation Status
-✓ Phase 1: [Name] - Fully implemented
-✓ Phase 2: [Name] - Fully implemented
-⚠️ Phase 3: [Name] - Partially implemented (see issues)
+✓ Phase 1: {Name} - Fully implemented
+✓ Phase 2: {Name} - Fully implemented
+⚠️ Phase 3: {Name} - Partially implemented (see issues)
 
 ### Automated Verification Results
 ✓ Build passes: `make build`
@@ -109,13 +109,13 @@ Create comprehensive validation summary:
 ### Code Review Findings
 
 #### Matches Plan:
-- Database migration correctly adds [table]
+- Database migration correctly adds {table}
 - API endpoints implement specified methods
 - Error handling follows plan
 
 #### Deviations from Plan:
-- Used different variable names in [file:line]
-- Added extra validation in [file:line] (improvement)
+- Used different variable names in {file:line}
+- Added extra validation in {file:line} (improvement)
 
 #### Potential Issues:
 - Missing index on foreign key could impact performance
@@ -123,16 +123,16 @@ Create comprehensive validation summary:
 
 ### Manual Testing Required:
 1. UI functionality:
-   - [ ] Verify [feature] appears correctly
+   - [ ] Verify {feature} appears correctly
    - [ ] Test error states with invalid input
 
 2. Integration:
-   - [ ] Confirm works with existing [component]
+   - [ ] Confirm works with existing {component}
    - [ ] Check performance with large datasets
 
 ### Recommendations:
 - Address linting warnings before merge
-- Consider adding integration test for [scenario]
+- Consider adding integration test for {scenario}
 - Document new API endpoints
 ```
 

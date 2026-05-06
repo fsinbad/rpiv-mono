@@ -136,20 +136,20 @@ Present a flow summary, then ask grounded questions one at a time.
 
 **Flow summary** (under 20 lines):
 ```
-## Feature: [Feature Name]
+## Feature: {Feature Name}
 
-Entry points: [N] endpoints across [M] web layers
-Postconditions: [K] side effects discovered
-Existing TCs: [X] found (will skip duplicates)
+Entry points: {N} endpoints across {M} web layers
+Postconditions: {K} side effects discovered
+Existing TCs: {X} found (will skip duplicates)
 
 ### Proposed Test Cases:
 1. TC-{MOD}-001: {Flow title} (priority: high)
    Steps: {brief flow summary — e.g., "browse -> add to cart -> checkout -> payment -> confirm"}
 2. TC-{MOD}-002: {Flow title} (priority: medium)
    Steps: {brief flow summary}
-[etc.]
+{etc.}
 
-Flows skipped (already covered): [list or "none"]
+Flows skipped (already covered): {list or "none"}
 ```
 
 When _meta.md is available, prepend:
@@ -227,7 +227,7 @@ What makes these examples good:
 - Postconditions describe system-level side effects (from integration-scanner findings)
 - Edge cases list variant scenarios worth separate testing
 - Include preconditions: user role, required test data, system state
-- Include `generated_at_commit` in frontmatter with current git commit hash
+- Include `commit` in frontmatter with current git commit hash
 
 **After all TCs**, generate the regression suite document:
 - Follow the regression-suite.md template
@@ -235,7 +235,7 @@ What makes these examples good:
 - Mark smoke test subset (TCs that cover critical paths in minimal time)
 - Include coverage map cross-referencing TCs to feature sub-areas
 - Calculate total estimated execution time
-- Include `git_commit` in overview with current commit hash
+- Include `commit` in overview with current commit hash
 
 ### Step 7: Write Files & Update Artifacts
 
@@ -252,7 +252,7 @@ What makes these examples good:
 3. **Update _meta.md** (when it exists):
    - Set `tc_count` to the number of TCs written
    - Set `status` to `generated`
-   - Update `generated` date to current date
+   - Update `date` to current date
    - Append new checkpoint Q&A pairs to `## Checkpoint History` under a new date header — only if new Q&A occurred during Step 5
 
 4. **Rebuild root coverage map** at `.rpiv/test-cases/_coverage-map.md`:
@@ -275,7 +275,7 @@ What makes these examples good:
    | _coverage-map.md | — | Project-wide coverage (N features, M TCs) |
 
    Output: `.rpiv/test-cases/{feature-slug}/`
-   Total: [N] test cases + 1 regression suite + 1 coverage map
+   Total: {N} test cases + 1 regression suite + 1 coverage map
 
    Review the generated test cases and let me know if you'd like adjustments.
    ```

@@ -100,7 +100,7 @@ Swept the plugin loader and lifecycle anchors across `src/plugins/`. Key files f
 
 2. Explain the lifecycle hook ordering contract — `onInit`, `onReady`, `onShutdown` defined in `src/plugins/lifecycle.ts:12-44`. Identify which phase calls which hook, how errors in one hook affect subsequent hooks, and whether hook execution is sequential or parallel across plugins. Trace a single hook invocation from `LifecycleManager.run()` through the per-plugin `try`/`catch` at `src/plugins/lifecycle.ts:67`. This matters because new extension points must integrate without breaking the existing ordering guarantees relied upon by the test suite at `tests/plugins/lifecycle.test.ts:34-89`.
 
-3. [Continue with 4-10 more dense paragraphs covering the rest of the topic...]
+3. {Continue with 4-10 more dense paragraphs covering the rest of the topic...}
 ```
 
 ## What NOT to Do
