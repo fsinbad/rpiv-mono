@@ -4,74 +4,70 @@
 [![codecov](https://codecov.io/gh/juicesharp/rpiv-mono/branch/main/graph/badge.svg?v=2)](https://codecov.io/gh/juicesharp/rpiv-mono)
 [![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/juicesharp/rpiv-mono/badges/tests.json)](https://github.com/juicesharp/rpiv-mono/actions/workflows/ci.yml)
 
-Monorepo for Pi CLI extensions in the `@juicesharp/rpiv-*` family. Lockstep versions, single install, single publish pipeline.
+Nine npm packages: one pipeline (rpiv-pi) and the sibling extensions it composes. Kept in one repo so orchestration and tool surfaces evolve together and ship in lockstep.
 
-## Packages
+The pipeline needs most of them. **rpiv-args** expands shell-style `$1` and `$ARGUMENTS` placeholders inside skills, **rpiv-ask-user-question** lets the model put a structured questionnaire to the user instead of guessing, **rpiv-todo** keeps a live task overlay that survives `/reload` and compaction, **rpiv-advisor** escalates to a stronger reviewer model before the agent acts, and **rpiv-web-tools** gives the model web search and fetch backed by Brave. A couple exist because I wanted them inside Pi: **rpiv-btw** is a side-conversation pattern I got used to in Claude Code, and **rpiv-warp** integrates Pi with Warp terminal's notification system, because that's where I actually run Pi. **rpiv-i18n** is the one that came from users: it started as localization for ask-user-question and grew into a small SDK.
 
-| Package | Description |
-|---|---|
-| [`@juicesharp/rpiv-pi`](packages/rpiv-pi) | Umbrella extension — skill-based workflow.<br>Default: `discover` → `research` → `design` → `plan` → `implement` → `validate`<br>One-shot: `research` → `blueprint` → `implement` → `validate`<br>Ship: `code-review` ↔ `commit` (interchangeable order); mid-flight: `revise` |
-| [`@juicesharp/rpiv-advisor`](packages/rpiv-advisor) | `advisor` tool + `/advisor` — escalate to a stronger reviewer model |
-| [`@juicesharp/rpiv-args`](packages/rpiv-args) | `$1`/`$ARGUMENTS`/`$@`/`${@:N}` — shell-style placeholder substitution in skill bodies |
-| [`@juicesharp/rpiv-ask-user-question`](packages/rpiv-ask-user-question) | `ask_user_question` tool — structured clarifying-question selector |
-| [`@juicesharp/rpiv-btw`](packages/rpiv-btw) | `/btw` slash command — side-question without polluting main transcript |
-| [`@juicesharp/rpiv-i18n`](packages/rpiv-i18n) | i18n SDK for Pi extensions — `/languages` picker + `--locale` flag + `registerStrings`/`scope`/`tr` API; 8 languages OOTB |
-| [`@juicesharp/rpiv-todo`](packages/rpiv-todo) | `todo` tool + `/todos` overlay — Claude-Code-parity task tracking |
-| [`@juicesharp/rpiv-warp`](packages/rpiv-warp) | Native [Warp](https://warp.dev) terminal toasts via `OSC 777` for Pi lifecycle events — opt-in, not auto-installed by `/rpiv-setup` |
-| [`@juicesharp/rpiv-web-tools`](packages/rpiv-web-tools) | `web_search` + `web_fetch` tools — backed by Brave Search API |
-
-Each package is published independently to npm and installable by name:
-
-```bash
-pi install npm:@juicesharp/rpiv-pi
-pi install npm:@juicesharp/rpiv-advisor
-# …
-```
-
-`@juicesharp/rpiv-pi` registers the core siblings (see [`siblings.ts`](packages/rpiv-pi/extensions/rpiv-core/siblings.ts)); `/rpiv-setup` installs any that are missing. Other packages (e.g. `rpiv-warp`) are opt-in — install them explicitly with `pi install`.
+For the full pipeline narrative, the subagent map, and install instructions: **[rpiv-pi.com](https://rpiv-pi.com)**.
 
 ## Roadmap
 
-1. **Discovery becomes a subagent.** The current `discover` skill's responsibilities move into a specialized subagent invoked automatically inside the main flow, so it stops being a step the user has to think about.
-2. **Repurpose `discover` for decision-tree interviews.** With the name freed, `discover` is rebuilt as a rigorous up-front interview skill: one question at a time, each paired with a recommended answer, the agent self-resolving anything answerable from the codebase rather than asking the user.
-3. **Task-slug-based `thoughts/` layout.** Move `thoughts/` from artifact-grouped folders (`questions/`, `research/`, `designs/`, …) to task-slug-grouped folders, so every artifact for a given task lives under one slug and any pipeline stage can resolve the full bundle by name.
-4. **Pipeline tuning.** Latency, token efficiency, and precision — rolling work across all stages.
+The realization shaping AI-assisted development right now is that LLMs produce correct code, not aligned code. The output compiles and passes tests, but it isn't enterprise-grade in the way human engineers produce: fitting the codebase's existing patterns, respecting conventions that aren't written down anywhere, making the boring choices mature systems rely on, staying reviewable and extensible by the next person who touches it. Closing that gap takes a driver: an experienced engineer who carries the context the model can't have, who frames the task correctly upfront, who steers architecture, who pushes back when output drifts. Without that active driver, the codebase fills with locally-correct, globally-misaligned diffs that look fine in PR review and erode the team's confidence over time.
 
-### Not planned
+rpiv-pi exists to keep the driver meaningfully in the loop while the work moves at LLM speed. The pipeline asks the right questions at the right moments (ask-user-question), surfaces architectural decisions where they matter, and structures human involvement as participation rather than approval. The bet isn't that models will plateau. They'll keep getting better. The bet is that the structural conditions for fully autonomous coding (institutional knowledge availability, connector maturity, correctness and latency at enterprise scale) are a decade-scale problem absent a real breakthrough. For that whole interval, the realistic operating model is a driver in the loop. rpiv-pi is the engine for that loop: it writes and verifies code under expert supervision. A real enterprise harness, the layer that connects an engine like this to ticketing, CI, and an organization's institutional context, is a separate piece of work and not what this project is today. At Codemasters, we're about to start exploring how an engine like rpiv-pi could fit as part of a broader multi-chain experiment. Whether any of that surfaces back here is open.
 
-- **Backward compatibility of skill bodies and `thoughts/` artifact shapes.** Both are treated as live; expect breaking changes between versions.
+In parallel, the pipeline is already viable on cheap open-weight models today (GLM-4.6, Kimi K2.5, MiMo-V2-Pro), and produces genuinely good results in practice. Output isn't yet at parity with frontier on the same task: more mistakes than I'd want, longer runs than I'd want. Closing that residual gap is the next set of work below. I'm assessing this as a CTO leading AI adoption at a mid-size company with no frontier-lab budget, where the cost difference matters: as of May 2026, GLM-4.6 lists at roughly 8× cheaper than Claude Sonnet 4.6 on output tokens, 14× cheaper than Opus 4.7.
 
-## Development
+- **Verification under cheap-model runs.** The failure mode I see today on GLM/Kimi/MiMo isn't loud breakage; it's same-model self-validation blindness. Cheap-model work passes cheap-model verifiers, and only escalation to a frontier judge (currently Opus 4.7, May 2026) reliably catches the residual issues. That defeats the cost argument. The next round of work is experimenting with verification setups that close the gap without leaning on a frontier model for every check.
+- **Delegation strategy.** The pipeline's runtime cost is a function of how work is delegated across skills and subagents: what runs in parallel, what serially, which model handles which step, where verification fires. Some of the slowness on cheap-model runs is infrastructure-side and outside scope. The part that's tractable is finding the delegation pattern that minimizes total run cost without sacrificing output quality. This is an open optimization question, not a planned feature; the next round of work is experimenting with combinations and measuring what actually trades off against what.
 
-```bash
-npm install          # one install at root; workspace symlinks under node_modules/
-npm run check        # biome + tsc --noEmit across all packages
-npm test             # forwarded to packages that declare a test script
-```
+## Who built this
 
-Pre-commit hooks (husky) run `npm run check` before every commit; pre-push runs the full coverage suite.
+Sergii Guslystyi. Software Architect and CTO at Codemasters International. Two decades building software, currently leading AI-first development adoption inside the company. rpiv-mono is a personal initiative, on my own time, where I prototype the patterns I'm working through professionally and put them in public for anyone to use, fork, or push back on.
 
-## Continuous integration
+Find me on X: [@juicesharp](https://x.com/juicesharp).
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push and pull request:
+## Repo as a repo
 
-- Matrix on Node 20 + 22 — `npm run check` (Biome + `tsc --noEmit`) then `npm run coverage` (full Vitest + V8 coverage).
-- Coverage uploads to [Codecov](https://codecov.io/gh/juicesharp/rpiv-mono) via tokenless OIDC (public-repo).
-- On `main` pushes, a follow-up job parses Vitest's JSON output and publishes a `{passed} / {total}` shields-endpoint badge to the orphan `badges` branch.
+npm workspaces monorepo. Clone, `npm install` at the root, that's it.
 
-## Releasing
+A few choices worth naming up front:
 
-All packages version in lockstep. One command cuts a release of all of them:
+- No build step. Packages publish raw `.ts`; Pi loads TypeScript directly. No `dist/`, no per-package tsconfig.
+- One Vitest runner at the root walks every package. No per-package vitest configs.
+- Lockstep versions. All nine packages share one version, enforced by `sync-versions.js`.
+- Releases are local-only by design. `node scripts/release.mjs <patch|minor|major|x.y.z>` cuts a release; no CI publish workflow.
+- Husky gates the work. `pre-commit` runs Biome and `tsc --noEmit` (fast); `pre-push` runs the full test suite with coverage thresholds. Tests don't block commits, they block pushes.
+- Single shared config across the workspace: one `biome.json`, one `tsconfig.base.json`, one `vitest.config.ts`.
 
-```bash
-node scripts/release.mjs patch     # e.g. 0.6.0 → 0.6.1
-node scripts/release.mjs minor     # 0.6.0 → 0.7.0
-node scripts/release.mjs major     # 0.6.0 → 1.0.0
-node scripts/release.mjs 1.2.3     # explicit version
-```
+### Contributions
 
-The script bumps every `packages/*/package.json`, promotes each package's `## [Unreleased]` CHANGELOG heading to `## [X.Y.Z] - YYYY-MM-DD`, commits, tags `vX.Y.Z`, runs `npm publish -ws --access public`, reinstates a fresh `## [Unreleased]` block, and pushes `main` + tag.
+Issues are welcome. PRs too, but please open an issue first if the change isn't trivial. The project has a definite shape and direction, and a quick conversation up front saves both of us a round-trip.
 
-## License
+## Status and expectations
 
-[MIT](LICENSE) © juicesharp
+Started April 2026. MIT licensed.
+
+Single maintainer (me); Claude Code is a co-author on most commits.
+
+Actively maintained as a personal project. Issues triaged on best effort. Cadence may slow when the day job runs hot.
+
+## Pointers
+
+- Site: [rpiv-pi.com](https://rpiv-pi.com)
+- License: [MIT](./LICENSE)
+- X: [@juicesharp](https://x.com/juicesharp)
+
+### Packages
+
+| Package | Role | npm |
+| --- | --- | --- |
+| `rpiv-pi` | Pipeline (skills + subagents) | [`@juicesharp/rpiv-pi`](https://www.npmjs.com/package/@juicesharp/rpiv-pi) |
+| `rpiv-args` | `$1` / `$ARGUMENTS` placeholders in skills | [`@juicesharp/rpiv-args`](https://www.npmjs.com/package/@juicesharp/rpiv-args) |
+| `rpiv-ask-user-question` | Structured questionnaire to the user | [`@juicesharp/rpiv-ask-user-question`](https://www.npmjs.com/package/@juicesharp/rpiv-ask-user-question) |
+| `rpiv-todo` | Live task overlay surviving `/reload` | [`@juicesharp/rpiv-todo`](https://www.npmjs.com/package/@juicesharp/rpiv-todo) |
+| `rpiv-advisor` | Escalate to a stronger reviewer model | [`@juicesharp/rpiv-advisor`](https://www.npmjs.com/package/@juicesharp/rpiv-advisor) |
+| `rpiv-web-tools` | Web search + fetch (Brave) | [`@juicesharp/rpiv-web-tools`](https://www.npmjs.com/package/@juicesharp/rpiv-web-tools) |
+| `rpiv-btw` | `/btw` side-conversation slash command | [`@juicesharp/rpiv-btw`](https://www.npmjs.com/package/@juicesharp/rpiv-btw) |
+| `rpiv-warp` | Warp terminal notification integration | [`@juicesharp/rpiv-warp`](https://www.npmjs.com/package/@juicesharp/rpiv-warp) |
+| `rpiv-i18n` | Localization SDK for sibling extensions | [`@juicesharp/rpiv-i18n`](https://www.npmjs.com/package/@juicesharp/rpiv-i18n) |
