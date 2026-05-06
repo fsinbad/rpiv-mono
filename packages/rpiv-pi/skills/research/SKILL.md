@@ -18,7 +18,13 @@ Input: `$ARGUMENTS`
    ```
    Then wait for input.
 
-2. **Dispatch the scope-tracer agent** to formulate trace-quality research questions for the user's topic:
+2. **Detect chained discover artifact:** If `$ARGUMENTS` mentions a path matching `thoughts/shared/discover/.*\.md`, read it FULLY using the Read tool (no limit/offset) before scope-tracer dispatch:
+   - Translate each `### [Decision title]` block in the FRD's `## Decisions` section into a Developer Context entry: `**Q (discover: <Decision title>): <Question text>**` followed by `A: <Chosen text>`. Hold these entries in main context — they're recorded in the research artifact's Developer Context section in Step 4 (write document).
+   - Use the FRD's `## Recommended Approach` text (1-2 sentences naming the architectural shape) as the topic body for the next sub-step's scope-tracer prompt. The full discover artifact path stays in `$ARGUMENTS` so scope-tracer's "read mentioned files first" rule picks up the file naturally for additional context.
+   - Carry the FRD's Open Questions forward verbatim into the research artifact's Open Questions section in Step 4.
+   - If `$ARGUMENTS` is plain free-text or mentions a non-discover path, skip this sub-step and proceed directly to scope-tracer dispatch with `$ARGUMENTS` as the topic.
+
+3. **Dispatch the scope-tracer agent** to formulate trace-quality research questions for the user's topic:
    ```
    Agent({
      subagent_type: "scope-tracer",
@@ -28,18 +34,18 @@ Input: `$ARGUMENTS`
    ```
    The agent reads any mentioned files, sweeps anchor terms via grep/find/ls, reads 5-10 key files for depth, then emits a Discovery Summary + 6-12 dense numbered questions inline in its final message. Nothing is written to disk.
 
-3. **Parse the agent's final message** as the questions artifact body. Extract: Discovery Summary (3-5 sentence file-landscape overview), Questions (numbered dense 3-6 sentence paragraphs).
+4. **Parse the agent's final message** as the questions artifact body. Extract: Discovery Summary (3-5 sentence file-landscape overview), Questions (numbered dense 3-6 sentence paragraphs).
 
-4. **Read key shared files** referenced across multiple questions into main context — especially shared utilities, type definitions, and integration points that multiple questions mention.
+5. **Read key shared files** referenced across multiple questions into main context — especially shared utilities, type definitions, and integration points that multiple questions mention.
 
-5. **Analyze question overlap for grouping:**
+6. **Analyze question overlap for grouping:**
    - Parse all question paragraphs and extract file references from each
    - Identify questions that share 2+ file references — these are candidates for grouping
    - Group related questions together (2-3 questions per group max)
    - Questions with no significant file overlap remain standalone
    - Target: 3-6 agent dispatches total (grouped + standalone)
 
-6. **Report scoped status:**
+7. **Report scoped status:**
    ```
    [Scoped]: ran scope-tracer. [N] questions in [G] groups, [M] shared files.
    ```
@@ -185,6 +191,7 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
      - topic: Brief kebab-case description
    - Repository name: from git root basename, or current directory basename if not a git repo
    - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly)
+   - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Researcher: use the User from the git context injected at the start of the session (fallback: "unknown")
    - If metadata unavailable: use "unknown" for commit/branch
 
@@ -200,7 +207,7 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
    topic: "[User's Research Topic]"
    tags: [research, codebase, relevant-component-names]
    status: complete
-   last_updated: [Current date in YYYY-MM-DD format]
+   last_updated: [Same ISO timestamp as `date:` above]
    last_updated_by: [User from injected git context]
    ---
 
@@ -302,6 +309,7 @@ When ready, choose your next step:
 
 - **Analysis only**: This skill answers questions. Question formulation is delegated to the scope-tracer subagent at Step 1.
 - **Single entry point**: Free-text research prompt. Argument substitution is handled by `rpiv-args`; scope-tracer runs in-band before analysis dispatch.
+- **Chained from discover**: when `$ARGUMENTS` mentions a `thoughts/shared/discover/*.md` artifact, read it FULLY in Step 1 and translate each Decision into a `Q (discover: <title>) / A: <Chosen>` Developer Context entry. Pass the FRD's `Recommended Approach` text as the scope-tracer topic. Open Questions carry forward verbatim. The `argument-hint` stays free-text-only — discover artifact recognition is by path-mention, not by argument-hint widening.
 - **Grouped dispatch**: Related questions are batched per agent based on file overlap. Default agent: codebase-analyzer. This reduces token waste from redundant file reads and lets agents build cross-question context.
 - **Downstream compatible**: Research documents feed directly into design and plan — the same Code References / Integration Points / Architecture Insights sections they expect.
 - **Agent-message parsing**: scope-tracer emits Discovery Summary + numbered Questions inline in its final assistant message; parse the agent's final-message text (no file write).

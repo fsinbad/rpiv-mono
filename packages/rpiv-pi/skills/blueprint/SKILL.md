@@ -203,6 +203,7 @@ After the design summary is confirmed, decompose the feature into vertical slice
 
 4. **Create skeleton artifact** — immediately after decomposition is approved:
    - Determine metadata: filename `thoughts/shared/plans/YYYY-MM-DD_HH-MM-SS_topic.md`, repository name from git root, branch and commit from the git context injected at the start of the session (fallbacks: "no-branch" / "no-commit"), planner from the injected User (fallback: "unknown")
+   - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Write skeleton using the Write tool with `status: in-progress` in frontmatter
    - **Include all prose sections filled** from Steps 1-5: Overview, Requirements, Current State Analysis, Desired End State, What We're NOT Doing, Decisions, Ordering Constraints, Verification Notes, Performance Considerations, Migration Notes, Pattern References, Developer Context, References
    - **Phase sections**: one `## Phase N: [slice name]` heading per slice from the decomposition (in slice order), each with `### Overview`, `### Changes Required:` (one `#### N. path/to/file.ext` subsection per file with empty code fence + NEW/MODIFY label), and `### Success Criteria:` (Automated + Manual placeholders — filled in Step 9)
@@ -355,10 +356,7 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
 
    If any check fails, return to Step 7 for the unresolved phase. Do NOT flip status to ready.
 
-4. **Update frontmatter** via Edit:
-   - Set `status: ready`
-   - Update `last_updated` to current date
-   - Update `last_updated_by` to the User from the injected git context (fallback: "unknown")
+4. **Update frontmatter** via Edit: set `status: ready`. `last_updated` and `last_updated_by` were set at skeleton creation — leave as-is.
 
 5. **Verify template completeness**: Ensure all sections from the template reference in Step 6 are present and filled. Edit to fix any gaps.
 

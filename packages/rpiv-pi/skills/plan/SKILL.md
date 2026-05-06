@@ -70,9 +70,9 @@ Get feedback on structure before writing details.
 After structure approval, write the plan **incrementally** — skeleton first, then fill each phase:
 
 1. **Write the plan skeleton** to `thoughts/shared/plans/YYYY-MM-DD_HH-MM-SS_description.md`
+   - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Format: `YYYY-MM-DD_HH-MM-SS_description.md` where:
-     - YYYY-MM-DD is today's date
-     - HH-MM-SS is the current time in 24-hour format
+     - YYYY-MM-DD / HH-MM-SS come from the `date` output above
      - description is a brief kebab-case description (may include ticket number)
    - Examples:
      - With ticket: `2025-01-08_14-30-00_ENG-1478-parent-child-tracking.md`
@@ -95,7 +95,7 @@ topic: "[Feature/Task Name]"
 tags: [plan, relevant-component-names]
 status: ready
 design_source: "[path to design artifact]"
-last_updated: [Current date in YYYY-MM-DD format]
+last_updated: [Same ISO timestamp as `date:` above]
 last_updated_by: [User from injected git context]
 ---
 

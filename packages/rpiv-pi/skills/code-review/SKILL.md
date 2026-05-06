@@ -413,6 +413,7 @@ Before writing the artifact, spawn ONE `claim-verifier` whose sole job is to gro
    - Filename: `thoughts/shared/reviews/YYYY-MM-DD_HH-MM-SS_[scope-kebab].md`
    - Repository: git root basename (fallback: cwd basename).
    - Branch + commit: from git-context injected at session start, or `git branch --show-current` / `git rev-parse --short HEAD` (fallback: `no-branch` / `no-commit`).
+   - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Reviewer: user from injected git-context (fallback: `unknown`).
 
 2. **Write the artifact** using the Write tool (no Edit — this skill writes once per run).

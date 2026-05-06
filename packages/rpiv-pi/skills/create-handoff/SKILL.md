@@ -15,11 +15,11 @@ You are tasked with writing a handoff document to hand off your work to another 
 ### 1. Filepath & Metadata
 Use the following information to understand how to create your document:
     - create your file under `thoughts/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md`, where:
-        - YYYY-MM-DD is today's date
-        - HH-MM-SS is the hours, minutes and seconds based on the current time, in 24-hour format (i.e. use `13-00-00` for `1:00 pm`)
+        - YYYY-MM-DD / HH-MM-SS come from the `date` command (see below)
         - description is a brief kebab-case description
      - Repository name: from git root basename, or current directory basename if not a git repo
      - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly)
+     - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
      - Researcher: use the User from the git context injected at the start of the session (fallback: "unknown")
      - If metadata unavailable: use "unknown" for commit/branch
     - Examples:
@@ -39,7 +39,7 @@ repository: [Repository name]
 topic: "[Feature/Task Name] [Work Type]" # Customize work type: Implementation Strategy, Bug Fix, Research, Feature Implementation, etc.
 tags: [implementation, strategy, relevant-component-names]
 status: complete
-last_updated: [Current date in YYYY-MM-DD format]
+last_updated: [Same ISO timestamp as `date:` above]
 last_updated_by: [Researcher name]
 type: [work_type] # Options: implementation_strategy, bug_fix, research, refactoring, feature_development, etc.
 ---

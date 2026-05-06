@@ -68,6 +68,7 @@ describe("session_start hook", () => {
 		const ctx = createMockCtx({ cwd: projectDir, hasUI: true });
 		await handler?.({ reason: "startup" } as never, ctx as never);
 		for (const d of [
+			"thoughts/shared/discover",
 			"thoughts/shared/research",
 			"thoughts/shared/designs",
 			"thoughts/shared/plans",

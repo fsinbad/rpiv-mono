@@ -125,6 +125,7 @@ Wait for ALL agents to complete before proceeding.
   - [topic]: Brief kebab-case description
 - Repository name: from git root basename, or current directory basename if not a git repo
 - Use the git branch and commit from the git context injected at the start of the session (or run `git branch --show-current` / `git rev-parse --short HEAD` directly)
+- Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
 - Researcher: use the User from the git context injected at the start of the session (fallback: "unknown")
 - If metadata unavailable: use "unknown" for commit/branch
 
@@ -145,7 +146,7 @@ Wait for ALL agents to complete before proceeding.
   complexity: low | medium | high
   status: ready | awaiting_input | blocked
   tags: [solutions, component-names]
-  last_updated: [Current date in YYYY-MM-DD format]
+  last_updated: [Same ISO timestamp as `date:` above]
   last_updated_by: [Researcher name]
   ---
 

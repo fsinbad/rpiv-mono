@@ -133,7 +133,7 @@ Use the `ask_user_question` tool to confirm before editing. Question: "[Summary 
    - If modifying scope, update "What We're NOT Doing" section
    - If changing approach, update "Implementation Approach" section
    - Maintain the distinction between automated vs manual success criteria
-   - If the plan has YAML frontmatter, update `last_updated` to today's date and `last_updated_by` to your name
+   - If the plan has YAML frontmatter, run `date +"%Y-%m-%dT%H:%M:%S%z"` once and use the output for `last_updated`; set `last_updated_by` to your name
 
 3. **Preserve quality standards**:
    - Include specific file paths and line numbers for new content

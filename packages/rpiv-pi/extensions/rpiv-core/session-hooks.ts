@@ -20,6 +20,7 @@ import { clearInjectionState, handleToolCallGuidance, injectRootGuidance } from 
 import { findMissingSiblings } from "./package-checks.js";
 
 const THOUGHTS_DIRS = [
+	"thoughts/shared/discover",
 	"thoughts/shared/research",
 	"thoughts/shared/designs",
 	"thoughts/shared/plans",
