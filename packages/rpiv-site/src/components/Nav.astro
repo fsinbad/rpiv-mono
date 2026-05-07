@@ -13,6 +13,13 @@ import { VERSION } from "../lib/version";
 				target="_blank"
 				rel="noopener"
 			>v{VERSION}</a>
+			<a
+				class="nav__github mono"
+				href="https://github.com/juicesharp/rpiv-mono"
+				target="_blank"
+				rel="noopener"
+				aria-label="rpiv-mono on GitHub"
+			>github</a>
 			<span class="nav__counter mono" aria-hidden="true">
 				<span class="nav__counter-rule"></span>
 				<span class="nav__counter-num" data-nav-counter>—</span>
@@ -89,6 +96,22 @@ import { VERSION } from "../lib/version";
 		opacity: 0.7;
 	}
 	.nav__version:hover { color: var(--washi); }
+
+	/* GitHub link — sits in the masthead row alongside the version imprint.
+	   Same tiny mono treatment but without the hairline divider; the text
+	   itself is the affordance. Sage hover echoes the SiblingCard CTA idiom
+	   and signals "external resource" without a full icon. */
+	.nav__github {
+		font-size: var(--type-tiny);
+		letter-spacing: 0.14em;
+		color: var(--text-distant);
+		border-bottom: none;
+		text-decoration: none;
+		padding: 0 var(--space-2);
+		line-height: 1;
+		transition: color var(--dur-ink) var(--ease-ink);
+	}
+	.nav__github:hover { color: var(--sage); }
 
 	/* Section counter — mobile-only flourish that echoes
 	   ScrollIndicator's `.indicator__foot` (tabular numerals + 0.14em
@@ -218,10 +241,16 @@ import { VERSION } from "../lib/version";
 		.nav__counter { display: inline-flex; }
 
 		/* Mobile masthead row is baseline-flex; the hairline divider reads
-		   cluttered against the brand at this density. Drop it. */
+		   cluttered against the brand at this density. Drop it. On mobile,
+		   the GitHub link carries the divider instead — keeps one separator
+		   in the masthead row without cluttering the brand. */
 		.nav__version {
 			border-left: none;
 			padding-left: 0;
+		}
+		.nav__github {
+			padding-left: var(--space-2);
+			border-left: 1px solid var(--rule);
 		}
 
 		.nav__cta {
@@ -259,8 +288,13 @@ import { VERSION } from "../lib/version";
 	@media (max-width: 480px) {
 		/* Sub-480 the masthead row gets tight (brand + counter + version + CTA
 		   on one line). Drop the version off-screen and let the colophon
-		   carry it. CTA is non-negotiable; the version is. */
+		   carry it. CTA is non-negotiable; the version is. GitHub stays —
+		   it's a key traffic driver. */
 		.nav__version { display: none; }
+		.nav__github {
+			border-left: none;
+			padding-left: 0;
+		}
 
 		.nav__links {
 			grid-template-columns: repeat(3, 1fr);
