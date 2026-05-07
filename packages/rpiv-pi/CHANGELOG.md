@@ -12,9 +12,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `/skill:discover` restored as an interview-driven Feature Requirements Document producer. One question at a time with a recommended answer, grounded by light agent fan-out, writing a timestamped artifact to `thoughts/shared/discover/`. Decision blocks in the FRD chain into `research` as Developer Context entries.
 - `scope-tracer` agent: Analyzer-tier specialist that formulates 5–10 numbered research questions inline for `research` to parse in-memory, replacing the former discover question-formulation procedure. Auto-syncs to the agent directory on first session after upgrade.
 
+### Changed
+- Standardized printed footer across all skills with a consistent follow-up prompt, next-step command, and `/new` tip. Unified the follow-up handling policy for appending answers, bumping frontmatter, and re-dispatching narrowly.
+- Placeholder syntax in templates and agent files changed from `[Verbose]` to `{Verbose}`. Update any custom skills or agents that reference the bracket notation.
+
 ### Breaking / Upgrade Notes
 - The old `/skill:discover` (codebase-discovery question-formulator) is permanently removed. Its question-formulation role is now handled by `scope-tracer` inside `research`. Custom skills that referenced the old discover for question-formulation should call `/skill:research "<topic>"` directly.
-- Placeholder syntax in templates and agent files changed from `[Verbose]` to `{Verbose}`. Update any custom skills or agents that reference the bracket notation.
 
 ## [1.1.5] - 2026-05-05
 
