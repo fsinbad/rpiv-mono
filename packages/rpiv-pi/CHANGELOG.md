@@ -9,12 +9,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - `/skill:changelog` — regenerates the `[Unreleased]` section of every affected CHANGELOG.md from commits since the last release tag, classified by Conventional Commit prefix and written as Keep a Changelog 1.1.0 prose. Idempotent — safe to re-run as work lands.
-- `scope-tracer` agent: Analyzer-tier specialist that absorbs the former discover question-formulation procedure, emitting 5–10 numbered research questions inline for `research` to parse in-memory. Auto-syncs to the agent directory on first session after upgrade.
-- `discover` skill restored as an interview-driven Feature Requirements Document producer. One question at a time with a recommended answer at every step, grounded by light agent fan-out, writing a timestamped artifact to `thoughts/shared/discover/`. Chains into `research` — each Decision block in the FRD becomes a Developer Context entry.
+- `/skill:discover` restored as an interview-driven Feature Requirements Document producer. One question at a time with a recommended answer, grounded by light agent fan-out, writing a timestamped artifact to `thoughts/shared/discover/`. Decision blocks in the FRD chain into `research` as Developer Context entries.
+- `scope-tracer` agent: Analyzer-tier specialist that formulates 5–10 numbered research questions inline for `research` to parse in-memory, replacing the former discover question-formulation procedure. Auto-syncs to the agent directory on first session after upgrade.
 
 ### Breaking / Upgrade Notes
-- The old `/skill:discover` (codebase-discovery question-formulator) is gone and stays gone. Its question-formulation role is now handled by `scope-tracer` inside `research`. Custom skills that referenced the old discover for question-formulation should call `/skill:research "<topic>"` directly.
-- The new `/skill:discover` serves a fundamentally different purpose (human-driven intent capture before research). Migration directives from the previous removal continue to apply for old-discover semantics.
+- The old `/skill:discover` (codebase-discovery question-formulator) is permanently removed. Its question-formulation role is now handled by `scope-tracer` inside `research`. Custom skills that referenced the old discover for question-formulation should call `/skill:research "<topic>"` directly.
+- Placeholder syntax in templates and agent files changed from `[Verbose]` to `{Verbose}`. Update any custom skills or agents that reference the bracket notation.
 
 ## [1.1.5] - 2026-05-05
 

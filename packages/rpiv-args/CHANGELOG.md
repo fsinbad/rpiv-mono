@@ -7,11 +7,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added
-- Skill-invocation protocol injected into the system prompt every turn via the `before_agent_start` hook. The protocol tells the LLM that text after `</skill>` is argument input to the skill, not a separate imperative — fixing the failure mode where skills like `/skill:discover write a file ...` had their workflow ignored because the LLM latched onto the trailing imperative.
-
-### Changed
-- Token-path emission no longer appends the trailing arguments after `</skill>` when the skill body contains `$N` / `$ARGUMENTS` / `$@` / `${@:N[:L]}` placeholders. Substitution already consumed the args inside the body; appending them again as a trailing suffix put a bare imperative outside the skill block that hijacked LLM attention from the skill workflow. The no-token path is unchanged — still byte-identical to Pi's built-in output for backward compatibility.
+### Fixed
+- Skill-invocation protocol is now injected into the system prompt so the LLM treats trailing text after `</skill>` as argument input. Token path no longer appends arguments when the skill body already consumed them via `$ARGUMENTS` / `$N` placeholders.
 
 ## [1.1.5] - 2026-05-05
 
