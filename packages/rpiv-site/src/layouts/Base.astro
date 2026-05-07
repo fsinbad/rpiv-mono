@@ -2,6 +2,11 @@
 import "@fontsource/jetbrains-mono/400.css";
 import "../styles/global.css";
 import Colophon from "../components/Colophon.astro";
+// Preload the latin subset so the browser fetches it in parallel with the
+// bundled CSS instead of discovering it via @font-face after the CSS parses
+// (~500ms into the critical path on the prior trace). Other subsets stay
+// lazy via unicode-range. ?url returns the Vite-hashed asset URL.
+import latinWoff2Url from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url";
 
 interface Props {
 	title?: string;
@@ -56,6 +61,8 @@ const jsonLd = {
 
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+		<link rel="preload" href={latinWoff2Url} as="font" type="font/woff2" crossorigin />
 
 		<meta property="og:site_name" content="rpiv-pi" />
 		<meta property="og:locale" content="en_US" />
