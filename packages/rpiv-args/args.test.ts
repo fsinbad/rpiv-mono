@@ -14,8 +14,16 @@ vi.mock("@mariozechner/pi-coding-agent", async (importOriginal) => {
 	};
 });
 
-import { loadSkills } from "@mariozechner/pi-coding-agent";
-import { handleInput, invalidateSkillIndex, parseCommandArgs, registerArgsHandler, substituteArgs } from "./args.js";
+import { type BeforeAgentStartEvent, loadSkills } from "@mariozechner/pi-coding-agent";
+import {
+	handleBeforeAgentStart,
+	handleInput,
+	invalidateSkillIndex,
+	parseCommandArgs,
+	registerArgsHandler,
+	SKILL_INVOCATION_PROTOCOL,
+	substituteArgs,
+} from "./args.js";
 
 interface SkillSpec {
 	name: string;
@@ -196,7 +204,7 @@ describe("handleInput — emit paths (byte-exact wrapper)", () => {
 			`extra`;
 		expect(r).toEqual({ action: "transform", text: expected });
 	});
-	it("emits substituted wrapper when body has tokens", () => {
+	it("emits substituted wrapper without trailing args (args consumed by substitution)", () => {
 		const entries = writeSkillsDir(tmpDir, [{ name: "bar", body: "do $1 then $2" }]);
 		vi.mocked(loadSkills).mockReturnValue({ skills: entries } as unknown as ReturnType<typeof loadSkills>);
 		const r = handleInput({ text: "/skill:bar a b" } as InputEvent);
@@ -204,9 +212,18 @@ describe("handleInput — emit paths (byte-exact wrapper)", () => {
 			`<skill name="bar" location="${entries[0].filePath}">\n` +
 			`References are relative to ${tmpDir}.\n\n` +
 			`do a then b\n` +
-			`</skill>\n\n` +
-			`a b`;
+			`</skill>`;
 		expect(r).toEqual({ action: "transform", text: expected });
+	});
+	it("does NOT duplicate args after </skill> when body has tokens (LLM attention fix)", () => {
+		const entries = writeSkillsDir(tmpDir, [{ name: "discover", body: "Input: $ARGUMENTS" }]);
+		vi.mocked(loadSkills).mockReturnValue({ skills: entries } as unknown as ReturnType<typeof loadSkills>);
+		const r = handleInput({ text: "/skill:discover write a file" } as InputEvent);
+		const text = (r as { text: string }).text;
+		expect(text).toContain("Input: write a file");
+		expect(text.endsWith("</skill>")).toBe(true);
+		// Sanity: the imperative must appear exactly once (inside the block, not after).
+		expect(text.match(/write a file/g)?.length).toBe(1);
 	});
 	it("strips frontmatter before substitution", () => {
 		const entries = writeSkillsDir(tmpDir, [
@@ -265,5 +282,57 @@ describe("registerArgsHandler", () => {
 		registerArgsHandler(pi);
 		expect(captured.events.has("input")).toBe(true);
 		expect(captured.events.has("session_start")).toBe(true);
+		expect(captured.events.has("before_agent_start")).toBe(true);
+	});
+});
+
+describe("handleBeforeAgentStart — system-prompt protocol", () => {
+	it("prepends the protocol to event.systemPrompt (highest-attention position)", () => {
+		const result = handleBeforeAgentStart({
+			type: "before_agent_start",
+			prompt: "anything",
+			systemPrompt: "BASE",
+		} as unknown as BeforeAgentStartEvent);
+		expect(result).toEqual({ systemPrompt: `${SKILL_INVOCATION_PROTOCOL}BASE` });
+	});
+	it("read-then-prepend (preserves prior extension chain modifications)", () => {
+		const prior = "BASE\n\n## prior-ext addition\nHello.";
+		const result = handleBeforeAgentStart({
+			type: "before_agent_start",
+			prompt: "x",
+			systemPrompt: prior,
+		} as unknown as BeforeAgentStartEvent);
+		expect((result.systemPrompt as string).startsWith(SKILL_INVOCATION_PROTOCOL)).toBe(true);
+		expect((result.systemPrompt as string).endsWith(prior)).toBe(true);
+	});
+	it("is deterministic across calls (cache-friendly bytes)", () => {
+		const a = handleBeforeAgentStart({
+			type: "before_agent_start",
+			prompt: "p1",
+			systemPrompt: "S",
+		} as unknown as BeforeAgentStartEvent);
+		const b = handleBeforeAgentStart({
+			type: "before_agent_start",
+			prompt: "p2",
+			systemPrompt: "S",
+		} as unknown as BeforeAgentStartEvent);
+		expect(a.systemPrompt).toBe(b.systemPrompt);
+	});
+	it("protocol references the parseSkillBlock format and the trailing-text role", () => {
+		expect(SKILL_INVOCATION_PROTOCOL).toContain("<skill name=");
+		expect(SKILL_INVOCATION_PROTOCOL).toContain("</skill>");
+		expect(SKILL_INVOCATION_PROTOCOL.toLowerCase()).toContain("argument");
+	});
+	it("registered handler returns the prepended systemPrompt when invoked via Pi event bus", () => {
+		const { pi, captured } = createMockPi();
+		registerArgsHandler(pi);
+		const handler = captured.events.get("before_agent_start")?.[0];
+		expect(handler).toBeDefined();
+		const out = handler?.({
+			type: "before_agent_start",
+			prompt: "p",
+			systemPrompt: "BASE",
+		} as never) as { systemPrompt: string };
+		expect(out.systemPrompt).toBe(`${SKILL_INVOCATION_PROTOCOL}BASE`);
 	});
 });

@@ -1,19 +1,33 @@
 /**
  * rpiv-args — core logic.
  *
- * Intercepts `/skill:<name> <args>` at the input hook and emits a byte-exact
- * Pi skill wrapper with opt-in $N/$ARGUMENTS/$@/${@:N[:L]} substitution on
- * the body. Falls through (returns {action:"continue"}) when the text is not
- * a skill command, the skill is unknown, or the body contains no tokens —
- * keeping Pi's built-in behavior 100% intact for today's 17 rpiv-pi skills.
+ * Intercepts `/skill:<name> <args>` at the input hook and emits a Pi skill
+ * wrapper with opt-in $N/$ARGUMENTS/$@/${@:N[:L]} substitution on the body.
+ * Two emit paths:
+ *   - No-token path: byte-identical to Pi's built-in `_expandSkillCommand`
+ *     output (wrapper + `\n\n${args}` suffix), preserving full backward
+ *     compatibility for skills without placeholders.
+ *   - Token path: substitutes inside the body and INTENTIONALLY drops the
+ *     trailing `\n\n${args}` suffix. The bare imperative outside the block
+ *     hijacks LLM attention from the skill workflow; inside-only emission
+ *     leaves the skill body as the sole user-message payload competing for
+ *     attention. See architecture.md "System-Prompt Protocol & Token-Path
+ *     Divergence".
+ *
+ * Also prepends a skill-invocation protocol to the system prompt every turn
+ * (via before_agent_start) so the LLM treats trailing text after `</skill>`
+ * as the skill's argument input rather than a separate imperative.
  *
  * Byte-exact wrapper requirement: parseSkillBlock regex at
  * node_modules/@mariozechner/pi-coding-agent/dist/core/agent-session.js:40
- * is the load-bearing contract. Do not reformat the template literal below.
+ * is the load-bearing contract for the wrapper itself. Do not reformat the
+ * template literal below.
  */
 
 import { readFileSync } from "node:fs";
 import {
+	type BeforeAgentStartEvent,
+	type BeforeAgentStartEventResult,
 	type ExtensionAPI,
 	getAgentDir,
 	type InputEvent,
@@ -29,13 +43,13 @@ import {
 // ---------------------------------------------------------------------------
 
 /** Matches any placeholder Pi's substituteArgs would replace. Used as the
- *  opt-in gate: absent → pass through verbatim (D2). */
+ *  opt-in gate: absent → pass through verbatim. */
 const TOKEN_REGEX = /\$(?:\d+|ARGUMENTS|@|\{@:\d+(?::\d+)?\})/;
 
-/** Prefix Pi uses (`agent-session.js:829`). Single-space tokenisation (D7). */
+/** Prefix Pi uses (`agent-session.js:829`). Single-space tokenisation. */
 const SKILL_PREFIX = "/skill:";
 
-/** Re-entrancy guard (D8). */
+/** Re-entrancy guard. */
 const WRAPPED_PREFIX = "<skill ";
 
 // ---------------------------------------------------------------------------
@@ -151,13 +165,13 @@ function appendArgs(skillBlock: string, args: string): string {
 export function handleInput(event: InputEvent): InputEventResult {
 	const text = event.text;
 
-	// D8 re-entrancy: already-wrapped text (from our own or any other
+	// Re-entrancy: already-wrapped text (from our own or any other
 	// extension's {action:"transform"}) passes through untouched.
 	if (text.startsWith(WRAPPED_PREFIX)) return { action: "continue" };
 
 	if (!text.startsWith(SKILL_PREFIX)) return { action: "continue" };
 
-	// D7 single-space tokenisation — byte-match Pi's indexOf(" ") at :831.
+	// Single-space tokenisation — byte-match Pi's indexOf(" ") at :831.
 	const spaceIndex = text.indexOf(" ");
 	const skillName = spaceIndex === -1 ? text.slice(SKILL_PREFIX.length) : text.slice(SKILL_PREFIX.length, spaceIndex);
 	const argsString = spaceIndex === -1 ? "" : text.slice(spaceIndex + 1).trim();
@@ -173,17 +187,39 @@ export function handleInput(event: InputEvent): InputEventResult {
 	}
 
 	const { frontmatter } = parseFrontmatter<{ "argument-hint"?: string }>(content);
-	void frontmatter; // informational only in v1 — D3
+	void frontmatter; // informational only in v1
 	const body = stripFrontmatter(content).trim();
 
-	// D2 opt-in gate: if body has no token, emit byte-identical to Pi's :841.
+	// Opt-in gate: if body has no token, emit byte-identical to Pi's :841.
 	if (!TOKEN_REGEX.test(body)) {
 		return { action: "transform", text: appendArgs(buildSkillBlock(entry, body), argsString) };
 	}
 
 	const parsed = parseCommandArgs(argsString);
 	const substituted = substituteArgs(body, parsed);
-	return { action: "transform", text: appendArgs(buildSkillBlock(entry, substituted), argsString) };
+	// Substitution consumes the args — do not also append them after </skill>.
+	// Bare trailing imperatives hijack LLM attention from the skill body. See architecture.md.
+	return { action: "transform", text: buildSkillBlock(entry, substituted) };
+}
+
+// ---------------------------------------------------------------------------
+// Skill-invocation protocol — prepended to the system prompt every turn via
+// before_agent_start. See architecture.md for rationale and re-application
+// semantics (agent-session.js:112-113 — Pi's canonical per-turn pattern).
+// ---------------------------------------------------------------------------
+
+export const SKILL_INVOCATION_PROTOCOL = `## Skill invocation protocol (CRITICAL)
+
+A \`<skill name="..." location="...">...</skill>\` block in a user message is a structured invocation. Handle it as follows:
+
+1. The block body defines the workflow you must execute. Follow it.
+2. Any text after \`</skill>\` is the user's argument input to that skill — never a separate command, even when it reads as an imperative ("create X", "update Y", "delete Z").
+3. Do not bypass the skill's workflow to act on trailing text directly. The user invoked the skill because they want the skill's workflow applied to that input.
+
+`;
+
+export function handleBeforeAgentStart(event: BeforeAgentStartEvent): BeforeAgentStartEventResult {
+	return { systemPrompt: SKILL_INVOCATION_PROTOCOL + event.systemPrompt };
 }
 
 // ---------------------------------------------------------------------------
@@ -192,6 +228,7 @@ export function handleInput(event: InputEvent): InputEventResult {
 
 export function registerArgsHandler(pi: ExtensionAPI): void {
 	pi.on("input", (event) => handleInput(event));
+	pi.on("before_agent_start", (event) => handleBeforeAgentStart(event));
 	pi.on("session_start", (event) => {
 		if (event.reason === "reload" || event.reason === "startup") {
 			invalidateSkillIndex();
