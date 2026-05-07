@@ -8,10 +8,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- **Skill-invocation protocol injected into the system prompt every turn** via the `before_agent_start` hook. The protocol tells the LLM that text after `</skill>` is argument input to the skill, not a separate imperative — fixing the failure mode where skills like `/skill:discover write a file ...` had their workflow ignored because the LLM latched onto the trailing imperative. Read-then-prepend pattern preserves chaining with other extensions; same bytes every turn → prompt-cache hit after turn 1 (`agent-session.js:112-113`, `runner.js:701-731`).
+- Skill-invocation protocol injected into the system prompt every turn via the `before_agent_start` hook. The protocol tells the LLM that text after `</skill>` is argument input to the skill, not a separate imperative — fixing the failure mode where skills like `/skill:discover write a file ...` had their workflow ignored because the LLM latched onto the trailing imperative.
 
 ### Changed
-- **Token-path emission no longer appends `\n\n${args}` after `</skill>`**. When the skill body contains `$N` / `$ARGUMENTS` / `$@` / `${@:N[:L]}`, substitution consumes the args inside the body; appending them again as a trailing suffix put a bare imperative outside the skill block that hijacked LLM attention from the skill workflow. The structural complement to the system-prompt protocol above. The no-token path is unchanged — still byte-identical to Pi's built-in `_expandSkillCommand` output for full backward compatibility with skills that rely on the suffix.
+- Token-path emission no longer appends the trailing arguments after `</skill>` when the skill body contains `$N` / `$ARGUMENTS` / `$@` / `${@:N[:L]}` placeholders. Substitution already consumed the args inside the body; appending them again as a trailing suffix put a bare imperative outside the skill block that hijacked LLM attention from the skill workflow. The no-token path is unchanged — still byte-identical to Pi's built-in output for backward compatibility.
 
 ## [1.1.5] - 2026-05-05
 
