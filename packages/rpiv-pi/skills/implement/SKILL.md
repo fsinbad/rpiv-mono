@@ -74,26 +74,47 @@ If the plan has existing checkmarks:
 
 Remember: You're implementing a solution, not just checking boxes. Keep the end goal in mind and maintain forward momentum.
 
-## Closing Out
+## Present and Chain
 
-When the last in-scope phase is complete (or the user pauses execution), print a closing block in this exact shape:
+When the last in-scope phase is complete, print the **completion** closing block:
 
 ```
-Implementation {complete | paused at Phase {N}}: `thoughts/shared/plans/{filename}.md`
+Implementation complete:
+`thoughts/shared/plans/{filename}.md`
 
 {P} phases completed, {M} files changed, {T} tests passing.
-Outstanding: {list of unchecked items, blockers, or "none"}.
+Outstanding: none.
+
+Please review the diff and let me know if anything should reopen a phase.
 
 ---
 
-💬 Follow-up: implement edits source files, not artifacts. For plan-level changes run `/skill:revise <plan-path>` first; for session pauses run `/skill:create-handoff`.
+💬 Follow-up: surface code/plan mismatches inline via the `ask_user_question` flow ("Follow the plan / Skip this change / Update the plan") — that is implement's only in-skill follow-up surface. For plan-level changes run `/skill:revise <plan-path>`; for session pauses run `/skill:create-handoff`.
 
 **Next step:** `/skill:validate thoughts/shared/plans/{filename}.md` — verify the implementation against the plan's success criteria before committing.
 
 > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
 ```
 
-If the run was paused mid-plan rather than completed, swap the next-step line for `/skill:create-handoff` so context can be resumed cleanly in a new session — the same `/new` tip still applies.
+If the run was paused mid-plan rather than completed, print the **paused** variant instead:
+
+```
+Implementation paused at Phase {N}:
+`thoughts/shared/plans/{filename}.md`
+
+{P} phases completed, {M} files changed, {T} tests passing.
+Outstanding: {list of unchecked items, blockers}.
+
+Please review what landed and let me know if anything needs to change before resuming.
+
+---
+
+💬 Follow-up: surface code/plan mismatches inline via the `ask_user_question` flow ("Follow the plan / Skip this change / Update the plan") — that is implement's only in-skill follow-up surface. For plan-level changes run `/skill:revise <plan-path>` first.
+
+**Next step:** `/skill:create-handoff` — capture in-flight state so the next session can resume cleanly via `/skill:resume-handoff`.
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
+```
 
 ## Handle Follow-ups
 
