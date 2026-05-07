@@ -92,12 +92,11 @@ For each breaking change, add an entry to **Breaking / Upgrade Notes** in additi
 
 ### Worked example
 
-Input commits in `packages/rpiv-i18n/`:
+Input commits in `packages/rpiv-pi/`:
 
 ```
-feat(rpiv-i18n): add --locale flag
-fix(rpiv-i18n): handle missing locale file gracefully
-chore(deps): bump zod to 3.23
+0a3e1e2 feat(rpiv-pi): replace discover skill with scope-tracer agent
+6117f7d feat(rpiv-pi): restore /skill:discover as FRD-producer, chain into research
 ```
 
 Output `[Unreleased]`:
@@ -106,13 +105,22 @@ Output `[Unreleased]`:
 ## [Unreleased]
 
 ### Added
-- `--locale` flag for per-invocation language override.
-
-### Fixed
-- Missing locale files no longer crash the loader.
+- `scope-tracer` agent: Analyzer-tier specialist that absorbs the former
+  discover question-formulation procedure, emitting 6–12 numbered research
+  questions inline for `research` to parse in-memory. Auto-syncs to the
+  agent directory on first session after upgrade.
+- `discover` skill restored as an interview-driven Feature Requirements
+  Document producer. One question at a time with a recommended answer at
+  every step, grounded by light agent fan-out, writing a timestamped
+  artifact to `thoughts/shared/discover/`. Chains into `research` — each
+  Decision block in the FRD becomes a Developer Context entry.
 ```
 
-(The dependency bump is omitted — no user-visible behavior change.)
+What this example demonstrates:
+
+- Two `feat:` commits → two entries under **Added** (one per user-visible feature, even though one of the commits also internally _removes_ the prior discover implementation — the user-facing story is restoration, not removal).
+- User-perspective prose: names the user-visible artefacts (`scope-tracer` agent, `/skill:discover`), describes what the user gets, omits implementation details (no file paths, no `tools: read, grep` frontmatter, no `Auto-syncs to <cwd>/.pi/agents/` path literal — collapsed to "the agent directory").
+- Multi-line entries are fine when the feature genuinely warrants explanation. Imperative-mood single sentences are the floor, not the ceiling.
 
 ## Step 5: Preview and confirm
 
