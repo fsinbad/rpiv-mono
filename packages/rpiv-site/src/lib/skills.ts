@@ -68,3 +68,33 @@ export const ARTIFACT_WRITE_SITES: Record<string, string | null> = {
 	changelog: null,
 	revise: null,
 };
+
+/** Pipeline-step presentation copy for the home-page emaki — kept here (not in
+ * skill specs) so the narrative is editable without re-deriving specs. */
+export type PipelineMeta = { collects: string[]; why: string };
+export const PIPELINE_META: Record<string, PipelineMeta> = {
+	discover: {
+		collects: ["Goals", "Non-Goals", "Functional Requirements", "Acceptance Criteria", "Decisions"],
+		why: "One question at a time captures intent before any code is read. Stops research from chasing the wrong target.",
+	},
+	research: {
+		collects: ["Open questions", "Codebase facts", "Cross-file traces", "Cited line refs"],
+		why: "Parallel analysis agents answer structured questions and synthesize one cited document. Design reads this, not the codebase.",
+	},
+	design: {
+		collects: ["Architectural decisions", "Vertical slices", "File map", "Ordering", "Risk notes"],
+		why: "Decomposes the feature into the smallest set of vertical slices that can land independently.",
+	},
+	plan: {
+		collects: ["Atomic phases", "Parallelization graph", "Success criteria", "Rollback notes"],
+		why: "Turns the design into phases sized for one verification loop each, with the criteria that prove a phase is done.",
+	},
+	implement: {
+		collects: ["Code edits", "Phase verification logs", "Failure-recovery notes"],
+		why: "Executes phases one at a time, runs the success criteria, refuses to advance until they pass.",
+	},
+	validate: {
+		collects: ["Pass/fail per criterion", "Drift notes", "Follow-up tickets"],
+		why: "Independent re-check of the plan against the working tree. Catches half-finished phases the implement loop missed.",
+	},
+};

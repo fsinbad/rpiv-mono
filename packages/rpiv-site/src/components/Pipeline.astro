@@ -1,5 +1,5 @@
 ---
-import { ARTIFACT_WRITE_SITES, getPipelineSkills, getSkill } from "../lib/skills";
+import { ARTIFACT_WRITE_SITES, PIPELINE_META, getPipelineSkills, getSkill } from "../lib/skills";
 const pipeline = await getPipelineSkills();
 const revise = await getSkill("revise");
 ---
@@ -39,76 +39,225 @@ const revise = await getSkill("revise");
 			</svg>
 		</figure>
 
-		<ol class="timeline">
+		<div class="emaki-progress" aria-hidden="true">
+			<span class="emaki-progress__fill" data-emaki-progress-fill></span>
+		</div>
+		<ol class="emaki" data-emaki aria-label="six-step pipeline, panels left to right">
 			{pipeline.map((skill, i) => {
 				const next = pipeline[i + 1];
+				const meta = PIPELINE_META[skill.data.name];
 				const artifact = ARTIFACT_WRITE_SITES[skill.data.name];
 				const isOptional = skill.data.name === "discover";
+				const stepNum = String(i + 1).padStart(2, "0");
 				return (
-					<li class:list={["timeline__item", isOptional && "timeline__item--optional"]}>
-						<div class="timeline__rail" aria-hidden="true">
-							<svg class="timeline__node" viewBox="0 0 40 40">
-								<circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.45"
-									stroke-dasharray={isOptional ? "2 2" : undefined} />
-								<circle cx="20" cy="20" r="10.5" fill="var(--ink-raised)" stroke="currentColor" stroke-width="1.1"
-									stroke-dasharray={isOptional ? "3 2" : undefined} />
-								<circle cx="20" cy="20" r="10.5" fill="currentColor" opacity="0.16" />
-								<text x="20" y="23.5" text-anchor="middle" class="timeline__nodeNum">{String(i + 1).padStart(2, "0")}</text>
-							</svg>
+					<li class:list={["emaki__panel", isOptional && "emaki__panel--optional"]}
+						data-emaki-panel data-step={i + 1}
+						style={`--reveal-delay: ${i * 60}ms`}>
+						<div class="emaki__head">
+							<span class="emaki__num mono">{stepNum}</span>
+							<span class="emaki__rule" aria-hidden="true"></span>
+							<span class="emaki__name mono">/skill:{skill.data.name}</span>
+							<span class="emaki__open mono" aria-hidden="true">open</span>
 						</div>
-						<div class="timeline__content">
-							<header class="timeline__head">
-								<span class="chip chip--sage">/skill:{skill.data.name}</span>
-								{isOptional && <span class="chip chip--muted">optional</span>}
-								{skill.data["disable-model-invocation"] && <span class="chip chip--ochre">manual only</span>}
-							</header>
-							<p class="timeline__desc">{skill.tagline}</p>
-							{(skill.data["argument-hint"] || artifact) && (
-								<ul class="timeline__meta mono">
-									{skill.data["argument-hint"] && (
-										<li>
-											<span class="timeline__metaLabel">arg</span>
-											<span>{skill.data["argument-hint"]}</span>
-										</li>
-									)}
-									{artifact && (
-										<li>
-											<span class="timeline__metaLabel">→</span>
-											<span>writes <code>{artifact}</code>
-												{next && <> &nbsp;<span class="timeline__bullet">∴</span>&nbsp; feeds <code>/skill:{next.data.name}</code></>}
-											</span>
-										</li>
-									)}
-								</ul>
-							)}
 
-							{/* Auxiliary skill annotation — revise hangs off the plan step
-							    as the utility you reach for after review or during implement. */}
-							{skill.data.name === "plan" && (
-								<aside class="timeline__aux" aria-label="auxiliary skill">
-									<span class="timeline__auxRule" aria-hidden="true"></span>
-									<div class="timeline__auxBody">
-										<header class="timeline__auxHead">
-											<span class="timeline__auxKicker mono">aux</span>
-											<span class="chip chip--ochre">/skill:{revise.data.name}</span>
-										</header>
-										<p class="timeline__auxDesc">{revise.tagline}</p>
-										{revise.data["argument-hint"] && (
-											<p class="mono timeline__auxMeta">
-												<span class="timeline__metaLabel">arg</span>
-												<span>{revise.data["argument-hint"]}</span>
-											</p>
-										)}
-									</div>
-								</aside>
+						<div class="emaki__chips">
+							{isOptional && <span class="chip chip--muted">optional</span>}
+							{skill.data["disable-model-invocation"] && <span class="chip chip--ochre">manual only</span>}
+						</div>
+
+						<p class="emaki__tagline">{skill.tagline}</p>
+
+						{meta && (
+							<>
+								<div class="emaki__field" role="group" aria-label="information collected">
+									<p class="emaki__fieldHead">
+										<span class="emaki__tick mono" aria-hidden="true">i.</span>
+										<span class="mono">collects</span>
+									</p>
+									<p class="emaki__collectList mono">
+										{meta.collects.map((c, idx) => (
+											<>
+												<span class="emaki__collectItem">{c}</span>
+												{idx < meta.collects.length - 1 && <span class="emaki__sep" aria-hidden="true"> · </span>}
+											</>
+										))}
+									</p>
+								</div>
+
+								<div class="emaki__field" role="group" aria-label="rationale">
+									<p class="emaki__fieldHead">
+										<span class="emaki__tick mono" aria-hidden="true">ii.</span>
+										<span class="mono">why</span>
+									</p>
+									<p class="emaki__rationale">{meta.why}</p>
+								</div>
+							</>
+						)}
+
+						<div class="emaki__produces" role="group" aria-label="artifact produced">
+							<p class="emaki__fieldHead">
+								<span class="emaki__tick mono" aria-hidden="true">iii.</span>
+								<span class="mono">produces</span>
+							</p>
+							{artifact ? (
+								<p class="mono emaki__artifactPath"><span aria-hidden="true">→ </span>{artifact}</p>
+							) : (
+								<p class="mono emaki__artifactPath emaki__artifactPath--empty">
+									<span aria-hidden="true">→ </span>working-tree changes (no thoughts/ artifact)
+								</p>
+							)}
+							{next && (
+								<p class="mono emaki__feeds">
+									<span class="emaki__bullet" aria-hidden="true">∴</span>
+									feeds <code>/skill:{next.data.name}</code>
+								</p>
 							)}
 						</div>
+
+						{skill.data.name === "plan" && (
+							<aside class="emaki__hinge" aria-label="auxiliary skill">
+								<span class="emaki__hingeRule" aria-hidden="true"></span>
+								<div class="emaki__hingeBody">
+									<div class="emaki__hingeHead">
+										<span class="emaki__hingeKicker mono">aux</span>
+										<span class="chip chip--ochre">/skill:{revise.data.name}</span>
+									</div>
+									<p class="emaki__hingeDesc">{revise.tagline}</p>
+								</div>
+							</aside>
+						)}
 					</li>
 				);
 			})}
 		</ol>
+		<p class="emaki__hint mono" aria-hidden="true">drag · scroll · ← → to advance</p>
 	</div>
 </section>
+
+<script>
+	(() => {
+		const track = document.querySelector<HTMLElement>("[data-emaki]");
+		if (!track) return;
+		const panels = Array.from(track.querySelectorAll<HTMLElement>("[data-emaki-panel]"));
+		const fill = document.querySelector<HTMLElement>("[data-emaki-progress-fill]");
+
+		const reveal = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) {
+					if (e.isIntersecting) {
+						e.target.classList.add("is-revealed");
+						reveal.unobserve(e.target);
+					}
+				}
+			},
+			{ threshold: 0, rootMargin: "0px 0px -12% 0px" },
+		);
+		for (const p of panels) reveal.observe(p);
+
+		// Safety net: IO's first callback can race with deep-link / fast scroll.
+		requestAnimationFrame(() => {
+			const vh = window.innerHeight;
+			for (const p of panels) {
+				const r = p.getBoundingClientRect();
+				if (r.top < vh && r.bottom > 0) {
+					p.classList.add("is-revealed");
+					reveal.unobserve(p);
+				}
+			}
+		});
+
+		let frame = 0;
+		const updateActive = () => {
+			const trackRect = track.getBoundingClientRect();
+			const centre = trackRect.left + trackRect.width / 2;
+			let bestIdx = 0;
+			let bestDist = Infinity;
+			panels.forEach((p, i) => {
+				const r = p.getBoundingClientRect();
+				const d = Math.abs(r.left + r.width / 2 - centre);
+				if (d < bestDist) {
+					bestDist = d;
+					bestIdx = i;
+				}
+			});
+			panels.forEach((p, i) => p.classList.toggle("is-open", i === bestIdx));
+
+			if (fill) {
+				const max = track.scrollWidth - track.clientWidth;
+				const ratio = max > 0 ? track.scrollLeft / max : 0;
+				fill.style.transform = `scaleX(${ratio})`;
+			}
+		};
+		const schedule = () => {
+			if (frame) return;
+			frame = requestAnimationFrame(() => {
+				frame = 0;
+				updateActive();
+			});
+		};
+		track.addEventListener("scroll", schedule, { passive: true });
+		window.addEventListener("resize", schedule);
+		updateActive();
+
+		// Mouse drag-to-scroll. Native overflow-x covers touch + trackpad; this
+		// adds parity for mouse users. Threshold separates click from drag so
+		// in-panel links (e.g. /skill:revise chip) still receive their click.
+		let dragging = false;
+		let dragStartX = 0;
+		let dragStartScroll = 0;
+		let dragMoved = 0;
+		const DRAG_THRESHOLD = 5;
+
+		track.addEventListener("mousedown", (e) => {
+			const me = e as MouseEvent;
+			if (me.button !== 0) return;
+			dragging = true;
+			dragStartX = me.pageX;
+			dragStartScroll = track.scrollLeft;
+			dragMoved = 0;
+			track.classList.add("is-dragging");
+		});
+		window.addEventListener("mousemove", (e) => {
+			if (!dragging) return;
+			const me = e as MouseEvent;
+			const dx = me.pageX - dragStartX;
+			dragMoved = Math.max(dragMoved, Math.abs(dx));
+			track.scrollLeft = dragStartScroll - dx;
+		});
+		const endDrag = () => {
+			if (!dragging) return;
+			dragging = false;
+			track.classList.remove("is-dragging");
+		};
+		window.addEventListener("mouseup", endDrag);
+		window.addEventListener("blur", endDrag);
+		// Suppress click that would fire on mouseup after a real drag.
+		track.addEventListener(
+			"click",
+			(e) => {
+				if (dragMoved > DRAG_THRESHOLD) {
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			},
+			true,
+		);
+
+		track.tabIndex = 0;
+		track.addEventListener("keydown", (e) => {
+			const ke = e as KeyboardEvent;
+			if (ke.key !== "ArrowLeft" && ke.key !== "ArrowRight" && ke.key !== "Home" && ke.key !== "End") return;
+			e.preventDefault();
+			const current = panels.findIndex((p) => p.classList.contains("is-open"));
+			let target = current;
+			if (ke.key === "ArrowLeft") target = Math.max(0, current - 1);
+			else if (ke.key === "ArrowRight") target = Math.min(panels.length - 1, current + 1);
+			else if (ke.key === "Home") target = 0;
+			else if (ke.key === "End") target = panels.length - 1;
+			panels[target]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+		});
+	})();
+</script>
 
 <style>
 	#pipeline h2 { margin-bottom: var(--space-5); max-width: 32ch; }
@@ -119,7 +268,7 @@ const revise = await getSkill("revise");
 	}
 
 	.pipeline__strip {
-		margin: 0 0 var(--space-8);
+		margin: 0 0 var(--space-7);
 		padding: var(--space-5) 0;
 		border-top: 1px solid var(--rule);
 		border-bottom: 1px solid var(--rule);
@@ -132,165 +281,352 @@ const revise = await getSkill("revise");
 		display: block;
 	}
 
-	.timeline {
-		list-style: none;
-		padding: 0;
+	.emaki-progress {
+		position: relative;
+		height: 1px;
+		background: var(--rule);
 		margin: 0;
+		overflow: hidden;
 	}
-	.timeline__item {
-		display: grid;
-		grid-template-columns: 56px 1fr;
-		gap: var(--space-5);
-		padding-bottom: var(--space-7);
-		position: relative;
-	}
-	.timeline__item:last-child { padding-bottom: 0; }
-
-	/* Optional pipeline item — ochre rail tint */
-	.timeline__item--optional .timeline__rail {
-		color: var(--ochre);
-	}
-
-	.timeline__rail {
-		position: relative;
-		display: flex;
-		justify-content: center;
-		color: var(--sage-deep);
-	}
-	/* ink rail line connecting nodes */
-	.timeline__rail::before {
-		content: "";
-		position: absolute;
-		top: 42px;
-		bottom: -16px;
-		left: 50%;
-		width: 1px;
+	.emaki-progress__fill {
+		display: block;
+		height: 100%;
+		width: 100%;
 		background: linear-gradient(
-			to bottom,
+			to right,
 			var(--sage-deep) 0%,
-			var(--rule-strong) 70%,
-			transparent 100%
+			var(--sage) 60%,
+			var(--ochre) 100%
 		);
-		transform: translateX(-0.5px);
-		opacity: 0.7;
-	}
-	.timeline__item:last-child .timeline__rail::before { display: none; }
-
-	.timeline__node {
-		width: 44px;
-		height: 44px;
-		flex-shrink: 0;
-		position: relative;
-		z-index: 1;
-		color: var(--sage);
-	}
-	.timeline__nodeNum {
-		font-family: var(--font-mono);
-		font-size: 9px;
-		letter-spacing: 0.06em;
-		fill: var(--washi);
+		transform: scaleX(0);
+		transform-origin: left center;
+		transition: transform 120ms linear;
 	}
 
-	.timeline__content { padding-top: 6px; }
-	.timeline__head {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-		margin-bottom: var(--space-3);
-	}
-	.timeline__desc {
-		font-family: var(--font-serif);
-		color: var(--text);
-		margin: 0 0 var(--space-4);
-		max-width: 64ch;
-	}
-	.timeline__meta {
+	.emaki {
 		list-style: none;
-		padding: var(--space-3) 0 0;
+		padding: var(--space-3) var(--space-1) var(--space-5);
 		margin: 0;
+		display: flex;
+		align-items: stretch;
+		gap: var(--space-5);
+		overflow-x: auto;
+		overflow-y: hidden;
+		scroll-snap-type: x mandatory;
+		scroll-padding-inline: var(--space-3);
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: thin;
+		scrollbar-color: var(--rule-strong) transparent;
+		outline: none;
+		cursor: grab;
+		user-select: none;
+	}
+	.emaki.is-dragging {
+		cursor: grabbing;
+		scroll-snap-type: none;
+	}
+	.emaki:focus-visible {
+		outline: 1px solid var(--sage);
+		outline-offset: 4px;
+	}
+	.emaki::-webkit-scrollbar { height: 6px; }
+	.emaki::-webkit-scrollbar-track { background: transparent; }
+	.emaki::-webkit-scrollbar-thumb {
+		background: var(--rule-strong);
+		border-radius: 3px;
+	}
+
+	.emaki__panel {
+		flex: 0 0 clamp(300px, 34vw, 420px);
+		scroll-snap-align: start;
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-2);
+		padding: var(--space-4);
+		background: var(--ink-raised);
+		border-top: 1px solid var(--sage-deep);
+		border-left: 1px solid var(--rule);
+		border-right: 1px solid var(--rule);
+		border-bottom: 1px solid var(--rule-strong);
+		overflow: hidden;
+
+		opacity: 0;
+		transform: translateY(8px);
+		clip-path: inset(0 100% 0 0);
+		transition:
+			opacity var(--dur-ink) var(--ease-ink) var(--reveal-delay, 0ms),
+			transform var(--dur-ink) var(--ease-ink) var(--reveal-delay, 0ms),
+			clip-path var(--dur-ink) var(--ease-ink) var(--reveal-delay, 0ms),
+			border-top-color 320ms var(--ease-ink);
+	}
+	.emaki__panel.is-revealed {
+		opacity: 1;
+		transform: translateY(0);
+		clip-path: inset(0 0 0 0);
+	}
+	/* No-JS fallback */
+	@media (scripting: none) {
+		.emaki__panel { opacity: 1; transform: none; clip-path: none; }
+	}
+
+	.emaki__panel::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background:
+			radial-gradient(800px 200px at 30% 0%, rgba(168, 137, 108, 0.05), transparent 60%),
+			radial-gradient(600px 200px at 80% 100%, rgba(138, 149, 128, 0.04), transparent 60%);
+		mix-blend-mode: lighten;
+	}
+
+	.emaki__panel + .emaki__panel::after {
+		content: "∴";
+		position: absolute;
+		top: 50%;
+		left: calc(var(--space-5) * -1);
+		width: var(--space-5);
+		text-align: center;
+		transform: translateY(-50%);
+		font-family: var(--font-mono);
+		font-size: var(--type-tiny);
+		color: var(--text-distant);
+		pointer-events: none;
+	}
+
+	.emaki__panel--optional {
+		border-top-color: var(--ochre);
+		border-top-style: dashed;
+	}
+
+	.emaki__panel.is-open {
+		border-top-color: var(--ochre);
+	}
+	.emaki__panel.is-open .emaki__open { opacity: 1; }
+	.emaki__panel.is-open .emaki__num { color: var(--ochre); }
+
+	.emaki__head {
+		display: grid;
+		grid-template-columns: auto 1fr auto auto;
+		align-items: center;
+		gap: var(--space-2);
+		padding-bottom: var(--space-2);
+		border-bottom: 1px solid var(--rule-strong);
+	}
+	.emaki__num {
+		font-size: var(--type-tiny);
+		letter-spacing: 0.18em;
+		color: var(--washi);
+		transition: color 320ms var(--ease-ink);
+	}
+	.emaki__rule {
+		display: block;
+		height: 1px;
+		background: var(--rule-strong);
+	}
+	.emaki__name {
 		font-size: var(--type-small);
-		color: var(--text-quiet);
+		color: var(--sage);
+		letter-spacing: 0;
+	}
+	.emaki__open {
+		font-size: var(--type-tiny);
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--ochre);
+		opacity: 0;
+		transition: opacity 320ms var(--ease-ink);
+	}
+
+	.emaki__chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		min-height: 0;
+	}
+	.emaki__chips:empty { display: none; }
+
+	.emaki__tagline {
+		font-family: var(--font-serif);
+		font-size: var(--type-small);
+		line-height: var(--leading-snug);
+		color: var(--text);
+		margin: 0;
+	}
+
+	.emaki__field {
+		padding-top: var(--space-2);
 		border-top: 1px solid var(--rule);
 	}
-	.timeline__meta li {
+	.emaki__fieldHead {
 		display: flex;
 		align-items: baseline;
 		gap: var(--space-2);
+		font-size: var(--type-tiny);
+		font-weight: 400;
+		letter-spacing: 0.04em;
+		color: var(--text-distant);
+		margin: 0 0 var(--space-1);
+		text-transform: uppercase;
 	}
-	.timeline__meta code {
+	.emaki__tick {
+		display: inline-block;
+		min-width: 1.5em;
+		font-size: var(--type-tiny);
+		color: var(--sage);
+		letter-spacing: 0;
+		text-transform: none;
+	}
+
+	.emaki__collectList {
+		font-size: var(--type-tiny);
+		line-height: var(--leading-snug);
+		color: var(--text-quiet);
+		margin: 0;
+	}
+	.emaki__collectItem {
+		color: var(--washi-soft);
+	}
+	.emaki__sep {
+		color: var(--text-distant);
+		margin: 0 2px;
+	}
+
+	.emaki__rationale {
+		font-family: var(--font-serif);
+		font-size: var(--type-small);
+		line-height: var(--leading-snug);
+		color: var(--text-quiet);
+		margin: 0;
+		max-width: 40ch;
+	}
+
+	.emaki__produces {
+		/* margin-top:auto pins produces to the panel's ground line under stretch */
+		margin-top: auto;
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--rule-strong);
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.emaki__artifactPath {
+		font-size: var(--type-tiny);
 		color: var(--ochre);
+		margin: 0;
+		word-break: break-all;
+	}
+	.emaki__artifactPath--empty {
+		color: var(--text-distant);
+		font-style: italic;
+	}
+	.emaki__feeds {
+		font-size: var(--type-tiny);
+		color: var(--text-distant);
+		margin: 0;
+		display: flex;
+		gap: var(--space-2);
+		align-items: baseline;
+	}
+	.emaki__feeds code {
+		color: var(--sage);
 		background: transparent;
 	}
-	.timeline__metaLabel {
-		display: inline-block;
-		min-width: 18px;
-		color: var(--text-distant);
-		flex-shrink: 0;
-	}
-	.timeline__bullet {
+	.emaki__bullet {
 		color: var(--text-distant);
 	}
 
-	/* ── Auxiliary skill annotation (e.g. /skill:revise on the plan step) ──
-	   Indented + ochre rule to read as a sidebar utility, not a chain step. */
-	.timeline__aux {
-		margin-top: var(--space-4);
-		padding-left: var(--space-4);
+	.emaki__hinge {
+		margin-top: var(--space-2);
+		padding: var(--space-2) var(--space-3);
 		display: grid;
 		grid-template-columns: 2px 1fr;
-		gap: var(--space-3);
-		max-width: 64ch;
-		position: relative;
+		gap: var(--space-2);
+		background: color-mix(in oklab, var(--ochre) 6%, transparent);
+		border-radius: var(--radius-sm);
 	}
-	.timeline__auxRule {
+	.emaki__hingeRule {
 		display: block;
 		background: var(--ochre);
 		opacity: 0.55;
 		border-radius: 1px;
 	}
-	.timeline__auxBody {
+	.emaki__hingeBody {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-2);
+		gap: 2px;
 	}
-	.timeline__auxHead {
+	.emaki__hingeHead {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-2);
 		align-items: baseline;
 	}
-	.timeline__auxKicker {
+	.emaki__hingeKicker {
 		font-size: var(--type-tiny);
-		letter-spacing: 0.22em;
+		letter-spacing: 0.18em;
 		text-transform: uppercase;
 		color: var(--ochre);
 	}
-	.timeline__auxDesc {
+	.emaki__hingeDesc {
 		font-family: var(--font-serif);
 		color: var(--text-quiet);
-		font-size: var(--type-small);
-		margin: 0;
-		line-height: var(--leading-snug);
-	}
-	.timeline__auxMeta {
 		font-size: var(--type-tiny);
-		color: var(--text-distant);
+		line-height: var(--leading-snug);
 		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-		align-items: baseline;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 
-	@media (max-width: 600px) {
-		.timeline__item {
-			grid-template-columns: 40px 1fr;
-			gap: var(--space-3);
+	.emaki__hint {
+		text-align: right;
+		max-width: none;
+		margin: var(--space-3) 0 0;
+		font-size: var(--type-tiny);
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--text-distant);
+	}
+
+	@media (max-width: 720px) {
+		.emaki__panel {
+			flex-basis: 82vw;
+			padding: var(--space-4);
 		}
-		.timeline__node { width: 36px; height: 36px; }
-		.timeline__rail::before { top: 36px; }
+	}
+
+	@media (max-width: 480px) {
+		.emaki {
+			flex-direction: column;
+			overflow-x: visible;
+			scroll-snap-type: none;
+			gap: var(--space-4);
+		}
+		.emaki__panel {
+			flex-basis: auto;
+			width: 100%;
+		}
+		.emaki__panel + .emaki__panel::after {
+			content: "∴";
+			top: calc(var(--space-4) * -1);
+			left: 50%;
+			transform: translateX(-50%);
+			width: auto;
+		}
+		.emaki__hint { display: none; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.emaki__panel {
+			opacity: 1;
+			transform: none;
+			clip-path: none;
+			transition: none;
+		}
+		.emaki-progress__fill { transition: none; }
 	}
 </style>
