@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-pi` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-05-07
 
 ### Added
 - `/skill:changelog` — regenerates the `[Unreleased]` section of every affected CHANGELOG.md from commits since the last release tag, classified by Conventional Commit prefix and written as Keep a Changelog 1.1.0 prose. Idempotent — safe to re-run as work lands.

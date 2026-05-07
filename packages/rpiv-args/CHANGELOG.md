@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-args` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-05-07
 
 ### Fixed
 - Skill-invocation protocol is now injected into the system prompt so the LLM treats trailing text after `</skill>` as argument input. Token path no longer appends arguments when the skill body already consumed them via `$ARGUMENTS` / `$N` placeholders.

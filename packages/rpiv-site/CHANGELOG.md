@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-site` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-05-07
 
 ### Added
 - `scope-tracer` agent and `/skill:changelog` skill listed on the agents and skills pages with updated visitor copy.
