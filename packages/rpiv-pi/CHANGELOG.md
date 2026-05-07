@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- `/skill:code-review` next step now recommends `/skill:design` over the review document instead of `/skill:revise` on an in-flight plan.
+
 ## [1.2.0] - 2026-05-07
 
 ### Added
