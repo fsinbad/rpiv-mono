@@ -13,6 +13,15 @@ const PIPELINE = ["discover", "research", "design", "plan", "implement", "valida
 export type PipelineStep = (typeof PIPELINE)[number];
 const SECONDARY = ["blueprint", "explore", "migrate-to-guidance"] as const;
 const CODE_REVIEW_FLOW = ["commit", "code-review", "changelog", "validate"] as const;
+/** Every skill name the site indexes by. Extend when adding a new skill so the
+ * `satisfies` checks on ARTIFACT_WRITE_SITES (and any future per-skill table)
+ * fail tsc rather than silently returning undefined at runtime. */
+type KnownSkill =
+	| PipelineStep
+	| (typeof SECONDARY)[number]
+	| (typeof CODE_REVIEW_FLOW)[number]
+	| "annotate-guidance"
+	| "revise";
 
 export async function getPipelineSkills(): Promise<SkillEntry[]> {
 	return resolve(PIPELINE);
@@ -52,8 +61,11 @@ function merge(spec: SpecEntry, copies: CollectionEntry<"skills">[]): SkillEntry
 	};
 }
 
-/** Artifact write site for §1 / §2 / §3 detail rows. `null` = no thoughts/ artifact. */
-export const ARTIFACT_WRITE_SITES: Record<string, string | null> = {
+/** Artifact write site for §1 / §2 / §3 detail rows. `null` = no thoughts/ artifact.
+ * `satisfies Record<KnownSkill, …>` enforces that every skill the site can name
+ * has an entry — adding a skill without one will fail tsc instead of falling
+ * through `undefined` at the call site. */
+export const ARTIFACT_WRITE_SITES = {
 	discover: "thoughts/shared/discover/",
 	research: "thoughts/shared/research/",
 	design: "thoughts/shared/designs/",
@@ -68,7 +80,7 @@ export const ARTIFACT_WRITE_SITES: Record<string, string | null> = {
 	commit: null,
 	changelog: null,
 	revise: null,
-};
+} satisfies Record<KnownSkill, string | null>;
 
 /** Pipeline-step presentation copy for the home-page emaki — kept here (not in
  * skill specs) so the narrative is editable without re-deriving specs.

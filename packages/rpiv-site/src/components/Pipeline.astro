@@ -1,5 +1,5 @@
 ---
-import { ARTIFACT_WRITE_SITES, PIPELINE_META, getPipelineSkills, getSkill } from "../lib/skills";
+import { ARTIFACT_WRITE_SITES, PIPELINE_META, type PipelineStep, getPipelineSkills, getSkill } from "../lib/skills";
 const pipeline = await getPipelineSkills();
 const revise = await getSkill("revise");
 ---
@@ -45,8 +45,10 @@ const revise = await getSkill("revise");
 		<ol class="emaki" data-emaki aria-label="six-step pipeline, panels left to right">
 			{pipeline.map((skill, i) => {
 				const next = pipeline[i + 1];
-				const meta = PIPELINE_META[skill.data.name];
-				const artifact = ARTIFACT_WRITE_SITES[skill.data.name];
+				// pipeline is built from the PIPELINE tuple, so name is always a PipelineStep
+				// and PIPELINE_META is total over PipelineStep — no undefined branch.
+				const meta = PIPELINE_META[skill.data.name as PipelineStep];
+				const artifact = ARTIFACT_WRITE_SITES[skill.data.name as PipelineStep];
 				const isOptional = skill.data.name === "discover";
 				const stepNum = String(i + 1).padStart(2, "0");
 				return (
@@ -67,32 +69,28 @@ const revise = await getSkill("revise");
 
 						<p class="emaki__tagline">{skill.tagline}</p>
 
-						{meta && (
-							<>
-								<div class="emaki__field" role="group" aria-label="information collected">
-									<p class="emaki__fieldHead">
-										<span class="emaki__tick mono" aria-hidden="true">i.</span>
-										<span class="mono">collects</span>
-									</p>
-									<p class="emaki__collectList mono">
-										{meta.collects.map((c, idx) => (
-											<>
-												<span class="emaki__collectItem">{c}</span>
-												{idx < meta.collects.length - 1 && <span class="emaki__sep" aria-hidden="true"> · </span>}
-											</>
-										))}
-									</p>
-								</div>
+						<div class="emaki__field" role="group" aria-label="information collected">
+							<p class="emaki__fieldHead">
+								<span class="emaki__tick mono" aria-hidden="true">i.</span>
+								<span class="mono">collects</span>
+							</p>
+							<p class="emaki__collectList mono">
+								{meta.collects.map((c, idx) => (
+									<>
+										<span class="emaki__collectItem">{c}</span>
+										{idx < meta.collects.length - 1 && <span class="emaki__sep" aria-hidden="true"> · </span>}
+									</>
+								))}
+							</p>
+						</div>
 
-								<div class="emaki__field" role="group" aria-label="rationale">
-									<p class="emaki__fieldHead">
-										<span class="emaki__tick mono" aria-hidden="true">ii.</span>
-										<span class="mono">why</span>
-									</p>
-									<p class="emaki__rationale">{meta.why}</p>
-								</div>
-							</>
-						)}
+						<div class="emaki__field" role="group" aria-label="rationale">
+							<p class="emaki__fieldHead">
+								<span class="emaki__tick mono" aria-hidden="true">ii.</span>
+								<span class="mono">why</span>
+							</p>
+							<p class="emaki__rationale">{meta.why}</p>
+						</div>
 
 						<div class="emaki__produces" role="group" aria-label="artifact produced">
 							<p class="emaki__fieldHead">
@@ -304,12 +302,13 @@ const revise = await getSkill("revise");
 	}
 
 	.emaki {
+		--emaki-gap: var(--space-5);
 		list-style: none;
 		padding: var(--space-3) var(--space-1) var(--space-5);
 		margin: 0;
 		display: flex;
 		align-items: stretch;
-		gap: var(--space-5);
+		gap: var(--emaki-gap);
 		overflow-x: auto;
 		overflow-y: hidden;
 		scroll-snap-type: x mandatory;
@@ -319,11 +318,11 @@ const revise = await getSkill("revise");
 		scrollbar-color: var(--rule-strong) transparent;
 		outline: none;
 		cursor: grab;
-		user-select: none;
 	}
 	.emaki.is-dragging {
 		cursor: grabbing;
 		scroll-snap-type: none;
+		user-select: none;
 	}
 	.emaki:focus-visible {
 		outline: 1px solid var(--sage);
@@ -376,8 +375,8 @@ const revise = await getSkill("revise");
 		inset: 0;
 		pointer-events: none;
 		background:
-			radial-gradient(800px 200px at 30% 0%, rgba(168, 137, 108, 0.05), transparent 60%),
-			radial-gradient(600px 200px at 80% 100%, rgba(138, 149, 128, 0.04), transparent 60%);
+			radial-gradient(800px 200px at 30% 0%, color-mix(in oklab, var(--ochre) 5%, transparent), transparent 60%),
+			radial-gradient(600px 200px at 80% 100%, color-mix(in oklab, var(--sage) 4%, transparent), transparent 60%);
 		mix-blend-mode: lighten;
 	}
 
@@ -385,8 +384,8 @@ const revise = await getSkill("revise");
 		content: "∴";
 		position: absolute;
 		top: 50%;
-		left: calc(var(--space-5) * -1);
-		width: var(--space-5);
+		left: calc(var(--emaki-gap) * -1);
+		width: var(--emaki-gap);
 		text-align: center;
 		transform: translateY(-50%);
 		font-family: var(--font-mono);
