@@ -6,15 +6,24 @@
  *   node scripts/release.mjs <major|minor|patch>
  *   node scripts/release.mjs <x.y.z>
  *
+ * Before running:
+ *   Draft [Unreleased] entries for every affected package's CHANGELOG.md.
+ *   If you are inside a Pi session with @juicesharp/rpiv-pi loaded, run
+ *   `/skill:changelog` — it regenerates [Unreleased] from git history
+ *   (committed + uncommitted) in Keep a Changelog style. Otherwise hand-edit
+ *   each packages/<pkg>/CHANGELOG.md before invoking this script. The release
+ *   below promotes whatever [Unreleased] currently contains.
+ *
  * Steps:
  * 1. Check for uncommitted changes
- * 2. Bump version via npm run version:xxx (lockstep across all packages)
- * 3. Promote each package CHANGELOG: [Unreleased] -> [version] - date
- * 4. Commit and tag
- * 5. Publish to npm (npm publish -ws --access public)
- * 6. Reinstate [Unreleased] section in each CHANGELOG
- * 7. Commit the [Unreleased] reinstatement
- * 8. Push main + tag
+ * 2. Warn if every [Unreleased] section is empty
+ * 3. Bump version via npm run version:xxx (lockstep across all packages)
+ * 4. Promote each package CHANGELOG: [Unreleased] -> [version] - date
+ * 5. Commit and tag
+ * 6. Publish to npm (npm publish -ws --access public)
+ * 7. Reinstate [Unreleased] section in each CHANGELOG
+ * 8. Commit the [Unreleased] reinstatement
+ * 9. Push main + tag
  */
 
 import { execSync } from "node:child_process";
@@ -135,8 +144,31 @@ function addUnreleasedSection() {
 	}
 }
 
+function getUnreleasedBody(changelogPath) {
+	const content = readFileSync(changelogPath, "utf-8");
+	const start = content.indexOf("## [Unreleased]");
+	if (start === -1) return null;
+	const after = content.slice(start + "## [Unreleased]".length);
+	const nextHeader = after.search(/^## \[/m);
+	const body = nextHeader === -1 ? after : after.slice(0, nextHeader);
+	return body;
+}
+
+function hasUnreleasedEntries() {
+	const changelogs = getChangelogs();
+	for (const changelog of changelogs) {
+		const body = getUnreleasedBody(changelog);
+		if (body && /^- /m.test(body)) return true;
+	}
+	return false;
+}
+
 // Main
 console.log("\n=== rpiv-mono Release ===\n");
+
+console.log("Reminder: draft [Unreleased] entries before releasing.");
+console.log("  In a Pi session with @juicesharp/rpiv-pi loaded: run /skill:changelog");
+console.log("  Otherwise: hand-edit each packages/<pkg>/CHANGELOG.md\n");
 
 console.log("Checking for uncommitted changes...");
 const status = run("git status --porcelain", { silent: true });
@@ -146,6 +178,15 @@ if (status?.trim()) {
 	process.exit(1);
 }
 console.log("  Working directory clean\n");
+
+console.log("Checking [Unreleased] sections...");
+if (!hasUnreleasedEntries()) {
+	console.log("  Warning: every package's [Unreleased] section is empty.");
+	console.log("  Proceeding — this is valid for a no-user-visible-change lockstep bump.");
+	console.log("  If you forgot to draft entries, Ctrl+C now and run /skill:changelog (Pi) or hand-edit.\n");
+} else {
+	console.log("  At least one package has [Unreleased] entries\n");
+}
 
 console.log("Running test suite with coverage...");
 run("npm run coverage");
