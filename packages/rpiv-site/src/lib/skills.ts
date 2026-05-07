@@ -10,6 +10,7 @@ export type SkillEntry = {
 };
 
 const PIPELINE = ["discover", "research", "design", "plan", "implement", "validate"] as const;
+export type PipelineStep = (typeof PIPELINE)[number];
 const SECONDARY = ["blueprint", "explore", "migrate-to-guidance"] as const;
 const CODE_REVIEW_FLOW = ["commit", "code-review", "changelog", "validate"] as const;
 
@@ -70,9 +71,11 @@ export const ARTIFACT_WRITE_SITES: Record<string, string | null> = {
 };
 
 /** Pipeline-step presentation copy for the home-page emaki — kept here (not in
- * skill specs) so the narrative is editable without re-deriving specs. */
+ * skill specs) so the narrative is editable without re-deriving specs.
+ * `satisfies Record<PipelineStep, …>` enforces parity with the PIPELINE array
+ * at compile time: adding a step without a matching meta entry will fail tsc. */
 export type PipelineMeta = { collects: string[]; why: string };
-export const PIPELINE_META: Record<string, PipelineMeta> = {
+export const PIPELINE_META = {
 	discover: {
 		collects: ["Goals", "Non-Goals", "Functional Requirements", "Acceptance Criteria", "Decisions"],
 		why: "One question at a time captures intent before any code is read. Stops research from chasing the wrong target.",
@@ -97,4 +100,4 @@ export const PIPELINE_META: Record<string, PipelineMeta> = {
 		collects: ["Pass/fail per criterion", "Drift notes", "Follow-up tickets"],
 		why: "Independent re-check of the plan against the working tree. Catches half-finished phases the implement loop missed.",
 	},
-};
+} satisfies Record<PipelineStep, PipelineMeta>;
