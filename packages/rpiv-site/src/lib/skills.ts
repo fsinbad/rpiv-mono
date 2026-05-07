@@ -11,7 +11,7 @@ export type SkillEntry = {
 
 const PIPELINE = ["discover", "research", "design", "plan", "implement", "validate"] as const;
 const SECONDARY = ["blueprint", "explore", "migrate-to-guidance"] as const;
-const CODE_REVIEW_FLOW = ["commit", "code-review"] as const;
+const CODE_REVIEW_FLOW = ["commit", "code-review", "changelog", "validate"] as const;
 
 export async function getPipelineSkills(): Promise<SkillEntry[]> {
 	return resolve(PIPELINE);
@@ -65,5 +65,6 @@ export const ARTIFACT_WRITE_SITES: Record<string, string | null> = {
 	"migrate-to-guidance": ".rpiv/guidance/ shadow tree",
 	"code-review": "thoughts/shared/reviews/",
 	commit: null,
+	changelog: null,
 	revise: null,
 };

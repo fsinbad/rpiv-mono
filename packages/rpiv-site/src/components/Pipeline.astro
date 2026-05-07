@@ -20,10 +20,13 @@ const revise = await getSkill("revise");
 				</g>
 				{pipeline.map((skill, i) => {
 					const x = 68 + i * (584 / (pipeline.length - 1));
+					const isOptional = skill.data.name === "discover";
 					return (
 						<g>
-							<circle cx={x} cy={28} r="13" fill="none" stroke="var(--sage)" stroke-width="0.7" opacity="0.4" />
-							<circle cx={x} cy={28} r="9" fill="var(--ink)" stroke="var(--sage)" stroke-width="1.1" />
+							<circle cx={x} cy={28} r="13" fill="none" stroke="var(--sage)" stroke-width="0.7" opacity="0.4"
+								stroke-dasharray={isOptional ? "2 2" : undefined} />
+							<circle cx={x} cy={28} r="9" fill="var(--ink)" stroke="var(--sage)" stroke-width="1.1"
+								stroke-dasharray={isOptional ? "3 2" : undefined} />
 							<circle cx={x} cy={28} r="9" fill="var(--sage)" opacity="0.16" />
 							<text x={x} y={31.2} text-anchor="middle"
 								font-family="var(--font-mono)" font-size="9" fill="var(--washi)">{String(i + 1).padStart(2, "0")}</text>
@@ -40,12 +43,15 @@ const revise = await getSkill("revise");
 			{pipeline.map((skill, i) => {
 				const next = pipeline[i + 1];
 				const artifact = ARTIFACT_WRITE_SITES[skill.data.name];
+				const isOptional = skill.data.name === "discover";
 				return (
-					<li class="timeline__item">
+					<li class:list={["timeline__item", isOptional && "timeline__item--optional"]}>
 						<div class="timeline__rail" aria-hidden="true">
 							<svg class="timeline__node" viewBox="0 0 40 40">
-								<circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.45" />
-								<circle cx="20" cy="20" r="10.5" fill="var(--ink-raised)" stroke="currentColor" stroke-width="1.1" />
+								<circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.45"
+									stroke-dasharray={isOptional ? "2 2" : undefined} />
+								<circle cx="20" cy="20" r="10.5" fill="var(--ink-raised)" stroke="currentColor" stroke-width="1.1"
+									stroke-dasharray={isOptional ? "3 2" : undefined} />
 								<circle cx="20" cy="20" r="10.5" fill="currentColor" opacity="0.16" />
 								<text x="20" y="23.5" text-anchor="middle" class="timeline__nodeNum">{String(i + 1).padStart(2, "0")}</text>
 							</svg>
@@ -53,6 +59,7 @@ const revise = await getSkill("revise");
 						<div class="timeline__content">
 							<header class="timeline__head">
 								<span class="chip chip--sage">/skill:{skill.data.name}</span>
+								{isOptional && <span class="chip chip--muted">optional</span>}
 								{skill.data["disable-model-invocation"] && <span class="chip chip--ochre">manual only</span>}
 							</header>
 							<p class="timeline__desc">{skill.tagline}</p>
@@ -138,6 +145,11 @@ const revise = await getSkill("revise");
 		position: relative;
 	}
 	.timeline__item:last-child { padding-bottom: 0; }
+
+	/* Optional pipeline item — ochre rail tint */
+	.timeline__item--optional .timeline__rail {
+		color: var(--ochre);
+	}
 
 	.timeline__rail {
 		position: relative;

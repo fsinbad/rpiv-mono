@@ -145,6 +145,10 @@ section {
 	color: var(--ochre);
 	border-color: var(--kuro);
 }
+.chip--muted {
+	color: var(--text-distant);
+	border-color: var(--rule);
+}
 
 .card {
 	padding: var(--space-6) var(--space-5);
