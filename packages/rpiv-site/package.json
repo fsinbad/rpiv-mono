@@ -29,7 +29,10 @@
 		"test": "vitest run"
 	},
 	"devDependencies": {
-		"astro": "^5.0.0",
-		"@astrojs/sitemap": "^3.2.0"
+		"@astrojs/sitemap": "^3.2.0",
+		"astro": "^5.0.0"
+	},
+	"dependencies": {
+		"@fontsource/jetbrains-mono": "^5.2.8"
 	}
 }
