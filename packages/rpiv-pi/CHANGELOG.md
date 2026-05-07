@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-pi` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.1] - 2026-05-07
 
 ### Changed
 - `/skill:code-review` next step now recommends `/skill:design` over the review document instead of `/skill:revise` on an in-flight plan.
