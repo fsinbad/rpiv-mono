@@ -354,14 +354,25 @@ const sections = [
 
 		// Active section detection — pick the section whose top has crossed
 		// roughly a third of the viewport. Falls back to the first section.
+		// Offsets cached at layout time so the per-scroll path does no layout
+		// query (avoids forced reflow during scroll).
+		const offsets = new Array<number>(targets.length);
+		let scrollMax = 1;
+		const measure = () => {
+			const baseY = window.scrollY;
+			for (let i = 0; i < targets.length; i++) {
+				offsets[i] = targets[i].el.getBoundingClientRect().top + baseY;
+			}
+			scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+		};
+
 		let rafId = 0;
 		const setActive = () => {
 			rafId = 0;
-			const anchorY = window.innerHeight * 0.34;
+			const anchor = window.scrollY + window.innerHeight * 0.34;
 			let activeIndex = 0;
 			for (let i = 0; i < targets.length; i++) {
-				const top = targets[i].el.getBoundingClientRect().top;
-				if (top - anchorY <= 0) activeIndex = i;
+				if (offsets[i] <= anchor) activeIndex = i;
 			}
 			targets.forEach((t, i) => {
 				t.tick.classList.toggle("is-active", i === activeIndex);
@@ -370,9 +381,7 @@ const sections = [
 			});
 
 			// progress + readout
-			const doc = document.documentElement;
-			const max = Math.max(1, doc.scrollHeight - window.innerHeight);
-			const pct = Math.min(100, Math.max(0, (window.scrollY / max) * 100));
+			const pct = Math.min(100, Math.max(0, (window.scrollY / scrollMax) * 100));
 			if (railFill) railFill.style.setProperty("--scroll-progress", `${pct}%`);
 			if (percentEl) percentEl.textContent = String(Math.round(pct)).padStart(2, "0");
 		};
@@ -381,9 +390,16 @@ const sections = [
 			if (rafId) return;
 			rafId = requestAnimationFrame(setActive);
 		};
+		const onResize = () => {
+			measure();
+			onScroll();
+		};
 
 		window.addEventListener("scroll", onScroll, { passive: true });
-		window.addEventListener("resize", onScroll, { passive: true });
+		window.addEventListener("resize", onResize, { passive: true });
+		// Late layout shifts (font swap, image decode) — recompute when body resizes.
+		new ResizeObserver(onResize).observe(document.body);
+		measure();
 		setActive();
 	})();
 </script>

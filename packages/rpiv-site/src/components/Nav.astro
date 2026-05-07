@@ -294,14 +294,24 @@ import { VERSION } from "../lib/version";
 			.filter((x): x is { link: HTMLAnchorElement; el: HTMLElement } => !!x);
 		if (!targets.length) return;
 
+		// Cache document-relative tops once per layout. The per-scroll path then
+		// only reads window.scrollY (no layout query), which avoids 2.8s of
+		// cumulative forced reflow during long sessions.
+		const offsets = new Array<number>(targets.length);
+		const measure = () => {
+			const baseY = window.scrollY;
+			for (let i = 0; i < targets.length; i++) {
+				offsets[i] = targets[i].el.getBoundingClientRect().top + baseY;
+			}
+		};
+
 		let rafId = 0;
 		const setActive = () => {
 			rafId = 0;
-			const anchorY = window.innerHeight * 0.34;
+			const anchor = window.scrollY + window.innerHeight * 0.34;
 			let activeIndex = -1;
 			for (let i = 0; i < targets.length; i++) {
-				const top = targets[i].el.getBoundingClientRect().top;
-				if (top - anchorY <= 0) activeIndex = i;
+				if (offsets[i] <= anchor) activeIndex = i;
 			}
 			targets.forEach((t, i) => {
 				t.link.classList.toggle("is-active", i === activeIndex);
@@ -318,8 +328,15 @@ import { VERSION } from "../lib/version";
 			if (rafId) return;
 			rafId = requestAnimationFrame(setActive);
 		};
+		const onResize = () => {
+			measure();
+			onScroll();
+		};
 		window.addEventListener("scroll", onScroll, { passive: true });
-		window.addEventListener("resize", onScroll, { passive: true });
+		window.addEventListener("resize", onResize, { passive: true });
+		// Late layout shifts (font swap, image decode) — recompute when body resizes.
+		new ResizeObserver(onResize).observe(document.body);
+		measure();
 		setActive();
 	})();
 </script>
