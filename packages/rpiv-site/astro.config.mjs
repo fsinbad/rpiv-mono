@@ -7,6 +7,7 @@ export default defineConfig({
 	trailingSlash: "ignore",
 	build: {
 		assets: "_astro",
+		inlineStylesheets: "always",
 	},
 	integrations: [sitemap()],
 });

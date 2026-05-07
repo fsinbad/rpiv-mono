@@ -362,14 +362,22 @@ import { VERSION } from "../lib/version";
 			if (rafId) return;
 			rafId = requestAnimationFrame(setActive);
 		};
-		const onResize = () => {
-			measure();
-			onScroll();
+		// RO/resize fire synchronously after style invalidation; reading
+		// geometry inline triggers a forced reflow per burst. Defer measure()
+		// into rAF so font-swap / image-decode bursts collapse to one pass.
+		let measureRaf = 0;
+		const scheduleMeasure = () => {
+			if (measureRaf) return;
+			measureRaf = requestAnimationFrame(() => {
+				measureRaf = 0;
+				measure();
+				setActive();
+			});
 		};
 		window.addEventListener("scroll", onScroll, { passive: true });
-		window.addEventListener("resize", onResize, { passive: true });
+		window.addEventListener("resize", scheduleMeasure, { passive: true });
 		// Late layout shifts (font swap, image decode) — recompute when body resizes.
-		new ResizeObserver(onResize).observe(document.body);
+		new ResizeObserver(scheduleMeasure).observe(document.body);
 		measure();
 		setActive();
 	})();
