@@ -92,11 +92,16 @@ For each breaking change, add an entry to **Breaking / Upgrade Notes** in additi
 
 ### Worked example
 
-Input commits in `packages/rpiv-pi/`:
+Input commits in `packages/api/`:
 
 ```
-0a3e1e2 feat(rpiv-pi): replace discover skill with scope-tracer agent
-6117f7d feat(rpiv-pi): restore /skill:discover as FRD-producer, chain into research
+abc1234 feat(api): add /v2/search endpoint with cursor pagination
+def5678 feat(api): support webhook retries with exponential backoff
+ghi9abc fix(api): rotate session secret on every JWT refresh
+jkl0def docs(api): document rate-limit headers in OpenAPI spec
+mno1234 chore(deps): bump @types/node to 20.11
+pqr5678 test(api): coverage for cursor edge cases
+stu9abc refactor(api): inline httpClient factory (no behavior change)
 ```
 
 Output `[Unreleased]`:
@@ -105,22 +110,25 @@ Output `[Unreleased]`:
 ## [Unreleased]
 
 ### Added
-- `scope-tracer` agent: Analyzer-tier specialist that absorbs the former
-  discover question-formulation procedure, emitting 6–12 numbered research
-  questions inline for `research` to parse in-memory. Auto-syncs to the
-  agent directory on first session after upgrade.
-- `discover` skill restored as an interview-driven Feature Requirements
-  Document producer. One question at a time with a recommended answer at
-  every step, grounded by light agent fan-out, writing a timestamped
-  artifact to `thoughts/shared/discover/`. Chains into `research` — each
-  Decision block in the FRD becomes a Developer Context entry.
+- `/v2/search` endpoint with cursor-based pagination.
+- Webhook delivery retries with exponential backoff.
+
+### Changed
+- OpenAPI spec documents rate-limit response headers.
+
+### Fixed
+- JWT refresh rotates the session secret on every renewal.
 ```
 
 What this example demonstrates:
 
-- Two `feat:` commits → two entries under **Added** (one per user-visible feature, even though one of the commits also internally _removes_ the prior discover implementation — the user-facing story is restoration, not removal).
-- User-perspective prose: names the user-visible artefacts (`scope-tracer` agent, `/skill:discover`), describes what the user gets, omits implementation details (no file paths, no `tools: read, grep` frontmatter, no `Auto-syncs to <cwd>/.pi/agents/` path literal — collapsed to "the agent directory").
-- Multi-line entries are fine when the feature genuinely warrants explanation. Imperative-mood single sentences are the floor, not the ceiling.
+- Two `feat:` commits → two **Added** entries (one per user-visible feature).
+- `docs:` for a user-facing API spec → **Changed** (skip if the docs touched were internal notes).
+- `fix:` → **Fixed**, written as the corrected behavior in imperative mood, not as the bug.
+- `chore(deps):` with no behavior change → omitted.
+- `test:` → omitted (not user-visible).
+- `refactor:` flagged "no behavior change" → omitted (the rule is user-visible impact, not commit type).
+- Commit hashes never appear in entries.
 
 ## Step 5: Preview and confirm
 
