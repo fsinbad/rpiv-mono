@@ -454,13 +454,23 @@ Top items:
 2. {ID} — `file:line` — {headline}
 3. {ID} — `file:line` — {headline}
 
-Ask follow-ups.
+Ask follow-ups, or chain forward.
+
+---
+
+💬 Follow-up: describe the question in chat to append a timestamped Follow-up section. Retired IDs stay retired; re-run `/skill:code-review` for a fresh review.
+
+**Next step:** `/skill:revise <plan-path> "Address findings from thoughts/shared/reviews/{filename}.md"` — fold the review's findings into the implementation plan (only when status is `needs_changes` or `requesting_changes`).
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
 ```
 
 ## Step 9: Handle Follow-ups
 
-- If the user asks for deeper analysis of a specific finding, spawn a targeted `codebase-analyzer` on that area (1 agent max) and append a `## Follow-up {ISO 8601 timestamp}` section using the Edit tool. The section heading's timestamp is the append-time record — no frontmatter update needed.
-- Never rewrite prior findings; only append. Retired IDs (Falsified in Step 6) stay retired; follow-ups introduce new IDs with the same lens-prefix scheme (next ordinal).
+- **Append, never rewrite.** Edit the artifact to add a `## Follow-up {ISO 8601 timestamp}` section. The section heading's timestamp is the append-time record — no frontmatter update needed.
+- **Re-dispatch narrowly.** Spawn a single targeted `codebase-analyzer` on the area in question (1 agent max).
+- **Retired IDs stay retired.** Findings dropped at Step 6 (Falsified) do not re-enter follow-ups; new findings introduce new IDs with the same lens-prefix scheme (next ordinal).
+- **When to re-invoke instead.** If the diff itself changed (new commits, scope shift, different branch), re-run `/skill:code-review` for a fresh review. The previous block's `Next step:` stays valid for the existing review.
 
 ## Important Notes
 

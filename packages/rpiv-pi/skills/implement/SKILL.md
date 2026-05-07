@@ -73,3 +73,31 @@ If the plan has existing checkmarks:
 - Verify previous work only if something seems off
 
 Remember: You're implementing a solution, not just checking boxes. Keep the end goal in mind and maintain forward momentum.
+
+## Closing Out
+
+When the last in-scope phase is complete (or the user pauses execution), print a closing block in this exact shape:
+
+```
+Implementation {complete | paused at Phase {N}}: `thoughts/shared/plans/{filename}.md`
+
+{P} phases completed, {M} files changed, {T} tests passing.
+Outstanding: {list of unchecked items, blockers, or "none"}.
+
+---
+
+💬 Follow-up: implement edits source files, not artifacts. For plan-level changes run `/skill:revise <plan-path>` first; for session pauses run `/skill:create-handoff`.
+
+**Next step:** `/skill:validate thoughts/shared/plans/{filename}.md` — verify the implementation against the plan's success criteria before committing.
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
+```
+
+If the run was paused mid-plan rather than completed, swap the next-step line for `/skill:create-handoff` so context can be resumed cleanly in a new session — the same `/new` tip still applies.
+
+## Handle Follow-ups
+
+- **Implement does not own the plan.** Source-file edits happen in implement; plan edits do not. Never patch the plan artifact from inside implement.
+- **For plan-level changes.** Run `/skill:revise <plan-path>` first — it appends a timestamped Follow-up section to the plan and preserves history. Then resume implement at the affected phase.
+- **For session pauses.** Run `/skill:create-handoff` to capture in-flight state, then `/new` and `/skill:resume-handoff` in the next session.
+- **Mismatch handling stays inline.** When code reality diverges from the plan, use the inline `ask_user_question` flow ("Follow the plan / Skip this change / Update the plan") — that is implement's only follow-up surface; everything else escalates to revise or create-handoff.

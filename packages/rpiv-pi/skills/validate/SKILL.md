@@ -134,7 +134,22 @@ Create comprehensive validation summary:
 - Address linting warnings before merge
 - Consider adding integration test for {scenario}
 - Document new API endpoints
+
+---
+
+💬 Follow-up: if findings are localized, fix them and re-run `/skill:validate`. If findings imply plan-level changes, escalate to `/skill:revise <plan-path>` first.
+
+**Next step:** `/skill:commit` — group the validated changes into atomic commits (skip if status is `needs_changes` — fix the gaps first, then re-run `/skill:validate`).
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
 ```
+
+## Handle Follow-ups
+
+- **Validate does not edit code or plans.** It produces a report. Fixes happen in implement; plan revisions happen in revise.
+- **Localized gaps.** If findings are small and localized, fix them in-place and re-run `/skill:validate` for a fresh report.
+- **Plan-level gaps.** If findings imply the plan itself is wrong (missing phases, wrong approach, untestable success criteria), escalate to `/skill:revise <plan-path>` first, then re-implement, then re-validate.
+- **No append mode.** Each validation run produces a fresh report — there is no `## Follow-up` append. The previous block's `Next step:` stays valid only when status is `complete`.
 
 ## Working with Existing Context
 

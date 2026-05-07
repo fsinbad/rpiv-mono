@@ -75,13 +75,18 @@ Save the document.
 Once this is completed, you should respond to the user with the template between <template_response></template_response> XML tags. do NOT include the tags in your response.
 
 <template_response>
-Handoff created! You can resume from this handoff in a new session with the following command:
+Handoff written to:
+`thoughts/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md`
 
-```bash
-/skill:resume-handoff thoughts/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md
-```
+Replace the path below with your actual handoff file path before running.
 
-Replace the path with your actual handoff file path.
+---
+
+💬 Follow-up: describe extra context in chat to append to this handoff before chaining; re-run `/skill:create-handoff` for a fresh handoff document.
+
+**Next step:** `/skill:resume-handoff thoughts/shared/handoffs/YYYY-MM-DD_HH-MM-SS_description.md` — pick up where this session left off in a fresh context.
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
 </template_response>
 
 ---

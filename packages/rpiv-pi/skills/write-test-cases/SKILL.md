@@ -282,13 +282,16 @@ What makes these examples good:
 
 ### Step 8: Handle Follow-ups
 
-- **Add missing flows**: Spawn targeted codebase-analyzer, generate new TCs, regenerate regression suite and coverage map
-- **Adjust priorities**: Edit TC frontmatter, regenerate regression suite and coverage map
-- **Modify steps**: Edit specific TC files directly
-- **Delete TCs**: Remove the file, regenerate regression suite and coverage map
-- **Re-run for different feature**: User invokes the skill again with a new feature name
+- **Append, never rewrite.** Edit specific TC files directly; preserve TC IDs (continue numbering from the highest existing ID when adding).
+- **Re-dispatch narrowly.** Spawn one targeted `codebase-analyzer` for missing flows. Do NOT re-run the full skill.
+- **Regenerate suites on any TC change.** Always regenerate `_regression-suite.md` and `_coverage-map.md` to keep them in sync.
+- **When to re-invoke instead.** Re-run `/skill:write-test-cases <feature>` for a different feature; for the same feature, prefer in-place edits. The previous block's `Next step:` stays valid.
 
-On any TC change: always regenerate `_regression-suite.md` and `_coverage-map.md` to keep them in sync.
+Skill-specific verbs:
+- **Add missing flows**: spawn targeted `codebase-analyzer`, generate new TCs, regenerate suites.
+- **Adjust priorities**: edit TC frontmatter, regenerate suites.
+- **Modify steps**: edit specific TC files directly.
+- **Delete TCs**: remove the file, regenerate suites.
 
 ## Framework Detection Reference
 

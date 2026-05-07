@@ -171,9 +171,23 @@ Compile interview output into the FRD. The interview's logical order (problem �
 
    {N} requirements, {M} decisions, {K} open questions.
 
-   When ready, run `/skill:research thoughts/shared/discover/<YYYY-MM-DD_HH-MM-SS>_<topic>.md` to ground the intent in codebase reality.
    The FRD's Decisions block is translated into research's Developer Context and inherited by design.
+
+   ---
+
+   💬 Follow-up: discover writes a fresh FRD per call — re-invoke `/skill:discover` to iterate (the prior FRD stays unchanged on disk).
+
+   **Next step:** `/skill:research thoughts/shared/discover/<YYYY-MM-DD_HH-MM-SS>_<topic>.md` — ground the intent in codebase reality.
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
+
+## Step 8: Handle Follow-ups
+
+- **Fresh artifact per call, no in-place append.** Discover deliberately writes a NEW timestamp-distinct FRD on every invocation — there is no `## Follow-up` append mode. The prior FRD stays unchanged on disk.
+- **Iterate by re-invoking.** Re-run `/skill:discover [path-to-prior-FRD]` (or `/skill:discover <free-text>`) to produce a fresh FRD informed by the prior one.
+- **No rubber-stamp question.** NEVER ask a final "looks good / want to adjust" question — chain forward to research is automatic at Step 7.
+- **Manual edits are allowed.** If the developer wants a one-off correction without re-running the full interview, they can Edit the FRD directly — the skill does not own follow-up surface area beyond fresh-artifact-per-call.
 
 ## Important Notes
 

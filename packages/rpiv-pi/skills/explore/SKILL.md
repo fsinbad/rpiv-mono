@@ -310,16 +310,29 @@ Wait for ALL agents to complete before proceeding.
 
 ### Step 8: Present Findings
 
-- Present concise summary with clear recommendation
-- Highlight key integration points
-- Ask if they want to proceed to /skill:design with the chosen option or need clarification
+Print a concise summary, highlight key integration points, then close with the standardized footer:
 
-### Step 9: Handle Follow-up Questions
+```
+Solutions document written to:
+`thoughts/shared/solutions/{filename}.md`
 
-- If user has questions, append to same document
-- Update frontmatter: `last_updated` and `last_updated_by`
-- Add section: `## Follow-up Analysis {timestamp}`
-- Spawn additional agents as needed
+{N} candidates evaluated, {M} dimensions scored, recommendation: {chosen}.
+
+---
+
+💬 Follow-up: describe the change in chat to append a timestamped Follow-up section to this artifact. Re-run `/skill:explore` for a fresh artifact.
+
+**Next step:** `/skill:design thoughts/shared/solutions/{filename}.md` — turn the chosen option into a design artifact (or `/skill:blueprint thoughts/shared/solutions/{filename}.md` for the fast path on smaller tasks).
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
+```
+
+### Step 9: Handle Follow-ups
+
+- **Append, never rewrite.** Edit the artifact to add a `## Follow-up Analysis {ISO 8601 timestamp}` section. Prior candidate scoring and verdicts stay immutable.
+- **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "<one-line summary of follow-up>"`.
+- **Re-dispatch narrowly.** Spawn ≤1–2 fresh agents scoped to the new candidate or dimension. Do NOT re-run the full skill.
+- **When to re-invoke instead.** If the candidate set or dimensions shift materially, re-run `/skill:explore` for a fresh artifact. The previous block's `Next step:` stays valid for the existing artifact.
 
 ## Important Notes
 

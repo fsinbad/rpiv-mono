@@ -352,15 +352,22 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
    - Does the code match what you envision?
    - Any missing integration points or edge cases?
 
-   When ready, run `/skill:plan thoughts/shared/designs/{filename}.md` to sequence into phases.
+   ---
+
+   💬 Follow-up: describe the change in chat to append a timestamped Follow-up section to this artifact. Re-run `/skill:design` for a fresh artifact.
+
+   **Next step:** `/skill:plan thoughts/shared/designs/{filename}.md` — sequence the design into implementation phases.
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
-2. **Handle follow-up changes**:
-   - Use the Edit tool to update the design artifact in-place
-   - Update frontmatter: `last_updated` and `last_updated_by`
-   - Add `last_updated_note: "Updated {brief description}"` to frontmatter
-   - If the change affects decisions, update both the Decisions section AND the Architecture code
-   - If new ambiguities arise, return to Step 5 (developer checkpoint)
+## Step 11: Handle Follow-ups
+
+- **Edit in-place.** Use the Edit tool to update the design artifact directly — sliced design code stays one source of truth.
+- **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "Updated <brief description>"`.
+- **Sync decisions ↔ code.** If the change affects decisions, update both the Decisions section AND the Architecture code. Code is source of truth — if they conflict, the code wins, update the prose.
+- **Return to checkpoint on new ambiguities.** If new ambiguities surface, return to Step 5 (developer checkpoint) before re-generating slices.
+- **When to re-invoke instead.** If the underlying research is now stale or the feature scope changed materially, re-run `/skill:research` then `/skill:design` for a fresh artifact. The previous block's `Next step:` stays valid for the existing design.
 
 ## Guidelines
 

@@ -379,15 +379,22 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
    - Does the code match what you envision?
    - Any missing integration points or edge cases?
 
-   When ready, run `/skill:implement thoughts/shared/plans/{filename}.md Phase 1` to start execution (or omit `Phase 1` to run all phases sequentially).
+   ---
+
+   💬 Follow-up: describe the change in chat to append a timestamped Follow-up section to this artifact. Re-run `/skill:blueprint` for a fresh artifact.
+
+   **Next step:** `/skill:implement thoughts/shared/plans/{filename}.md Phase 1` — start execution at Phase 1 (omit `Phase 1` to run all phases sequentially).
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
-2. **Handle follow-up changes**:
-   - Use the Edit tool to update the plan artifact in-place
-   - Update frontmatter: `last_updated` and `last_updated_by`
-   - Add `last_updated_note: "Updated {brief description}"` to frontmatter
-   - If the change affects decisions, update both the Decisions section AND the affected `## Phase N` code
-   - If new ambiguities arise, return to Step 5 (developer checkpoint)
+## Step 11: Handle Follow-ups
+
+- **Edit in-place.** Use the Edit tool to update the plan artifact directly — phase code stays one source of truth.
+- **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "Updated <brief description>"`.
+- **Sync decisions ↔ code.** If the change affects decisions, update both the Decisions section AND the affected `## Phase N` code. Code is source of truth — if they conflict, the code wins, update the prose.
+- **Return to checkpoint on new ambiguities.** If new ambiguities surface, return to Step 5 (developer checkpoint) before regenerating phases.
+- **When to re-invoke instead.** For surgical edits to a specific phase, prefer `/skill:revise <plan-path>` over re-running the full skill. Re-run `/skill:blueprint` only when the underlying research changed materially. The previous block's `Next step:` stays valid for the existing plan.
 
 ## Guidelines
 

@@ -145,7 +145,7 @@ Use the `ask_user_question` tool to confirm before editing. Question: "{Summary 
 
 1. **Present the changes made**:
    ```
-   I've updated the plan at `thoughts/shared/plans/{filename}.md`
+   Plan updated at `thoughts/shared/plans/{filename}.md`
 
    Changes made:
    - {Specific change 1}
@@ -155,10 +155,23 @@ Use the `ask_user_question` tool to confirm before editing. Question: "{Summary 
    - {Key improvement}
    - {Another improvement}
 
-   Would you like any further adjustments?
+   Let me know if you want further adjustments — otherwise chain forward.
+
+   ---
+
+   💬 Follow-up: describe further plan changes in chat — each `/skill:revise` call appends another timestamped Follow-up section, history is preserved.
+
+   **Next step:** `/skill:implement thoughts/shared/plans/{filename}.md Phase {N}` — resume execution at the affected phase (or omit `Phase {N}` to run all phases sequentially).
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
-2. **Be ready to iterate further** based on feedback
+## Step 6: Handle Follow-ups
+
+- **Each invocation appends history.** Every `/skill:revise` call adds another timestamped Follow-up section — do not collapse history. Prior phase decisions stay visible.
+- **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "<one-line summary of revision>"`.
+- **Surgical edits only.** Make precise edits to specific phases or success criteria — not wholesale rewrites. Preserve good content that doesn't need changing.
+- **When to re-invoke instead.** For deep architectural changes, the upstream design or research is the right place to revise — re-run those rather than expanding revise's scope. The previous block's `Next step:` stays valid for the existing plan.
 
 ## Important Guidelines
 

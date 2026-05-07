@@ -220,10 +220,11 @@ Use the current working directory as the target project by default. If the user 
      Please review the files and let me know if you'd like any adjustments.
      ```
 
-10. **Handle follow-up adjustments:**
-   - If the user requests changes to specific files, edit them directly using the Edit tool
-   - If the user wants additional folders annotated, run a targeted Pass 2 (analyzer + pattern finder) for those folders, then write
-   - If the user wants a file removed, note that they can delete it themselves
+10. **Handle Follow-ups:**
+    - **Edit in-place.** If the user requests changes to specific files, edit them directly using the Edit tool — annotation files are pure markdown, no frontmatter to bump.
+    - **Re-dispatch narrowly.** If the user wants additional folders annotated, run a targeted Pass 2 (analyzer + pattern finder) for those folders, then write.
+    - **Removals.** If the user wants a file removed, note that they can delete it themselves — annotate does not delete.
+    - **When to re-invoke instead.** Re-run `/skill:annotate-guidance` for project-wide refresh after major architectural changes; for single-folder updates, prefer in-place edits.
 
 ## Root Architecture Template (compact):
 

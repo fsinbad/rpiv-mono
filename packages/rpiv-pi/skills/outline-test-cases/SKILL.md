@@ -265,8 +265,13 @@ After all questions are answered, present the full feature list summary (same fo
 
    Note: this outline is a starting point based on code analysis — re-run or add features manually as the project evolves.
 
-   Generate test cases for a feature:
-   `/skill:write-test-cases [feature-name]`
+   ---
+
+   💬 Follow-up: describe folder/metadata changes in chat to update specific `_meta.md` files. Re-run `/skill:outline-test-cases` for incremental discovery against the current codebase.
+
+   **Next step:** `/skill:write-test-cases [feature-name]` — generate the test case files for a single feature (run once per feature folder).
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
 #### Incremental Mode — updating existing files
@@ -304,18 +309,27 @@ After all questions are answered, present the full feature list summary (same fo
 
    Note: this outline is a starting point based on code analysis — re-run or add features manually as the project evolves.
 
-   Generate test cases for a feature:
-   `/skill:write-test-cases [feature-name]`
+   ---
+
+   💬 Follow-up: describe folder/metadata changes in chat to update specific `_meta.md` files. Re-run `/skill:outline-test-cases` for incremental discovery against the current codebase.
+
+   **Next step:** `/skill:write-test-cases [feature-name]` — generate the test case files for a single feature (run once per feature folder).
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
-### Step 6: Handle follow-ups
+### Step 6: Handle Follow-ups
 
-- **Add features**: Add folder + `_meta.md`, update `README.md`
-- **Remove features**: Note that user can delete the folder; update `README.md` using Edit
-- **Reclassify phantoms**: Create folder + `_meta.md` for the reclassified feature, update `README.md`
-- **Re-run**: If codebase changed significantly, re-run — the skill will detect existing outlines and run incremental discovery
-- **Adjust metadata**: Edit specific `_meta.md` files using the Edit tool
-- On follow-up updates: update `_meta.md` frontmatter `date` field and `README.md` `Last updated:` line to reflect the current date
+- **Append, never rewrite.** Edit `_meta.md` files in place; do not delete folders that contain generated TCs (flag them via `status: removed` instead).
+- **Bump frontmatter.** Update each touched `_meta.md`'s `date` field and the root `README.md` `Last updated:` line to the current date.
+- **Re-dispatch narrowly.** Spawn ≤1–2 agents scoped to the changed feature. Do NOT re-run the full skill.
+- **When to re-invoke instead.** If the codebase changed significantly, re-run `/skill:outline-test-cases` — incremental mode auto-detects existing outlines and reconciles. The previous block's `Next step:` stays valid.
+
+Skill-specific verbs:
+- **Add features**: add folder + `_meta.md`, update `README.md`.
+- **Remove features**: tell the user they can delete the folder; update `README.md`.
+- **Reclassify phantoms**: create folder + `_meta.md` for the reclassified feature, update `README.md`.
+- **Adjust metadata**: edit specific `_meta.md` files using the Edit tool.
 
 ## Framework Detection Reference
 

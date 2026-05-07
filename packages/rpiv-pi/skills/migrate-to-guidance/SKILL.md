@@ -75,10 +75,20 @@ The migration relocates files from in-place `CLAUDE.md` to `.rpiv/guidance/{path
    - If warnings exist about unresolved prose references:
      - Read the affected guidance files
      - Offer to fix the remaining references using contextual knowledge of the project structure
-   - Suggest next steps:
-     - "Run `claude` in the project and read a source file to verify guidance injection works"
-     - If originals were not deleted: "You can delete the original CLAUDE.md files once you've verified the migration"
-     - "If you were using `/skill:annotate-inline`, you can now use `/skill:annotate-guidance` for future annotations"
+   - Print the closing footer (verbatim, with placeholders filled):
+     ```
+     Migration complete: {N} files migrated to `.rpiv/guidance/`.
+     {Originals deleted: yes/no}
+     Verification: run `claude` in the project and read a source file to confirm guidance injection works.
+
+     ---
+
+     💬 Follow-up: describe targeted edits in chat; re-run `/skill:migrate-to-guidance` with different flags (`--force`, `--delete-originals`) for a different migration shape.
+
+     **Next step:** `/skill:annotate-guidance` — refresh or extend annotations now that the guidance tree owns them (skip if no further annotation is planned).
+
+     > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
+     ```
 
 ## Important notes:
 - The migration script handles all file operations — do not manually copy or move CLAUDE.md files

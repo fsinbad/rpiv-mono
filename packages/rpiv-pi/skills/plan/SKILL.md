@@ -185,16 +185,21 @@ last_updated_by: {User from injected git context}
    - Are the success criteria specific enough?
    - Any phase that should be split or merged?
 
-   When ready, run `/skill:implement thoughts/shared/plans/{filename}.md Phase 1`
+   ---
+
+   💬 Follow-up: describe the change in chat to append a timestamped Follow-up section to this artifact, or use `/skill:revise <plan-path>` for surgical phase edits. Re-run `/skill:plan` for a fresh artifact.
+
+   **Next step:** `/skill:implement thoughts/shared/plans/{filename}.md Phase 1` — start execution at Phase 1 (omit `Phase 1` to run all phases sequentially).
+
+   > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
-2. **Iterate based on feedback** — be ready to:
-   - Split large phases
-   - Merge small phases
-   - Adjust success criteria
-   - Reorder phases
+## Step 10: Handle Follow-ups
 
-3. **Continue refining** until the developer is satisfied
+- **Edit in-place.** Use the Edit tool to update the plan artifact directly. Phase numbering stays stable when possible — renumber only when a phase is split or merged.
+- **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "<one-line summary>"`.
+- **Phase-level moves.** Split large phases, merge small phases, adjust success criteria, reorder phases — all in-place. Continue refining until the developer is satisfied.
+- **When to re-invoke instead.** For surgical edits driven by review findings, prefer `/skill:revise <plan-path>`. Re-run `/skill:plan` only when the underlying design changed materially. The previous block's `Next step:` stays valid for the existing plan.
 
 ## Guidelines
 

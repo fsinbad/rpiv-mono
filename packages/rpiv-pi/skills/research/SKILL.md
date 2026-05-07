@@ -292,18 +292,23 @@ Research document written to:
 
 Please review and let me know if you have follow-up questions.
 
-When ready, choose your next step:
-- `/skill:design thoughts/shared/research/[filename].md` — iterative design with vertical-slice decomposition (produces design artifact for plan)
-- `/skill:blueprint thoughts/shared/research/[filename].md` — combined design + phased plan in one pass (produces implement-ready plan directly)
+---
+
+💬 Follow-up: describe the change in chat to append a timestamped Follow-up section to this artifact. Re-run `/skill:research` for a fresh artifact.
+
+**Next step (choose one):**
+- `/skill:design thoughts/shared/research/{filename}.md` — iterative design with vertical-slice decomposition (produces design artifact for plan)
+- `/skill:blueprint thoughts/shared/research/{filename}.md` — lightweight fast path for smaller tasks; combined design + phased plan in one pass (produces implement-ready plan directly)
+
+> 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
 ```
 
 ## Step 6: Handle Follow-ups
 
-- If the user has follow-up questions, append to the same research document
-- Update frontmatter: `last_updated` and `last_updated_by`
-- Add `last_updated_note: "Added follow-up research for {brief description}"` to frontmatter
-- Add section: `## Follow-up Research {timestamp}`
-- Spawn new analysis agents as needed
+- **Append, never rewrite.** Edit the artifact to add a `## Follow-up Research {ISO 8601 timestamp}` section. Prior content stays immutable.
+- **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "Added follow-up research for <brief description>"`.
+- **Re-dispatch narrowly.** Spawn ≤1–2 fresh analysis agents scoped to the new question. Do NOT re-run the full skill.
+- **When to re-invoke instead.** If scope changed materially (different feature surface, different research target), re-run `/skill:research` for a fresh artifact. The previous block's `Next step:` stays valid for the existing artifact.
 
 ## Important Notes
 
