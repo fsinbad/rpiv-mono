@@ -298,7 +298,7 @@ const revise = await getSkill("revise");
 		);
 		transform: scaleX(0);
 		transform-origin: left center;
-		transition: transform 120ms linear;
+		transition: transform var(--dur-fast) var(--ease-ink);
 	}
 
 	.emaki {
@@ -332,7 +332,7 @@ const revise = await getSkill("revise");
 	.emaki::-webkit-scrollbar-track { background: transparent; }
 	.emaki::-webkit-scrollbar-thumb {
 		background: var(--rule-strong);
-		border-radius: 3px;
+		border-radius: var(--radius-md);
 	}
 
 	.emaki__panel {
@@ -357,7 +357,7 @@ const revise = await getSkill("revise");
 			opacity var(--dur-ink) var(--ease-ink) var(--reveal-delay, 0ms),
 			transform var(--dur-ink) var(--ease-ink) var(--reveal-delay, 0ms),
 			clip-path var(--dur-ink) var(--ease-ink) var(--reveal-delay, 0ms),
-			border-top-color 320ms var(--ease-ink);
+			border-top-color var(--dur-quick) var(--ease-ink);
 	}
 	.emaki__panel.is-revealed {
 		opacity: 1;
@@ -417,7 +417,7 @@ const revise = await getSkill("revise");
 		font-size: var(--type-tiny);
 		letter-spacing: 0.18em;
 		color: var(--washi);
-		transition: color 320ms var(--ease-ink);
+		transition: color var(--dur-quick) var(--ease-ink);
 	}
 	.emaki__rule {
 		display: block;
@@ -435,7 +435,7 @@ const revise = await getSkill("revise");
 		text-transform: uppercase;
 		color: var(--ochre);
 		opacity: 0;
-		transition: opacity 320ms var(--ease-ink);
+		transition: opacity var(--dur-quick) var(--ease-ink);
 	}
 
 	.emaki__chips {
@@ -549,7 +549,7 @@ const revise = await getSkill("revise");
 		display: block;
 		background: var(--ochre);
 		opacity: 0.55;
-		border-radius: 1px;
+		border-radius: var(--radius-xs);
 	}
 	.emaki__hingeBody {
 		display: flex;
@@ -626,6 +626,8 @@ const revise = await getSkill("revise");
 			clip-path: none;
 			transition: none;
 		}
+		.emaki__num,
+		.emaki__open,
 		.emaki-progress__fill { transition: none; }
 	}
 </style>

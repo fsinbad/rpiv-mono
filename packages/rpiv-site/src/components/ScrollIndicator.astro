@@ -63,7 +63,7 @@ const sections = [
 		z-index: 9;
 		pointer-events: none;
 		opacity: 0;
-		animation: indicator-rise 1200ms var(--ease-ink) 400ms forwards;
+		animation: indicator-rise var(--dur-enter) var(--ease-ink) 400ms forwards;
 	}
 
 	@keyframes indicator-rise {
@@ -163,13 +163,13 @@ const sections = [
 		opacity: 0;
 		transform: translateX(6px);
 		transition:
-			opacity 360ms var(--ease-ink),
-			transform 360ms var(--ease-ink),
+			opacity var(--dur-tick) var(--ease-ink),
+			transform var(--dur-tick) var(--ease-ink),
 			color var(--dur-ink) var(--ease-ink);
 		white-space: nowrap;
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 16px;
+		font-size: var(--type-base);
 		letter-spacing: 0.01em;
 		text-transform: lowercase;
 		line-height: 1;
@@ -215,8 +215,8 @@ const sections = [
 			inset 0 0 0 0.5px color-mix(in oklab, var(--kuro) 60%, transparent),
 			0 0 12px color-mix(in oklab, var(--ochre) 25%, transparent);
 		transition:
-			transform 600ms var(--ease-ink),
-			opacity 360ms var(--ease-ink);
+			transform var(--dur-ink) var(--ease-ink),
+			opacity var(--dur-tick) var(--ease-ink);
 	}
 
 	/* hover state — subtle reveal */

@@ -54,28 +54,43 @@
 	--font-mono: "Berkeley Mono", "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code", monospace;
 	--font-serif: "Iowan Old Style", "Hoefler Text", "Charter", "Source Serif Pro", Georgia, serif;
 
-	--type-base: 16px;
-	--type-small: 13px;
+	--type-micro: 10px;
 	--type-tiny: 11px;
-	--type-h1: clamp(48px, 8vw, 96px);
-	--type-h2: clamp(28px, 4vw, 40px);
+	--type-kicker: 12px;
+	--type-small: 13px;
+	--type-base: 16px;
+	--type-lead: 17px;
 	--type-h3: 20px;
+	--type-h-hero: 30px;
+	--type-h2: clamp(28px, 4vw, 40px);
+	--type-h1: clamp(48px, 8vw, 96px);
 
 	--leading-tight: 1.1;
 	--leading-snug: 1.35;
+	--leading-relaxed: 1.55;
 	--leading-body: 1.65;
 
-	/* Motion — slow, organic ink */
+	/* Motion — slow, organic ink. Durations stack from quickest tap-feedback
+	   through entrance ticks to the signature long-form ink reveal. */
 	--ease-ink: cubic-bezier(0.23, 0.71, 0.27, 0.98);
+	--dur-fast: 120ms;
+	--dur-quick: 320ms;
+	--dur-tick: 360ms;
 	--dur-ink: 600ms;
+	--dur-enter: 1200ms;
 
 	/* Radii — slightly imperfect, never crisp */
+	--radius-xs: 1px;
 	--radius-sm: 2px;
 	--radius-md: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	:root {
+		--dur-fast: 0ms;
+		--dur-quick: 0ms;
+		--dur-tick: 0ms;
 		--dur-ink: 0ms;
+		--dur-enter: 0ms;
 	}
 }

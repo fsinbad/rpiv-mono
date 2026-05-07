@@ -37,7 +37,7 @@ const pipeline = await getPipelineSkills();
 	}
 	.colophon__kicker {
 		color: var(--text-distant);
-		font-size: 12px;
+		font-size: var(--type-kicker);
 		letter-spacing: 0.22em;
 		text-transform: uppercase;
 		margin: 0 0 var(--space-4);
@@ -45,8 +45,8 @@ const pipeline = await getPipelineSkills();
 	.colophon__statement {
 		font-family: var(--font-serif);
 		color: var(--washi);
-		font-size: 19px;
-		line-height: 1.55;
+		font-size: var(--type-h3);
+		line-height: var(--leading-relaxed);
 		margin: 0 0 var(--space-5);
 	}
 	.colophon__rail {
@@ -58,7 +58,7 @@ const pipeline = await getPipelineSkills();
 		justify-content: center;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 12px;
+		font-size: var(--type-kicker);
 	}
 	.colophon__node {
 		display: inline-flex;
@@ -88,6 +88,6 @@ const pipeline = await getPipelineSkills();
 	}
 	@media (max-width: 720px) {
 		.colophon { padding: var(--space-7) 0 var(--space-5); }
-		.colophon__statement { font-size: 17px; }
+		.colophon__statement { font-size: var(--type-lead); }
 	}
 </style>

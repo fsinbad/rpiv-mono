@@ -106,7 +106,7 @@ const TIER_META: Record<CapabilityTier, { label: string; note: string; cap: stri
 	.ladder__rung:first-child { border-top: 0; padding-top: var(--space-4); }
 	.ladder__rung:last-child { padding-bottom: 0; }
 
-	@media (min-width: 880px) {
+	@media (min-width: 920px) {
 		.ladder__rung {
 			grid-template-columns: 220px 1fr;
 			gap: var(--space-7);
@@ -199,8 +199,8 @@ const TIER_META: Record<CapabilityTier, { label: string; note: string; cap: stri
 	.rung__cards::-webkit-scrollbar-track { background: transparent; }
 	.rung__cards::-webkit-scrollbar-thumb {
 		background: transparent;
-		border-radius: 2px;
-		transition: background 0.3s var(--ease-ink);
+		border-radius: var(--radius-sm);
+		transition: background var(--dur-quick) var(--ease-ink);
 	}
 	.rung__cards:hover::-webkit-scrollbar-thumb,
 	.rung__cards:focus-within::-webkit-scrollbar-thumb,
@@ -272,7 +272,7 @@ const TIER_META: Record<CapabilityTier, { label: string; note: string; cap: stri
 		width: 16px;
 		height: 3px;
 		background: var(--rule-strong);
-		border-radius: 1px;
+		border-radius: var(--radius-xs);
 	}
 	.rung__pager-bar.is-visible {
 		background: var(--sage);

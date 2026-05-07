@@ -89,7 +89,7 @@ pre {
 	overflow-x: auto;
 	border-left: 1px solid var(--sage-deep);
 	font-size: var(--type-small);
-	line-height: 1.55;
+	line-height: var(--leading-relaxed);
 	border-radius: var(--radius-sm);
 }
 

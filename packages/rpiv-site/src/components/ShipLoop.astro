@@ -488,7 +488,7 @@ const skills = await getCodeReviewSkills();
 		word-break: keep-all;
 	}
 	.cr-name--hero {
-		font-size: 30px;
+		font-size: var(--type-h-hero);
 		color: var(--washi);
 		letter-spacing: -0.01em;
 	}
@@ -504,8 +504,8 @@ const skills = await getCodeReviewSkills();
 	   measure capped well under the card width so lines don't feel taut,
 	   and orphan-control via text-wrap: pretty where supported. */
 	.cr-desc--hero {
-		font-size: 17px;
-		line-height: 1.55;
+		font-size: var(--type-lead);
+		line-height: var(--leading-relaxed);
 		max-width: 52ch;
 		margin-top: var(--space-2);
 		color: var(--washi-soft);

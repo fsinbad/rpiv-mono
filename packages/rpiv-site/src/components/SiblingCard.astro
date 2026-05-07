@@ -158,7 +158,7 @@ const idx = String(index).padStart(2, "0");
 	.sibling__desc {
 		font-family: var(--font-serif);
 		font-size: var(--type-small);
-		line-height: 1.55;
+		line-height: var(--leading-relaxed);
 		color: var(--text);
 		max-width: none;
 		margin: 0;
@@ -206,7 +206,7 @@ const idx = String(index).padStart(2, "0");
 		font-size: var(--type-tiny);
 		color: var(--text-distant);
 		margin: 0;
-		line-height: 1.55;
+		line-height: var(--leading-relaxed);
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-2);
@@ -254,6 +254,6 @@ const idx = String(index).padStart(2, "0");
 
 	@media (max-width: 720px) {
 		.sibling__body { padding: var(--space-4); gap: var(--space-3); }
-		.sibling__install { font-size: 10px; }
+		.sibling__install { font-size: var(--type-micro); }
 	}
 </style>

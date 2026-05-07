@@ -177,7 +177,7 @@ import { VERSION } from "../lib/version";
 		height: 1px;
 		background: var(--ochre);
 		transform-origin: left center;
-		animation: nav-tick-in 360ms var(--ease-ink) forwards;
+		animation: nav-tick-in var(--dur-tick) var(--ease-ink) forwards;
 	}
 	@keyframes nav-tick-in {
 		from { transform: scaleX(0); }
@@ -228,7 +228,7 @@ import { VERSION } from "../lib/version";
 			grid-area: cta;
 			align-self: center;
 			padding: 3px 8px;
-			font-size: 10px;
+			font-size: var(--type-micro);
 			letter-spacing: 0.14em;
 		}
 
@@ -237,7 +237,7 @@ import { VERSION } from "../lib/version";
 			display: grid;
 			grid-template-columns: repeat(6, 1fr);
 			gap: 0;
-			font-size: 10px;
+			font-size: var(--type-micro);
 			letter-spacing: 0.12em;
 			border-top: 1px solid var(--rule);
 			padding-top: var(--space-3);
