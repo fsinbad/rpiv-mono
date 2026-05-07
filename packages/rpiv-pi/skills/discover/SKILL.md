@@ -40,20 +40,25 @@ Input: `$ARGUMENTS`
 
 Each invocation always writes a NEW timestamp-distinct artifact (Step 6) — there is no in-place stress-test append mode. To iterate on a prior FRD, either re-invoke discover (produces a fresh artifact) or manually Edit the prior artifact.
 
-## Step 2: Lightweight Codebase Probe (light agent fan-out permitted)
+## Step 2: Lightweight Codebase Probe (parallel agents)
 
-Goal: identify which questions the codebase can answer so you don't ask the developer about them.
+Goal: a shallow probe that grounds the very first interview question in concrete codebase evidence — so the developer is reviewing a proposal, not generating from scratch.
 
-1. Extract anchor terms from the input — feature names, component names, file paths, command names, config keys mentioned by the user.
-2. Run focused `grep` / `find` / `ls` for those anchors. Cap at 5-8 sweeps. This is NOT a discovery sweep — that's `research`'s job downstream. Goal here is just enough grounding to recognize which branches of the decision tree have evidence-based answers.
-3. If 1-2 specific seams genuinely need depth beyond grep, spawn at most 2 agents in parallel using the Agent tool:
-   - **codebase-locator** — "Find ALL files implementing/calling/configuring {specific component}; report function names, class/type names, and import paths."
-   - **codebase-analyzer** (only when one seam needs end-to-end tracing) — "Trace how {specific integration point} works in detail. Cite `file:line` for each step."
-   Do NOT dispatch breadth-discovery agents (`scope-tracer`, broad locator sweeps, integration-scanner) — those duplicate research's job. The boundary: probe, not discovery.
-4. Read any clearly-relevant files surfaced by the sweep or agents (≤5 files in main context, files <300 lines fully, larger files first 150 lines).
-5. Build a short internal map: `{ branch → evidence }` for every branch you can pre-answer. These become evidence-based Decisions in Step 5, NOT interview questions in Step 4.
+1. **Pick the agent set.** Dispatch `codebase-locator`, `codebase-analyzer`, or both — nothing else.
 
-Wait for ALL agents to complete before proceeding to Step 3.
+2. **Spawn the chosen agent(s) in parallel using the Agent tool.** Draft each prompt yourself from the user's topic — keep the slice narrow (one component, one seam) and avoid breadth phrasing like "everything related to X". Shape per call:
+   ```
+   Agent({
+     subagent_type: "codebase-locator",   // or "codebase-analyzer"
+     description: "<3-5 word task>",
+     prompt: "<your narrow-slice prompt>"
+   })
+   ```
+   The agent description on each subagent is the contract for what it expects in the prompt body.
+
+3. **Wait for ALL agents to complete before proceeding to Step 3.**
+
+4. **Read any clearly-relevant files** surfaced by the agents (≤5 files in main context, files <300 lines fully, larger files first 150 lines). Carry the agent reports and these files into Step 3 as evidence — Step 3 organizes them into the decision tree.
 
 ## Step 3: Build the Decision Tree
 
@@ -74,14 +79,7 @@ Walk the tree depth-first, parent before child. For each unresolved node:
 
 1. **Recommended answer**: derive a recommendation from the developer's input + Step 2 evidence + project conventions. Every question must carry a recommendation — never ask without one.
 
-2. **Choose question format**:
-
-   - **`ask_user_question` tool** — when the question has 2-4 concrete options. Lead with the recommended option labeled `(Recommended)`. Example:
-
-     > Use the `ask_user_question` tool. Question: "How should the feature be triggered — manual command, automatic on save, or both?". Header: "Trigger". Options: "Manual command (Recommended)" (Matches existing `/skill:*` pattern in `packages/rpiv-pi/skills/`); "Automatic on save" (Requires file-watcher wiring not currently in the extension); "Both" (Implement manual first, defer auto-trigger).
-
-   - **Free-text with ❓ Question: prefix** — when the answer space is open-ended (problem framing, "what am I missing", scope edges). Always include the recommendation in the question body. Example:
-     > "❓ Question: I'm reading this as 'export the current todo list as JSON'. Recommended scope: a single new command that writes to stdout, no UI changes. Does that match your intent, or is there more (filtering, formatting, persistence)?"
+2. **Ask via `ask_user_question`.** Lead with the recommended option labeled `(Recommended)`. The "Other" option is automatic and handles open-ended answers — do not draft questions outside this tool.
 
 3. **Critical rules**:
    - Ask ONE question at a time. Wait for the answer before asking the next.
