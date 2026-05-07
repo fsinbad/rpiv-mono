@@ -9,7 +9,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - `/skill:changelog` — regenerates the `[Unreleased]` section of every affected CHANGELOG.md from commits since the last release tag, classified by Conventional Commit prefix and written as Keep a Changelog 1.1.0 prose. Idempotent — safe to re-run as work lands.
-- `scope-tracer` agent: Analyzer-tier specialist that absorbs the former discover question-formulation procedure, emitting 6–12 numbered research questions inline for `research` to parse in-memory. Auto-syncs to the agent directory on first session after upgrade.
+- `scope-tracer` agent: Analyzer-tier specialist that absorbs the former discover question-formulation procedure, emitting 5–10 numbered research questions inline for `research` to parse in-memory. Auto-syncs to the agent directory on first session after upgrade.
 - `discover` skill restored as an interview-driven Feature Requirements Document producer. One question at a time with a recommended answer at every step, grounded by light agent fan-out, writing a timestamped artifact to `thoughts/shared/discover/`. Chains into `research` — each Decision block in the FRD becomes a Developer Context entry.
 
 ### Breaking / Upgrade Notes
