@@ -63,14 +63,17 @@ Actively maintained as a personal project. Issues triaged on best effort. Cadenc
 
 ### Packages
 
-| Package | Role | npm |
-| --- | --- | --- |
-| `rpiv-pi` | Pipeline (skills + subagents) | [`@juicesharp/rpiv-pi`](https://www.npmjs.com/package/@juicesharp/rpiv-pi) |
-| `rpiv-args` | `$1` / `$ARGUMENTS` placeholders in skills | [`@juicesharp/rpiv-args`](https://www.npmjs.com/package/@juicesharp/rpiv-args) |
-| `rpiv-ask-user-question` | Structured questionnaire to the user | [`@juicesharp/rpiv-ask-user-question`](https://www.npmjs.com/package/@juicesharp/rpiv-ask-user-question) |
-| `rpiv-todo` | Live task overlay surviving `/reload` | [`@juicesharp/rpiv-todo`](https://www.npmjs.com/package/@juicesharp/rpiv-todo) |
-| `rpiv-advisor` | Escalate to a stronger reviewer model | [`@juicesharp/rpiv-advisor`](https://www.npmjs.com/package/@juicesharp/rpiv-advisor) |
-| `rpiv-web-tools` | Web search + fetch (Brave) | [`@juicesharp/rpiv-web-tools`](https://www.npmjs.com/package/@juicesharp/rpiv-web-tools) |
-| `rpiv-btw` | `/btw` side-conversation slash command | [`@juicesharp/rpiv-btw`](https://www.npmjs.com/package/@juicesharp/rpiv-btw) |
-| `rpiv-warp` | Warp terminal notification integration | [`@juicesharp/rpiv-warp`](https://www.npmjs.com/package/@juicesharp/rpiv-warp) |
-| `rpiv-i18n` | Localization SDK for sibling extensions | [`@juicesharp/rpiv-i18n`](https://www.npmjs.com/package/@juicesharp/rpiv-i18n) |
+Almost every package can be installed directly from npm on its own. `/rpiv-setup` (shipped by `rpiv-pi`) only auto-installs the siblings the pipeline depends on; the rest are opt-in via `pi install npm:@juicesharp/rpiv-<name>`.
+
+| Package | Role | Standalone install | Auto with `rpiv-pi` | npm |
+| --- | --- | :---: | :---: | --- |
+| `rpiv-pi` | Pipeline (skills + subagents) | ✓ | — | [`@juicesharp/rpiv-pi`](https://www.npmjs.com/package/@juicesharp/rpiv-pi) |
+| `rpiv-args` | `$1` / `$ARGUMENTS` placeholders in skills | ✓ | ✓ | [`@juicesharp/rpiv-args`](https://www.npmjs.com/package/@juicesharp/rpiv-args) |
+| `rpiv-ask-user-question` | Structured questionnaire to the user | ✓ | ✓ | [`@juicesharp/rpiv-ask-user-question`](https://www.npmjs.com/package/@juicesharp/rpiv-ask-user-question) |
+| `rpiv-todo` | Live task overlay surviving `/reload` | ✓ | ✓ | [`@juicesharp/rpiv-todo`](https://www.npmjs.com/package/@juicesharp/rpiv-todo) |
+| `rpiv-advisor` | Escalate to a stronger reviewer model | ✓ | ✓ | [`@juicesharp/rpiv-advisor`](https://www.npmjs.com/package/@juicesharp/rpiv-advisor) |
+| `rpiv-web-tools` | Web search + fetch (Brave) | ✓ | ✓ | [`@juicesharp/rpiv-web-tools`](https://www.npmjs.com/package/@juicesharp/rpiv-web-tools) |
+| `rpiv-i18n` | Localization SDK for sibling extensions | ✓ | ✓ | [`@juicesharp/rpiv-i18n`](https://www.npmjs.com/package/@juicesharp/rpiv-i18n) |
+| `rpiv-btw` | `/btw` side-conversation slash command | ✓ | — | [`@juicesharp/rpiv-btw`](https://www.npmjs.com/package/@juicesharp/rpiv-btw) |
+| `rpiv-voice` | Local voice dictation (`/v` overlay, on-device Whisper) | ✓ | — | [`@juicesharp/rpiv-voice`](https://www.npmjs.com/package/@juicesharp/rpiv-voice) |
+| `rpiv-warp` | Warp terminal notification integration | ✓ | — | [`@juicesharp/rpiv-warp`](https://www.npmjs.com/package/@juicesharp/rpiv-warp) |
