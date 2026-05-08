@@ -2,7 +2,13 @@ export const TARGET_SAMPLE_RATE = 16000;
 export const FRAMES_PER_BUFFER = 1600;
 
 const VAD_THRESHOLD = 0.5;
-const VAD_HOLDOFF_MS = 300;
+// Hangover before emitting `silence`. decibri's 300 ms default flushed mid-
+// clause at natural breath pauses, which forced Whisper to "complete" an
+// unterminated phrase with a spurious period. 700 ms eliminated that but felt
+// laggy at the user-perceived "I stopped → text appears" gap. 500 ms is the
+// LiveKit value: covers most natural breath pauses, keeps the perceived gap
+// to ~half a second, and the transcribing spinner now papers over the rest.
+const VAD_HOLDOFF_MS = 500;
 
 export interface DecibriLike {
 	on(event: "data", listener: (chunk: Buffer) => void): unknown;

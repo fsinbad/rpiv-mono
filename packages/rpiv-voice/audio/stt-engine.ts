@@ -35,6 +35,12 @@ const WHISPER_FEATURE_DIM = 80;
 // returns and can starve other Pi work on smaller machines.
 const DEFAULT_NUM_THREADS = 4;
 const DEFAULT_PROVIDER = "cpu";
+// `tailPaddings` is the only decoder-adjacent knob sherpa-onnx exposes for
+// Whisper. Per maintainer guidance in k2-fsa/sherpa-onnx#2787, audio under
+// 30 s makes Whisper miss EOS and hallucinate; padding the encoder input
+// reduces the chunk-end EOT bias that produces spurious terminal punctuation.
+// 1000 frames ≈ 100 mel-frame steps of trailing silence.
+const DEFAULT_TAIL_PADDINGS = 1000;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,6 +106,7 @@ function buildRecognizerConfig(config: SttEngineConfig): Config {
 			whisper: {
 				encoder: config.encoderPath,
 				decoder: config.decoderPath,
+				tailPaddings: DEFAULT_TAIL_PADDINGS,
 				...(config.language ? { language: config.language } : {}),
 			},
 			tokens: config.tokensPath,
