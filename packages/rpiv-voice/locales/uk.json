@@ -7,7 +7,7 @@
   "error.mic_unavailable": "Мікрофон недоступний. Перевірте, що пристрій вводу підключено й у Pi є дозвіл на мікрофон.",
 
   "splash.preparing": "Підготовка моделі…",
-  "splash.downloading": "Завантаження Whisper base multilingual (~198 МБ)…",
+  "splash.downloading": "Завантаження Whisper (~198 МБ)…",
   "splash.extracting": "Розпаковування файлів моделі…",
   "splash.verifying": "Перевірка файлів моделі…",
   "splash.loading_engine": "Завантаження мовленнєвої моделі…",

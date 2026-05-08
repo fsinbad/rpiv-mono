@@ -57,8 +57,7 @@ const TAR_STRIP_FLAG = "--strip-components=1";
 // ── Status messages ──────────────────────────────────────────────────────────
 // Resolved at progress-emit time (not module load) so live `/languages` flips
 // take effect mid-download.
-const msgDownloading = (): string =>
-	t("splash.downloading", `Downloading Whisper base multilingual (~${APPROX_DOWNLOAD_MB} MB)…`);
+const msgDownloading = (): string => t("splash.downloading", `Downloading Whisper (~${APPROX_DOWNLOAD_MB} MB)…`);
 const msgExtracting = (): string => t("splash.extracting", "Extracting model files…");
 const msgVerifying = (): string => t("splash.verifying", "Verifying model files…");
 

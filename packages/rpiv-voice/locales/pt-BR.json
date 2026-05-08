@@ -7,7 +7,7 @@
   "error.mic_unavailable": "Microfone indisponível. Verifique se há um dispositivo de entrada conectado e se o Pi tem permissão de microfone.",
 
   "splash.preparing": "Preparando o modelo…",
-  "splash.downloading": "Baixando Whisper base multilingual (~198 MB)…",
+  "splash.downloading": "Baixando Whisper (~198 MB)…",
   "splash.extracting": "Extraindo arquivos do modelo…",
   "splash.verifying": "Verificando arquivos do modelo…",
   "splash.loading_engine": "Carregando o modelo de voz…",
