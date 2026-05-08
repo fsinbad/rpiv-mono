@@ -1,4 +1,4 @@
-import type { VoiceConfig } from "../config/voice-config.js";
+import { isHallucinationFilterEnabled, type VoiceConfig } from "../config/voice-config.js";
 import { t } from "./i18n-bridge.js";
 import type { VoiceAction } from "./key-router.js";
 import type { SettingsDraft, VoiceState } from "./state.js";
@@ -126,6 +126,6 @@ export function configFromDraft(draft: SettingsDraft): VoiceConfig {
 
 export function draftFromConfig(config: VoiceConfig): SettingsDraft {
 	return {
-		hallucinationFilterEnabled: config.hallucinationFilterEnabled !== false,
+		hallucinationFilterEnabled: isHallucinationFilterEnabled(config),
 	};
 }

@@ -31,10 +31,12 @@ export const WHISPER_BASE_DIR = join(MODELS_DIR, MODEL_DIR_NAME);
 export const SENTINEL_FILE = ".download-complete";
 
 // ── Source archive ───────────────────────────────────────────────────────────
+// Approx archive size on the wire is ~198 MB; the splash now shows the exact
+// total once Content-Length is parsed, so we no longer encode the estimate
+// in any user-facing string. Kept here for documentation only.
 const MODEL_RELEASE_TAG = "asr-models";
 const MODEL_ARCHIVE_NAME = "sherpa-onnx-whisper-base.tar.bz2";
 const MODEL_URL = `https://github.com/k2-fsa/sherpa-onnx/releases/download/${MODEL_RELEASE_TAG}/${MODEL_ARCHIVE_NAME}`;
-const APPROX_DOWNLOAD_MB = 198;
 
 // ── Files we keep (int8 quantized) ──────────────────────────────────────────
 const ENCODER_FILE = "base-encoder.int8.onnx";
@@ -57,7 +59,7 @@ const TAR_STRIP_FLAG = "--strip-components=1";
 // ── Status messages ──────────────────────────────────────────────────────────
 // Resolved at progress-emit time (not module load) so live `/languages` flips
 // take effect mid-download.
-const msgDownloading = (): string => t("splash.downloading", `Downloading Whisper (~${APPROX_DOWNLOAD_MB} MB)…`);
+const msgDownloading = (): string => t("splash.downloading", "Downloading Whisper…");
 const msgExtracting = (): string => t("splash.extracting", "Extracting model files…");
 const msgVerifying = (): string => t("splash.verifying", "Verifying model files…");
 
@@ -218,9 +220,7 @@ async function downloadArchive(
 	// Servers occasionally omit `Content-Length` for chunked / proxied
 	// responses; downstream we treat undefined as "unknown total" and the
 	// splash falls back to a byte-counter without a percentage.
-	const contentLengthHeader = response.headers.get("content-length");
-	const parsed = contentLengthHeader ? Number.parseInt(contentLengthHeader, 10) : Number.NaN;
-	const totalBytes = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+	const totalBytes = parsePositiveInt(response.headers.get("content-length"));
 
 	let bytesReceived = 0;
 	const tap = new Transform({
@@ -233,6 +233,14 @@ async function downloadArchive(
 
 	const out = createWriteStream(destPath);
 	await pipeline(Readable.fromWeb(response.body as never), tap, out, { signal });
+}
+
+const DECIMAL_RADIX = 10;
+
+function parsePositiveInt(raw: string | null | undefined): number | undefined {
+	if (!raw) return undefined;
+	const value = Number.parseInt(raw, DECIMAL_RADIX);
+	return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
 async function extractArchive(archivePath: string, destDir: string): Promise<void> {

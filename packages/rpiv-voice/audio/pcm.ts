@@ -38,3 +38,8 @@ export function clamp01(n: number): number {
 }
 
 export const BYTES_PER_INT16 = BYTES_PER_INT16_SAMPLE;
+
+/** How many Int16 samples sit in a raw PCM chunk. */
+export function samplesInInt16Chunk(chunk: Buffer): number {
+	return chunk.length / BYTES_PER_INT16_SAMPLE;
+}

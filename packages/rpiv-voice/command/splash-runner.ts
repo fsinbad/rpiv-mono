@@ -1,5 +1,10 @@
 import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { SPLASH_FRAME_INTERVAL_MS, type SplashPhase, SplashView } from "../view/components/splash-view.js";
+import {
+	SPLASH_FRAME_INTERVAL_MS,
+	SPLASH_FRAMES,
+	type SplashPhase,
+	SplashView,
+} from "../view/components/splash-view.js";
 
 export interface SplashController {
 	setPhase(phase: SplashPhase): void;
@@ -29,7 +34,7 @@ export async function runWithSplash<T>(
 		splash.setProps({ phase, frame });
 
 		const tick = setInterval(() => {
-			frame = (frame + 1) % 4;
+			frame = (frame + 1) % SPLASH_FRAMES.length;
 			splash.setProps({ phase, frame });
 			tui.requestRender();
 		}, SPLASH_FRAME_INTERVAL_MS);

@@ -9,7 +9,7 @@ import {
 	removeModelInstall,
 } from "../audio/model-download.js";
 import { createSttEngine, type SttEngine } from "../audio/stt-engine.js";
-import { loadVoiceConfig } from "../config/voice-config.js";
+import { isHallucinationFilterEnabled, loadVoiceConfig } from "../config/voice-config.js";
 import { getActiveLocale, t } from "../state/i18n-bridge.js";
 import type { VoiceResult } from "../state/state-reducer.js";
 import { VoiceSession } from "../state/voice-session.js";
@@ -37,10 +37,23 @@ const WHISPER_SUPPORTED_LANGUAGES: ReadonlySet<string> = new Set([
 	"zh",
 ]);
 
+// IETF locale tags have an optional region subtag after the first hyphen
+// (e.g. "pt-BR" → "pt"). Whisper's language hint expects just the base.
+const LOCALE_REGION_SEPARATOR = "-";
+const LOCALE_BASE_INDEX = 0;
+
+function baseLanguage(locale: string): string {
+	return locale.split(LOCALE_REGION_SEPARATOR)[LOCALE_BASE_INDEX] ?? locale;
+}
+
+function isWhisperSupported(language: string): boolean {
+	return WHISPER_SUPPORTED_LANGUAGES.has(language);
+}
+
 function whisperLanguageForLocale(locale: string | undefined): string | undefined {
 	if (!locale) return undefined;
-	const base = locale.split("-")[0]; // "pt-BR" → "pt"
-	return WHISPER_SUPPORTED_LANGUAGES.has(base) ? base : undefined;
+	const base = baseLanguage(locale);
+	return isWhisperSupported(base) ? base : undefined;
 }
 
 const SPLASH_INITIAL_ENGINE: SplashPhase = { kind: "loading_engine" };
@@ -221,7 +234,7 @@ async function runDictationSession(
 			done,
 		});
 		pipelineHandle = startDictationPipeline(mic, sttEngine, session, controller.signal, {
-			hallucinationFilterEnabled: persistedConfig.hallucinationFilterEnabled !== false,
+			hallucinationFilterEnabled: isHallucinationFilterEnabled(persistedConfig),
 		});
 		pulseTick = setInterval(() => session.tickPulse(), STATUS_BAR_PULSE_FRAME_INTERVAL_MS);
 		return session.component;

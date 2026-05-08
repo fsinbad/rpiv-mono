@@ -28,6 +28,17 @@ export interface VoiceConfig {
 	readonly hallucinationFilterEnabled?: boolean;
 }
 
+/**
+ * The hallucination filter defaults to ENABLED. We only persist the off-state
+ * to keep voice.json minimal, which means "field absent" must be read as
+ * "enabled". Centralizing this rule here keeps the three readers in sync —
+ * persisted config, pipeline runtime options, and the in-flight settings
+ * draft all decode the absence the same way.
+ */
+export function isHallucinationFilterEnabled(config: { hallucinationFilterEnabled?: boolean }): boolean {
+	return config.hallucinationFilterEnabled !== false;
+}
+
 export function loadVoiceConfig(): VoiceConfig {
 	if (!existsSync(CONFIG_PATH)) return {};
 	try {

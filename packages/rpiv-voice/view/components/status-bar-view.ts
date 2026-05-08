@@ -94,9 +94,19 @@ export class StatusBarView implements StatefulView<StatusBarViewProps> {
 	}
 }
 
+const MS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PADDING_DIGITS = 2;
+
+function decomposeElapsed(ms: number): { minutes: number; seconds: number } {
+	const totalSeconds = Math.floor(ms / MS_PER_SECOND);
+	return {
+		minutes: Math.floor(totalSeconds / SECONDS_PER_MINUTE),
+		seconds: totalSeconds % SECONDS_PER_MINUTE,
+	};
+}
+
 function formatElapsed(ms: number): string {
-	const totalSec = Math.floor(ms / 1000);
-	const m = Math.floor(totalSec / 60);
-	const s = totalSec % 60;
-	return `${m}:${s.toString().padStart(2, "0")}`;
+	const { minutes, seconds } = decomposeElapsed(ms);
+	return `${minutes}:${seconds.toString().padStart(SECONDS_PADDING_DIGITS, "0")}`;
 }
