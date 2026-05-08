@@ -8,7 +8,6 @@
   </a>
 </div>
 
-[![npm version](https://img.shields.io/npm/v/@juicesharp/rpiv-voice.svg)](https://www.npmjs.com/package/@juicesharp/rpiv-voice)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Talk to [Pi Agent](https://github.com/badlogic/pi-mono) instead of typing. `rpiv-voice` adds the `/voice` slash command — open the overlay, speak, hit `Enter`, and your transcript drops straight into Pi's editor. Speech-to-text runs **entirely on your machine** via [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) Whisper (base multilingual int8). No cloud, no API keys, no telemetry.
