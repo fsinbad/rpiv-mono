@@ -41,11 +41,6 @@ export const SIBLINGS: readonly SiblingPlugin[] = [
 		provides: "advisor tool + /advisor command",
 	},
 	{
-		pkg: "npm:@juicesharp/rpiv-btw",
-		matches: /rpiv-btw/i,
-		provides: "/btw side-question command",
-	},
-	{
 		pkg: "npm:@juicesharp/rpiv-i18n",
 		matches: /rpiv-i18n(?![-\w])/i,
 		provides: "i18n SDK for Pi extensions — /languages command + --locale flag + registerStrings/scope/tr API",
