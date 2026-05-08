@@ -1,6 +1,7 @@
 {
 	"name": "@juicesharp/rpiv-voice",
 	"version": "1.2.1",
+	"private": true,
 	"description": "Pi extension. Voice dictation via /voice — local STT with sherpa-onnx Moonshine, microphone capture via decibri.",
 	"keywords": [
 		"pi-package",
