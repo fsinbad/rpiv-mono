@@ -59,6 +59,7 @@ export const selectStatusBarProps: GlobalSelector<StatusBarViewProps> = (state, 
 
 export const selectTranscriptProps: GlobalSelector<TranscriptViewProps> = (state, _ctx) => ({
 	text: state.transcript,
+	partial: state.partialTranscript,
 	placeholder: t("transcript.placeholder", "Listening..."),
 });
 

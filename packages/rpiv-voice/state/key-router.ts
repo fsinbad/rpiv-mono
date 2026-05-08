@@ -13,6 +13,7 @@ const CTRL_S = "\x13";
 export type VoiceAction =
 	| { kind: "audio_chunk"; level: number }
 	| { kind: "audio_transcript_appended"; text: string }
+	| { kind: "audio_partial_transcript_set"; text: string }
 	| { kind: "toggle_pause" }
 	| { kind: "commit" }
 	| { kind: "cancel" }

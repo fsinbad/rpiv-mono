@@ -27,6 +27,13 @@ const CAP_CUT_SCAN_SAMPLES = (TARGET_SAMPLE_RATE * CAP_CUT_SCAN_MS) / 1000;
 // RMS is below a floor. ~-46 dBFS sits between room noise and quiet speech.
 const MIN_SEGMENT_RMS = 0.005;
 
+// Cadence of rolling partial-transcript decodes during an active utterance.
+// 1 s gives the user a continuously-refining preview without saturating the
+// CPU on Whisper-base (typical decode of a sub-12 s buffer is well under 1 s
+// on modern silicon, leaving headroom for mic + render). Single-flight: a
+// new tick is skipped if the previous decode hasn't returned.
+const PARTIAL_DECODE_INTERVAL_MS = 1000;
+
 export interface PipelineHandle {
 	finalTranscriptPromise: Promise<string>;
 	isPaused(): boolean;
@@ -53,14 +60,33 @@ export function startDictationPipeline(
 	let paused = false;
 	let hallucinationFilterEnabled = isHallucinationFilterEnabled(options);
 
-	const recognizeChunks = async (chunks: Buffer[]): Promise<void> => {
+	// Single-flight gate for partial decodes. Combined with the interval
+	// throttle this means at most one partial recognize() at a time and at
+	// most one per PARTIAL_DECODE_INTERVAL_MS — never queueing a backlog if
+	// the CPU stalls.
+	let partialInFlight = false;
+	let lastPartialAt = 0;
+	// Bumps every time the buffer is committed (silence flush, cap flush, or
+	// session shutdown). A partial whose snapshot was taken at an earlier
+	// epoch is dropped on dispatch — protects against a slow partial decode
+	// painting stale text after the final commit.
+	let utteranceEpoch = 0;
+
+	const recognizeFinal = async (chunks: Buffer[]): Promise<void> => {
 		if (chunks.length === 0) return;
 		const samples = bufferToFloat32(Buffer.concat(chunks));
-		if (computeRmsFloat32(samples) < MIN_SEGMENT_RMS) return;
+		if (computeRmsFloat32(samples) < MIN_SEGMENT_RMS) {
+			// No audible content — but still finalize so any in-flight partial
+			// gets cleared by the reducer's empty-append branch.
+			session.dispatchAction({ kind: "audio_transcript_appended", text: "" });
+			return;
+		}
 		try {
 			const text = await sttEngine.recognize(samples, TARGET_SAMPLE_RATE);
-			if (!text) return;
-			if (hallucinationFilterEnabled && isHallucination(text)) return;
+			if (!text || (hallucinationFilterEnabled && isHallucination(text))) {
+				session.dispatchAction({ kind: "audio_transcript_appended", text: "" });
+				return;
+			}
 			transcript = transcript ? `${transcript} ${text}` : text;
 			session.dispatchAction({ kind: "audio_transcript_appended", text });
 		} catch (err) {
@@ -69,32 +95,60 @@ export function startDictationPipeline(
 			// every dropped segment. Instead, append a breadcrumb to a file the
 			// user can `cat` later when investigating transcript gaps.
 			appendErrorLog("stt.recognize", err);
+			session.dispatchAction({ kind: "audio_transcript_appended", text: "" });
 		}
 	};
 
-	const flushBuffer = async (): Promise<void> => {
+	const flushBuffer = (): void => {
 		if (speechBuffer.length === 0) return;
 		const chunks = speechBuffer;
 		speechBuffer = [];
 		speechBufferSamples = 0;
-		await recognizeChunks(chunks);
+		utteranceEpoch++;
+		recognizing = recognizing.then(() => recognizeFinal(chunks));
 	};
 
-	const queueFlush = () => {
-		recognizing = recognizing.then(flushBuffer);
-	};
-
-	const queueCapFlush = () => {
+	const queueCapFlush = (): void => {
 		const cutIdx = findLowestEnergyCutIndex(speechBuffer);
 		if (cutIdx <= 0 || cutIdx >= speechBuffer.length) {
-			queueFlush();
+			flushBuffer();
 			return;
 		}
 		const head = speechBuffer.slice(0, cutIdx);
 		const tail = speechBuffer.slice(cutIdx);
 		speechBuffer = tail;
 		speechBufferSamples = countSamples(tail);
-		recognizing = recognizing.then(() => recognizeChunks(head));
+		utteranceEpoch++;
+		recognizing = recognizing.then(() => recognizeFinal(head));
+	};
+
+	// Rolling partial preview. Runs *outside* the `recognizing` chain so the
+	// preview latency isn't queued behind pending finals. Best-effort: a
+	// snapshot of the current buffer is decoded, and the result is dispatched
+	// as the new partial only if the utterance epoch hasn't advanced under us.
+	const tryEmitPartial = (): void => {
+		if (partialInFlight) return;
+		if (speechBuffer.length === 0) return;
+		const now = Date.now();
+		if (now - lastPartialAt < PARTIAL_DECODE_INTERVAL_MS) return;
+		lastPartialAt = now;
+		partialInFlight = true;
+		const snapshotEpoch = utteranceEpoch;
+		const snapshot = speechBuffer.slice();
+		void (async () => {
+			try {
+				const samples = bufferToFloat32(Buffer.concat(snapshot));
+				if (computeRmsFloat32(samples) < MIN_SEGMENT_RMS) return;
+				const text = await sttEngine.recognize(samples, TARGET_SAMPLE_RATE);
+				if (snapshotEpoch !== utteranceEpoch) return;
+				if (hallucinationFilterEnabled && isHallucination(text)) return;
+				session.dispatchAction({ kind: "audio_partial_transcript_set", text });
+			} catch (err) {
+				appendErrorLog("stt.recognize.partial", err);
+			} finally {
+				partialInFlight = false;
+			}
+		})();
 	};
 
 	mic.on("data", (chunk: Buffer) => {
@@ -103,16 +157,20 @@ export function startDictationPipeline(
 		if (paused) return;
 		speechBuffer.push(chunk);
 		speechBufferSamples += samplesInInt16Chunk(chunk);
-		if (speechBufferSamples >= MAX_SEGMENT_SAMPLES) queueCapFlush();
+		if (speechBufferSamples >= MAX_SEGMENT_SAMPLES) {
+			queueCapFlush();
+		} else {
+			tryEmitPartial();
+		}
 	});
 	mic.on("silence", () => {
 		if (paused) return;
-		queueFlush();
+		flushBuffer();
 	});
 
 	const finalTranscriptPromise = waitForMicShutdown(mic, signal, async () => {
+		flushBuffer();
 		await recognizing;
-		await flushBuffer();
 	}).then(() => transcript);
 
 	return {

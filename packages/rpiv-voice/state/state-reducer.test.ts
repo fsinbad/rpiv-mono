@@ -30,6 +30,33 @@ describe("reduce", () => {
 		expect(s.transcript).toBe("hello world");
 	});
 
+	it("audio_partial_transcript_set replaces the partial wholesale", () => {
+		let s = freshState();
+		s = reduce(s, { kind: "audio_partial_transcript_set", text: "I am" }, ctx).state;
+		expect(s.partialTranscript).toBe("I am");
+		s = reduce(s, { kind: "audio_partial_transcript_set", text: "I am going to" }, ctx).state;
+		expect(s.partialTranscript).toBe("I am going to");
+	});
+
+	it("audio_partial_transcript_set with the same text is a no-op (no effects)", () => {
+		const s = { ...freshState(), partialTranscript: "stable" };
+		const r = reduce(s, { kind: "audio_partial_transcript_set", text: "stable" }, ctx);
+		expect(r.effects).toHaveLength(0);
+	});
+
+	it("audio_transcript_appended commits and clears the partial", () => {
+		let s = { ...freshState(), partialTranscript: "I am goin" };
+		s = reduce(s, { kind: "audio_transcript_appended", text: "I am going home" }, ctx).state;
+		expect(s.transcript).toBe("I am going home");
+		expect(s.partialTranscript).toBe("");
+	});
+
+	it("audio_transcript_appended with empty text still clears a stale partial", () => {
+		let s = { ...freshState(), partialTranscript: "stale" };
+		s = reduce(s, { kind: "audio_transcript_appended", text: "" }, ctx).state;
+		expect(s.partialTranscript).toBe("");
+	});
+
 	it("toggle_pause flips status and emits set_pipeline_paused matching STATUS_META", () => {
 		const s = freshState();
 		const r = reduce(s, { kind: "toggle_pause" }, ctx);
@@ -43,6 +70,27 @@ describe("reduce", () => {
 		s = reduce(s, { kind: "audio_transcript_appended", text: "hi" }, ctx).state;
 		const r = reduce(s, { kind: "commit" }, ctx);
 		expect(r.effects).toContainEqual({ kind: "done", result: { intent: "commit", transcript: "hi" } });
+	});
+
+	it("commit folds the in-flight partial into the committed transcript", () => {
+		let s = freshState();
+		s = reduce(s, { kind: "audio_transcript_appended", text: "hello" }, ctx).state;
+		s = reduce(s, { kind: "audio_partial_transcript_set", text: "world" }, ctx).state;
+		const r = reduce(s, { kind: "commit" }, ctx);
+		expect(r.effects).toContainEqual({
+			kind: "done",
+			result: { intent: "commit", transcript: "hello world" },
+		});
+	});
+
+	it("commit with only a partial (no committed text) returns just the partial", () => {
+		let s = freshState();
+		s = reduce(s, { kind: "audio_partial_transcript_set", text: "first words" }, ctx).state;
+		const r = reduce(s, { kind: "commit" }, ctx);
+		expect(r.effects).toContainEqual({
+			kind: "done",
+			result: { intent: "commit", transcript: "first words" },
+		});
 	});
 
 	it("cancel emits abort_session and done with empty transcript", () => {
