@@ -2,19 +2,19 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { InputEvent } from "@earendil-works/pi-coding-agent";
 import { createMockPi } from "@juicesharp/rpiv-test-utils";
-import type { InputEvent } from "@mariozechner/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@mariozechner/pi-coding-agent", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mariozechner/pi-coding-agent")>();
+vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@earendil-works/pi-coding-agent")>();
 	return {
 		...actual,
 		loadSkills: vi.fn(() => ({ skills: [] })),
 	};
 });
 
-import { type BeforeAgentStartEvent, loadSkills } from "@mariozechner/pi-coding-agent";
+import { type BeforeAgentStartEvent, loadSkills } from "@earendil-works/pi-coding-agent";
 import {
 	handleBeforeAgentStart,
 	handleInput,

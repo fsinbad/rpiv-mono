@@ -6,8 +6,8 @@
  * private buildSelectPanel owns the layout + theme wiring.
  */
 
-import { DynamicBorder, type ExtensionContext, type Theme } from "@mariozechner/pi-coding-agent";
-import { Container, type SelectItem, SelectList, Spacer, Text } from "@mariozechner/pi-tui";
+import { DynamicBorder, type ExtensionContext, type Theme } from "@earendil-works/pi-coding-agent";
+import { Container, type SelectItem, SelectList, Spacer, Text } from "@earendil-works/pi-tui";
 
 const MAX_VISIBLE_ROWS = 10;
 const NAV_HINT = "↑↓ navigate • enter select • esc cancel";

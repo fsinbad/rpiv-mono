@@ -7,8 +7,8 @@
  */
 
 import { basename } from "node:path";
-import type { AssistantMessage, UserMessage } from "@mariozechner/pi-ai";
-import type { ExtensionContext, SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { AssistantMessage, UserMessage } from "@earendil-works/pi-ai";
+import type { ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
 import { negotiateProtocolVersion, type WarpEvent } from "./protocol.js";
 
 // ---------------------------------------------------------------------------

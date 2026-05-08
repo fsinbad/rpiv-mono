@@ -1,5 +1,5 @@
+import type { Api, Model } from "@earendil-works/pi-ai";
 import { createMockCtx, createMockPi } from "@juicesharp/rpiv-test-utils";
-import type { Api, Model } from "@mariozechner/pi-ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./advisor-ui.js", () => ({

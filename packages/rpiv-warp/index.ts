@@ -1,5 +1,5 @@
 import { basename } from "node:path";
-import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
 import { getBlockingTools } from "./config.js";
 import {
 	buildPromptSubmitPayload,

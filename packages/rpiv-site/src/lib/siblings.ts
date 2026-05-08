@@ -52,7 +52,7 @@ function readPkg(name: SiblingName): PkgJson {
 function shortPeers(peers: Record<string, string> | undefined): string[] {
 	if (!peers) return [];
 	return Object.keys(peers)
-		.map((p) => p.replace(/^@mariozechner\//, "").replace(/^@juicesharp\//, ""))
+		.map((p) => p.replace(/^@earendil-works\//, "").replace(/^@juicesharp\//, ""))
 		.filter((p) => !p.startsWith("rpiv-"));
 }
 

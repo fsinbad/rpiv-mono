@@ -7,7 +7,7 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { type ExtensionAPI, isToolCallEventType } from "@mariozechner/pi-coding-agent";
+import { type ExtensionAPI, isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import { type SyncResult, syncBundledAgents } from "./agents.js";
 import { FLAG_DEBUG, MSG_TYPE_GIT_CONTEXT } from "./constants.js";
 import {

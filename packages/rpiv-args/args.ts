@@ -19,7 +19,7 @@
  * as the skill's argument input rather than a separate imperative.
  *
  * Byte-exact wrapper requirement: parseSkillBlock regex at
- * node_modules/@mariozechner/pi-coding-agent/dist/core/agent-session.js:40
+ * node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js:40
  * is the load-bearing contract for the wrapper itself. Do not reformat the
  * template literal below.
  */
@@ -36,7 +36,7 @@ import {
 	parseFrontmatter,
 	type Skill,
 	stripFrontmatter,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 // ---------------------------------------------------------------------------
 // Tokens
@@ -54,7 +54,7 @@ const WRAPPED_PREFIX = "<skill ";
 
 // ---------------------------------------------------------------------------
 // Tokeniser — byte-equivalent to Pi's parseCommandArgs at
-// node_modules/@mariozechner/pi-coding-agent/dist/core/prompt-templates.js:11-42
+// node_modules/@earendil-works/pi-coding-agent/dist/core/prompt-templates.js:11-42
 // ---------------------------------------------------------------------------
 
 export function parseCommandArgs(argsString: string): string[] {
@@ -86,7 +86,7 @@ export function parseCommandArgs(argsString: string): string[] {
 
 // ---------------------------------------------------------------------------
 // Substitutor — byte-equivalent to Pi's substituteArgs at
-// node_modules/@mariozechner/pi-coding-agent/dist/core/prompt-templates.js:54-82
+// node_modules/@earendil-works/pi-coding-agent/dist/core/prompt-templates.js:54-82
 // Order matters: $N first, then ${@:N[:L]}, then $ARGUMENTS, then $@.
 // ---------------------------------------------------------------------------
 
@@ -146,7 +146,7 @@ function getSkillIndex(): Map<string, SkillIndexEntry> {
 
 // ---------------------------------------------------------------------------
 // Wrapper emit — byte-exact against parseSkillBlock regex at
-// node_modules/@mariozechner/pi-coding-agent/dist/core/agent-session.js:40
+// node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js:40
 // and byte-equivalent to _expandSkillCommand's output at :840-841.
 // ---------------------------------------------------------------------------
 

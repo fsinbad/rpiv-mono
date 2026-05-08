@@ -3,7 +3,7 @@
  * Adds new, overwrites changed managed files, removes stale managed files.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { type SyncResult, syncBundledAgents } from "./agents.js";
 
 const MSG_UP_TO_DATE = "All agents already up-to-date.";

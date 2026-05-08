@@ -17,8 +17,8 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Api, Model, StopReason, Usage } from "@mariozechner/pi-ai";
-import { completeSimple, getSupportedThinkingLevels, type Message, type ThinkingLevel } from "@mariozechner/pi-ai";
+import type { Api, Model, StopReason, Usage } from "@earendil-works/pi-ai";
+import { completeSimple, getSupportedThinkingLevels, type Message, type ThinkingLevel } from "@earendil-works/pi-ai";
 import {
 	type AgentToolResult,
 	type AgentToolUpdateCallback,
@@ -27,8 +27,8 @@ import {
 	type ExtensionContext,
 	type SessionEntry,
 	type ToolInfo,
-} from "@mariozechner/pi-coding-agent";
-import type { SelectItem } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import type { SelectItem } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { showAdvisorPicker, showEffortPicker } from "./advisor-ui.js";
 

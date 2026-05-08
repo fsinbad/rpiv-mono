@@ -9,8 +9,8 @@
  * Exposes i18n state via globalThis[Symbol.for("rpiv-i18n")] as plain data.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import type { SelectItem } from "@mariozechner/pi-tui";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { SelectItem } from "@earendil-works/pi-tui";
 import {
 	applyLocale,
 	detectLocaleFromConfigAndEnv,

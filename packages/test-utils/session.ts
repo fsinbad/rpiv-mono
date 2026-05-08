@@ -1,5 +1,5 @@
-import type { AssistantMessage, Message, ToolResultMessage, UserMessage } from "@mariozechner/pi-ai";
-import type { SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { AssistantMessage, Message, ToolResultMessage, UserMessage } from "@earendil-works/pi-ai";
+import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 export function makeUserMessage(text: string): UserMessage {
 	return {

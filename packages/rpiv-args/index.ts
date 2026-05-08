@@ -6,7 +6,7 @@
  * args.ts.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerArgsHandler } from "./args.js";
 
 export default function (pi: ExtensionAPI): void {

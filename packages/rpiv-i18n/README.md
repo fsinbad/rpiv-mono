@@ -64,7 +64,7 @@ The SDK gives every Pi extension a single shared locale dial. Register your tran
 ### Register strings at extension load
 
 ```ts
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerStrings, scope } from "@juicesharp/rpiv-i18n";
 
 const NAMESPACE = "@my-org/cool-tool";
@@ -132,7 +132,7 @@ my-extension/
 {
   "peerDependencies": {
     "@juicesharp/rpiv-i18n": "*",
-    "@mariozechner/pi-coding-agent": "*"
+    "@earendil-works/pi-coding-agent": "*"
   },
   "peerDependenciesMeta": {
     "@juicesharp/rpiv-i18n": { "optional": true }
@@ -191,7 +191,7 @@ Use the same dynamic-import shim pattern as the bridge - `registerStrings` is a 
 ```ts
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { I18N_NAMESPACE } from "./state/i18n-bridge.js";
 
 type TranslationMap = Readonly<Record<string, string>>;
