@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { LEGACY_SIBLINGS, SIBLINGS } from "./siblings.js";
 
 describe("SIBLINGS registry", () => {
-	it("contains 8 entries (pi-subagents at SIBLINGS[0] — tintinweb fork is the dispatch runtime)", () => {
-		expect(SIBLINGS).toHaveLength(8);
+	it("contains 7 entries (pi-subagents at SIBLINGS[0] — tintinweb fork is the dispatch runtime)", () => {
+		expect(SIBLINGS).toHaveLength(7);
 	});
 
 	it("lists @tintinweb/pi-subagents at SIBLINGS[0]", () => {
@@ -12,6 +12,10 @@ describe("SIBLINGS registry", () => {
 
 	it("does NOT list nicobailon's unscoped pi-subagents (superseded in 0.14.0)", () => {
 		expect(SIBLINGS.find((s) => s.pkg === "npm:pi-subagents")).toBeUndefined();
+	});
+
+	it("does NOT list rpiv-btw (standalone-only — rpiv-pi has no runtime dependency on it)", () => {
+		expect(SIBLINGS.find((s) => s.pkg === "npm:@juicesharp/rpiv-btw")).toBeUndefined();
 	});
 
 	for (const s of SIBLINGS) {
