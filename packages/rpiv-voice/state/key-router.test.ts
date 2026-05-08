@@ -71,3 +71,28 @@ describe("routeKey — settings screen", () => {
 		expect(routeKey("x", settingsState, runtime())).toEqual({ kind: "ignore" });
 	});
 });
+
+describe("routeKey — cancel honors user keybinding remap", () => {
+	const remappedKb = {
+		matches: (data: string, name: string): boolean => {
+			if (name === "tui.select.confirm") return data === "\r" || data === "\n";
+			// User remapped cancel to Ctrl-G instead of Esc.
+			if (name === "tui.select.cancel") return data === "\x07";
+			return false;
+		},
+	};
+	const remappedRuntime = () => ({ keybindings: remappedKb });
+
+	it("dictation: Ctrl-G fires cancel when user remapped 'tui.select.cancel'", () => {
+		expect(routeKey("\x07", freshState(), remappedRuntime())).toEqual({ kind: "cancel" });
+	});
+
+	it("dictation: Esc no longer cancels when remapped away", () => {
+		expect(routeKey(ESC, freshState(), remappedRuntime())).toEqual({ kind: "ignore" });
+	});
+
+	it("settings: Ctrl-G fires close_settings when user remapped cancel", () => {
+		const settingsState = { ...freshState(), currentScreen: "settings" as const };
+		expect(routeKey("\x07", settingsState, remappedRuntime())).toEqual({ kind: "close_settings" });
+	});
+});

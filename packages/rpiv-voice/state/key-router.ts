@@ -2,6 +2,10 @@ import { Key, matchesKey } from "@earendil-works/pi-tui";
 import type { VoiceRuntime, VoiceState } from "./state.js";
 
 const KEYBIND_CONFIRM = "tui.select.confirm";
+// Mirrors the rpiv-ask-user-question peer pattern — cancel goes through the
+// user's configurable keybinding (defaults to Esc) instead of a hardcoded
+// `Key.escape`. Users who remap Esc still get a working cancel.
+const KEYBIND_CANCEL = "tui.select.cancel";
 
 const SPACE_KEY = " ";
 const CTRL_S = "\x13";
@@ -23,13 +27,13 @@ export function routeKey(data: string, state: VoiceState, runtime: VoiceRuntime)
 
 	if (state.currentScreen === "settings") {
 		if (data === CTRL_S) return { kind: "settings_save" };
-		if (matchesKey(data, Key.escape)) return { kind: "close_settings" };
+		if (kb.matches(data, KEYBIND_CANCEL)) return { kind: "close_settings" };
 		if (matchesKey(data, Key.tab)) return { kind: "close_settings" };
 		if (kb.matches(data, KEYBIND_CONFIRM)) return { kind: "toggle_hallucination_filter" };
 		return { kind: "ignore" };
 	}
 
-	if (matchesKey(data, Key.escape)) return { kind: "cancel" };
+	if (kb.matches(data, KEYBIND_CANCEL)) return { kind: "cancel" };
 	if (kb.matches(data, KEYBIND_CONFIRM)) return { kind: "commit" };
 	if (matchesKey(data, Key.tab)) return { kind: "open_settings" };
 	if (data === SPACE_KEY) return { kind: "toggle_pause" };
