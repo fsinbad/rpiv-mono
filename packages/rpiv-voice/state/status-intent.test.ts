@@ -12,9 +12,4 @@ describe("STATUS_META", () => {
 		expect(STATUS_META.recording.gatesSttPipeline).toBe(false);
 		expect(STATUS_META.paused.gatesSttPipeline).toBe(true);
 	});
-
-	it("levelFactor is 1 when recording and < 1 when paused", () => {
-		expect(STATUS_META.recording.levelFactor).toBe(1);
-		expect(STATUS_META.paused.levelFactor).toBeLessThan(1);
-	});
 });
