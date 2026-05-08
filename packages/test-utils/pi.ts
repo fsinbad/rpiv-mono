@@ -1,4 +1,4 @@
-import type { Api, Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@earendil-works/pi-ai";
 import type {
 	ExtensionAPI,
 	ExtensionContext,
@@ -7,7 +7,7 @@ import type {
 	SessionEntry,
 	ToolDefinition,
 	ToolInfo,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { vi } from "vitest";
 
 export interface CapturedPi {
@@ -74,6 +74,7 @@ export interface MockUI {
 	setWorkingMessage: ReturnType<typeof vi.fn>;
 	setHiddenThinkingLabel: ReturnType<typeof vi.fn>;
 	onTerminalInput: ReturnType<typeof vi.fn>;
+	pasteToEditor: ReturnType<typeof vi.fn>;
 }
 
 export function createMockUI(overrides: Partial<ExtensionUIContext> = {}): MockUI {
@@ -87,6 +88,7 @@ export function createMockUI(overrides: Partial<ExtensionUIContext> = {}): MockU
 		setWorkingMessage: vi.fn(),
 		setHiddenThinkingLabel: vi.fn(),
 		onTerminalInput: vi.fn(() => () => {}),
+		pasteToEditor: vi.fn(),
 		...overrides,
 	} as unknown as MockUI;
 }

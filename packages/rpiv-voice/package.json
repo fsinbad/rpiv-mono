@@ -1,0 +1,64 @@
+{
+	"name": "@juicesharp/rpiv-voice",
+	"version": "1.2.1",
+	"description": "Pi extension. Voice dictation via /voice — local STT with sherpa-onnx Moonshine, microphone capture via decibri.",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"rpiv",
+		"voice",
+		"dictation",
+		"stt",
+		"sherpa-onnx",
+		"overlay"
+	],
+	"type": "module",
+	"license": "MIT",
+	"author": "juicesharp",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/juicesharp/rpiv-mono.git",
+		"directory": "packages/rpiv-voice"
+	},
+	"homepage": "https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-voice#readme",
+	"bugs": {
+		"url": "https://github.com/juicesharp/rpiv-mono/issues"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"files": [
+		"index.ts",
+		"audio/**/*.ts",
+		"command/**/*.ts",
+		"config/**/*.ts",
+		"locales/",
+		"state/**/*.ts",
+		"view/**/*.ts",
+		"README.md",
+		"CHANGELOG.md",
+		"LICENSE"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"dependencies": {
+		"sherpa-onnx-node": "^1.13.0",
+		"decibri": "^3.4.0"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*",
+		"@juicesharp/rpiv-i18n": "*"
+	},
+	"peerDependenciesMeta": {
+		"@juicesharp/rpiv-i18n": {
+			"optional": true
+		}
+	}
+}
