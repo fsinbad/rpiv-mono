@@ -56,8 +56,10 @@ beforeEach(async () => {
 	const advisorConfig = join(process.env.HOME!, ".config", "rpiv-advisor", "advisor.json");
 	const i18nConfig = join(process.env.HOME!, ".config", "rpiv-i18n", "locale.json");
 	const voiceConfig = join(process.env.HOME!, ".config", "rpiv-voice", "voice.json");
+	const voiceErrorsLog = join(process.env.HOME!, ".config", "rpiv-voice", "errors.log");
 	rmSync(piAgentSettings, { force: true });
 	rmSync(advisorConfig, { force: true });
 	rmSync(i18nConfig, { force: true });
 	rmSync(voiceConfig, { force: true });
+	rmSync(voiceErrorsLog, { force: true });
 });

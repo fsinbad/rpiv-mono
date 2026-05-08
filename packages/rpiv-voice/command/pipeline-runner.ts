@@ -1,3 +1,4 @@
+import { appendErrorLog } from "../audio/error-log.js";
 import { isHallucination } from "../audio/hallucination-filter.js";
 import type { DecibriLike } from "../audio/mic-source.js";
 import { TARGET_SAMPLE_RATE } from "../audio/mic-source.js";
@@ -52,8 +53,12 @@ export function startDictationPipeline(
 			if (hallucinationFilterEnabled && isHallucination(text)) return;
 			transcript = transcript ? `${transcript} ${text}` : text;
 			session.dispatchAction({ kind: "audio_transcript_appended", text });
-		} catch {
-			// Swallowed: writing to stderr corrupts the active TUI render.
+		} catch (err) {
+			// We deliberately do not surface this to the TUI: writing to stderr
+			// corrupts the active render, and `notify` would churn the chat for
+			// every dropped segment. Instead, append a breadcrumb to a file the
+			// user can `cat` later when investigating transcript gaps.
+			appendErrorLog("stt.recognize", err);
 		}
 	};
 
