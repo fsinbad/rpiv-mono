@@ -7,7 +7,14 @@ export const SPLASH_FRAMES = ["⠴", "⠦", "⠖", "⠲"] as const;
 export const SPLASH_FRAME_INTERVAL_MS = 160;
 
 export type SplashPhase =
-	| { kind: "downloading"; message: string }
+	| {
+			kind: "downloading";
+			message: string;
+			/** 0-100 integer when Content-Length was provided. */
+			percent?: number;
+			bytesReceived?: number;
+			totalBytes?: number;
+	  }
 	| { kind: "extracting"; message: string }
 	| { kind: "verifying"; message: string }
 	| { kind: "loading_engine" }
@@ -26,6 +33,7 @@ const COLOR_MUTED = "muted";
 function phaseLabel(phase: SplashPhase): string {
 	switch (phase.kind) {
 		case "downloading":
+			return appendDownloadProgress(phase.message, phase);
 		case "extracting":
 		case "verifying":
 			return phase.message;
@@ -34,6 +42,27 @@ function phaseLabel(phase: SplashPhase): string {
 		case "initializing_mic":
 			return t("splash.initializing_mic", "Initializing microphone…");
 	}
+}
+
+const BYTES_PER_MB = 1024 * 1024;
+
+function formatMB(bytes: number): string {
+	return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`;
+}
+
+// Decorate the downloading label with whatever progress information we have:
+//   - percent + bytes when Content-Length was present
+//   - byte counter only when the server didn't send Content-Length
+//   - bare label on the very first emit before any chunk has arrived
+function appendDownloadProgress(
+	base: string,
+	progress: { percent?: number; bytesReceived?: number; totalBytes?: number },
+): string {
+	if (progress.bytesReceived === undefined) return base;
+	if (progress.totalBytes && progress.percent !== undefined) {
+		return `${base} ${progress.percent}% (${formatMB(progress.bytesReceived)} / ${formatMB(progress.totalBytes)})`;
+	}
+	return `${base} ${formatMB(progress.bytesReceived)}`;
 }
 
 /**

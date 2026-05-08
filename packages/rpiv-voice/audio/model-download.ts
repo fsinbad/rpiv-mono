@@ -17,7 +17,7 @@ import { execFile } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { Readable } from "node:stream";
+import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 import { t } from "../state/i18n-bridge.js";
@@ -66,10 +66,21 @@ const msgVerifying = (): string => t("splash.verifying", "Verifying model files�
 
 export interface DownloadProgress {
 	phase: "downloading" | "extracting" | "verifying";
+	/** 0-100 integer when total size is known. Omitted when the server didn't
+	 *  send a Content-Length, or when the phase isn't byte-bounded. */
 	percent?: number;
+	/** Bytes received so far during the download phase (cumulative). */
+	bytesReceived?: number;
+	/** Total expected bytes when known via Content-Length. */
+	totalBytes?: number;
 	message?: string;
 }
 export type ProgressCallback = (progress: DownloadProgress) => void;
+
+// Bound how often we surface byte-count updates: terminals re-flow on every
+// emit and a fast network can fire chunks at >1 kHz, which would burn CPU on
+// no-op renders. 200 ms feels lively without being chatty.
+const PROGRESS_THROTTLE_MS = 200;
 
 export interface ModelPaths {
 	encoderPath: string;
@@ -141,7 +152,24 @@ export async function ensureModelDownloaded(onProgress: ProgressCallback, signal
 	try {
 		onProgress({ phase: "downloading", message: msgDownloading() });
 		try {
-			await downloadArchive(MODEL_URL, archivePath, signal);
+			let lastEmitMs = 0;
+			await downloadArchive(MODEL_URL, archivePath, signal, (stats) => {
+				const now = Date.now();
+				const isFinal = stats.totalBytes !== undefined && stats.bytesReceived >= stats.totalBytes;
+				if (!isFinal && now - lastEmitMs < PROGRESS_THROTTLE_MS) return;
+				lastEmitMs = now;
+				const percent =
+					stats.totalBytes && stats.totalBytes > 0
+						? Math.min(100, Math.floor((stats.bytesReceived / stats.totalBytes) * 100))
+						: undefined;
+				onProgress({
+					phase: "downloading",
+					message: msgDownloading(),
+					percent,
+					bytesReceived: stats.bytesReceived,
+					totalBytes: stats.totalBytes,
+				});
+			});
 		} catch (err) {
 			throw new ModelInstallError("download", err);
 		}
@@ -172,13 +200,40 @@ export async function ensureModelDownloaded(onProgress: ProgressCallback, signal
 
 // ── Internals ────────────────────────────────────────────────────────────────
 
-async function downloadArchive(url: string, destPath: string, signal?: AbortSignal): Promise<void> {
+interface DownloadStats {
+	bytesReceived: number;
+	totalBytes?: number;
+}
+
+async function downloadArchive(
+	url: string,
+	destPath: string,
+	signal: AbortSignal | undefined,
+	onStats?: (stats: DownloadStats) => void,
+): Promise<void> {
 	const response = await fetch(url, { signal });
 	if (!response.ok || !response.body) {
 		throw new Error(`Model download failed: HTTP ${response.status}`);
 	}
+
+	// Servers occasionally omit `Content-Length` for chunked / proxied
+	// responses; downstream we treat undefined as "unknown total" and the
+	// splash falls back to a byte-counter without a percentage.
+	const contentLengthHeader = response.headers.get("content-length");
+	const parsed = contentLengthHeader ? Number.parseInt(contentLengthHeader, 10) : Number.NaN;
+	const totalBytes = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+
+	let bytesReceived = 0;
+	const tap = new Transform({
+		transform(chunk: Buffer, _enc, cb) {
+			bytesReceived += chunk.length;
+			onStats?.({ bytesReceived, totalBytes });
+			cb(null, chunk);
+		},
+	});
+
 	const out = createWriteStream(destPath);
-	await pipeline(Readable.fromWeb(response.body as never), out, { signal });
+	await pipeline(Readable.fromWeb(response.body as never), tap, out, { signal });
 }
 
 async function extractArchive(archivePath: string, destDir: string): Promise<void> {

@@ -96,7 +96,14 @@ async function runPreflight(ctx: ExtensionCommandContext): Promise<Preflight | n
 					try {
 						await ensureModelDownloaded((p) => {
 							const message = p.message ?? "";
-							if (p.phase === "downloading") controller.setPhase({ kind: "downloading", message });
+							if (p.phase === "downloading")
+								controller.setPhase({
+									kind: "downloading",
+									message,
+									percent: p.percent,
+									bytesReceived: p.bytesReceived,
+									totalBytes: p.totalBytes,
+								});
 							else if (p.phase === "extracting") controller.setPhase({ kind: "extracting", message });
 							else if (p.phase === "verifying") controller.setPhase({ kind: "verifying", message });
 						});
