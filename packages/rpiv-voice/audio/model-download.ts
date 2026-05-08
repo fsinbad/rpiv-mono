@@ -77,6 +77,24 @@ export interface ModelPaths {
 	tokensPath: string;
 }
 
+export type ModelInstallStage = "download" | "extract" | "verify";
+
+/**
+ * Tagged failure surface for `ensureModelDownloaded` — lets callers distinguish
+ * "couldn't fetch the bytes" (network / HTTP) from "got the bytes but the
+ * archive was bad" (tar exit, missing file). Diagnostics matter: previously
+ * every stage rolled up to the same "check your internet connection" string.
+ */
+export class ModelInstallError extends Error {
+	constructor(
+		readonly stage: ModelInstallStage,
+		cause: unknown,
+	) {
+		super(`model install failed at ${stage}`, { cause: cause as Error });
+		this.name = "ModelInstallError";
+	}
+}
+
 export function isModelDownloaded(): boolean {
 	return existsSync(join(WHISPER_BASE_DIR, SENTINEL_FILE));
 }
@@ -89,25 +107,67 @@ export function getModelPaths(): ModelPaths {
 	};
 }
 
+/**
+ * Re-runs the post-extraction file existence check against an "already
+ * downloaded" install. The sentinel only proves the *previous* run wrote it —
+ * a user (or another tool) can have removed a required `.onnx` since then,
+ * which would otherwise surface as an opaque native crash inside
+ * sherpa-onnx's `OfflineRecognizer` constructor. Callers should call this
+ * after `isModelDownloaded()` returns true and *before* loading the engine,
+ * and on failure should `removeModelInstall()` so the next launch redownloads.
+ */
+export function assertModelIntact(): void {
+	verifyModelFiles();
+}
+
+/** Wipe the entire model directory — used to recover from any partial /
+ * corrupt install state. Idempotent and silent on missing dir. */
+export function removeModelInstall(): void {
+	rmSync(WHISPER_BASE_DIR, { recursive: true, force: true });
+}
+
 export async function ensureModelDownloaded(onProgress: ProgressCallback, signal?: AbortSignal): Promise<ModelPaths> {
 	if (isModelDownloaded()) return getModelPaths();
 
 	mkdirSync(WHISPER_BASE_DIR, { recursive: true });
 	const archivePath = join(WHISPER_BASE_DIR, MODEL_ARCHIVE_NAME);
 
-	onProgress({ phase: "downloading", message: msgDownloading() });
-	await downloadArchive(MODEL_URL, archivePath, signal);
+	// Any failure between mkdir and writeSentinel leaves a half-populated
+	// directory (partial archive, partially-extracted .onnx, etc.) but no
+	// sentinel — so the next run would re-enter this function and overwrite,
+	// but only after wasting bandwidth. Wiping the dir on failure makes that
+	// redownload start from a clean slate and prevents a hypothetical
+	// race where another caller observes the partial state mid-run.
+	try {
+		onProgress({ phase: "downloading", message: msgDownloading() });
+		try {
+			await downloadArchive(MODEL_URL, archivePath, signal);
+		} catch (err) {
+			throw new ModelInstallError("download", err);
+		}
 
-	onProgress({ phase: "extracting", message: msgExtracting() });
-	await extractArchive(archivePath, WHISPER_BASE_DIR);
-	rmSync(archivePath, { force: true });
-	pruneFp32Duplicates();
+		onProgress({ phase: "extracting", message: msgExtracting() });
+		try {
+			await extractArchive(archivePath, WHISPER_BASE_DIR);
+			rmSync(archivePath, { force: true });
+			pruneFp32Duplicates();
+		} catch (err) {
+			throw new ModelInstallError("extract", err);
+		}
 
-	onProgress({ phase: "verifying", message: msgVerifying() });
-	verifyModelFiles();
+		onProgress({ phase: "verifying", message: msgVerifying() });
+		try {
+			verifyModelFiles();
+		} catch (err) {
+			throw new ModelInstallError("verify", err);
+		}
 
-	writeSentinel();
-	return getModelPaths();
+		writeSentinel();
+		return getModelPaths();
+	} catch (err) {
+		removeModelInstall();
+		throw err;
+	}
 }
 
 // ── Internals ────────────────────────────────────────────────────────────────

@@ -1,6 +1,13 @@
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { createMic, type DecibriLike } from "../audio/mic-source.js";
-import { ensureModelDownloaded, getModelPaths, isModelDownloaded } from "../audio/model-download.js";
+import {
+	assertModelIntact,
+	ensureModelDownloaded,
+	getModelPaths,
+	isModelDownloaded,
+	ModelInstallError,
+	removeModelInstall,
+} from "../audio/model-download.js";
 import { createSttEngine, type SttEngine } from "../audio/stt-engine.js";
 import { loadVoiceConfig } from "../config/voice-config.js";
 import { getActiveLocale, t } from "../state/i18n-bridge.js";
@@ -41,7 +48,7 @@ function splashInitialDownload(): SplashPhase {
 	return { kind: "downloading", message: t("splash.preparing", "Preparing model…") };
 }
 
-type PreflightStage = "download" | "engine" | "mic";
+type PreflightStage = "download" | "extract" | "verify" | "stale_install" | "engine" | "mic";
 
 class PreflightError extends Error {
 	constructor(
@@ -94,13 +101,25 @@ async function runPreflight(ctx: ExtensionCommandContext): Promise<Preflight | n
 							else if (p.phase === "verifying") controller.setPhase({ kind: "verifying", message });
 						});
 					} catch (e) {
-						throw new PreflightError("download", e);
+						const stage = e instanceof ModelInstallError ? e.stage : "download";
+						throw new PreflightError(stage, e);
 					}
 				}
 
 				controller.setPhase({ kind: "loading_engine" });
 				let sttEngine: SttEngine;
 				try {
+					// The sentinel proves a *prior* run finished cleanly — it does not
+					// guarantee the .onnx files are still present and valid. Re-verify
+					// here so a tampered/partially-deleted install gets caught with a
+					// clear message + auto-recovery instead of an opaque native crash
+					// deep inside sherpa-onnx.
+					try {
+						assertModelIntact();
+					} catch (e) {
+						removeModelInstall();
+						throw new PreflightError("stale_install", e);
+					}
 					const paths = getModelPaths();
 					// Pre-set Whisper's language hint from the active i18n locale when we
 					// have a confident mapping; otherwise fall back to Whisper's built-in
@@ -131,25 +150,34 @@ async function runPreflight(ctx: ExtensionCommandContext): Promise<Preflight | n
 		);
 	} catch (e) {
 		if (e instanceof PreflightError) {
-			if (e.stage === "download")
-				ctx.ui.notify(
-					t("error.model_download_failed", "Failed to download STT model. Check your internet connection."),
-					"error",
-				);
-			else if (e.stage === "engine")
-				ctx.ui.notify(t("error.engine_load_failed", "Failed to load STT model."), "error");
-			else
-				ctx.ui.notify(
-					t(
-						"error.mic_unavailable",
-						"Microphone unavailable. Check that an input device is connected and that Pi has microphone permission.",
-					),
-					"error",
-				);
+			ctx.ui.notify(preflightUserMessage(e.stage), "error");
 		} else {
 			ctx.ui.notify(t("error.engine_load_failed", "Failed to load STT model."), "error");
 		}
 		return null;
+	}
+}
+
+function preflightUserMessage(stage: PreflightStage): string {
+	switch (stage) {
+		case "download":
+			return t("error.model_download_failed", "Failed to download STT model. Check your internet connection.");
+		case "extract":
+			return t("error.model_extract_failed", "Downloaded STT model archive is corrupt. Please retry.");
+		case "verify":
+			return t("error.model_verify_failed", "STT model files are incomplete after download. Please retry.");
+		case "stale_install":
+			return t(
+				"error.model_stale_install",
+				"STT model files were removed or corrupted. They will be redownloaded on next launch.",
+			);
+		case "engine":
+			return t("error.engine_load_failed", "Failed to load STT model.");
+		case "mic":
+			return t(
+				"error.mic_unavailable",
+				"Microphone unavailable. Check that an input device is connected and that Pi has microphone permission.",
+			);
 	}
 }
 
