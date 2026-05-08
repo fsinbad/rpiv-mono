@@ -1,4 +1,5 @@
 import { type Component, Spacer } from "@earendil-works/pi-tui";
+import type { EqualizerViewProps } from "./components/equalizer-view.js";
 import type { SettingsFormViewProps } from "./components/settings-form-view.js";
 import type { StatusBarViewProps } from "./components/status-bar-view.js";
 import type { TranscriptViewProps } from "./components/transcript-view.js";
@@ -7,8 +8,9 @@ import type { StatefulView } from "./stateful-view.js";
 /**
  * Per-screen layout. Returns the ordered list of pi-tui Components that the
  * overlay container renders top-down. Both screens share the same bottom
- * status bar (recording glyph + timer + screen-specific hints) so the hint
- * column is stable when flipping between dictation and settings.
+ * chrome (mint divider + equalizer + status row) so the equalizer column and
+ * key hints stay vertically pinned when flipping between dictation and
+ * settings.
  */
 export interface ScreenContentStrategy {
 	readonly kind: "dictation" | "settings";
@@ -18,6 +20,7 @@ export interface ScreenContentStrategy {
 export interface DictationScreenStrategyConfig {
 	transcript: StatefulView<TranscriptViewProps>;
 	divider: Component;
+	equalizer: StatefulView<EqualizerViewProps>;
 	statusBar: StatefulView<StatusBarViewProps>;
 }
 
@@ -27,13 +30,14 @@ export class DictationScreenStrategy implements ScreenContentStrategy {
 	constructor(private readonly config: DictationScreenStrategyConfig) {}
 
 	children(): readonly Component[] {
-		return [new Spacer(1), this.config.transcript, this.config.divider, this.config.statusBar];
+		return [new Spacer(1), this.config.transcript, this.config.divider, this.config.equalizer, this.config.statusBar];
 	}
 }
 
 export interface SettingsScreenStrategyConfig {
 	settingsForm: StatefulView<SettingsFormViewProps>;
 	divider: Component;
+	equalizer: StatefulView<EqualizerViewProps>;
 	statusBar: StatefulView<StatusBarViewProps>;
 }
 
@@ -43,6 +47,12 @@ export class SettingsScreenStrategy implements ScreenContentStrategy {
 	constructor(private readonly config: SettingsScreenStrategyConfig) {}
 
 	children(): readonly Component[] {
-		return [new Spacer(1), this.config.settingsForm, this.config.divider, this.config.statusBar];
+		return [
+			new Spacer(1),
+			this.config.settingsForm,
+			this.config.divider,
+			this.config.equalizer,
+			this.config.statusBar,
+		];
 	}
 }

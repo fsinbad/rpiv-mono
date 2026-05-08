@@ -3,6 +3,7 @@ import { getKeybindings } from "@earendil-works/pi-tui";
 import type { VoiceConfig } from "../config/voice-config.js";
 import { saveVoiceConfig } from "../config/voice-config.js";
 import { globalBinding } from "../view/component-binding.js";
+import { EqualizerView } from "../view/components/equalizer-view.js";
 import { SettingsFieldView } from "../view/components/settings-field-view.js";
 import { SettingsFormView } from "../view/components/settings-form-view.js";
 import { StatusBarView } from "../view/components/status-bar-view.js";
@@ -12,6 +13,7 @@ import { VoiceOverlayPropsAdapter } from "../view/props-adapter.js";
 import { DictationScreenStrategy, SettingsScreenStrategy } from "../view/screen-content-strategy.js";
 import { routeKey, type VoiceAction } from "./key-router.js";
 import {
+	selectEqualizerProps,
 	selectHallucinationFilterFieldProps,
 	selectLanguageReadonlyFieldProps,
 	selectMicReadonlyFieldProps,
@@ -65,6 +67,7 @@ export class VoiceSession {
 
 		const transcript = new TranscriptView(config.theme);
 		const divider = new DynamicBorder((s) => config.theme.fg("accent", s));
+		const equalizer = new EqualizerView(config.theme);
 		const statusBar = new StatusBarView(config.theme);
 		this.statusBar = statusBar;
 		const micField = new SettingsFieldView(config.theme);
@@ -72,8 +75,8 @@ export class VoiceSession {
 		const hallucinationField = new SettingsFieldView(config.theme);
 		const settingsForm = new SettingsFormView({ fields: [micField, languageField, hallucinationField] });
 
-		const dictation = new DictationScreenStrategy({ transcript, divider, statusBar });
-		const settings = new SettingsScreenStrategy({ settingsForm, divider, statusBar });
+		const dictation = new DictationScreenStrategy({ transcript, divider, equalizer, statusBar });
+		const settings = new SettingsScreenStrategy({ settingsForm, divider, equalizer, statusBar });
 		this.overlay = new OverlayView({
 			tui: config.tui,
 			dictation,
@@ -86,6 +89,7 @@ export class VoiceSession {
 		const bindings = [
 			globalBinding({ component: statusBar, select: selectStatusBarProps }),
 			globalBinding({ component: transcript, select: selectTranscriptProps }),
+			globalBinding({ component: equalizer, select: selectEqualizerProps }),
 			globalBinding({ component: micField, select: selectMicReadonlyFieldProps }),
 			globalBinding({ component: languageField, select: selectLanguageReadonlyFieldProps }),
 			globalBinding({ component: hallucinationField, select: selectHallucinationFilterFieldProps }),

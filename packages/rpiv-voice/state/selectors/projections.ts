@@ -1,3 +1,4 @@
+import type { EqualizerViewProps } from "../../view/components/equalizer-view.js";
 import type { SettingsFieldViewProps } from "../../view/components/settings-field-view.js";
 import type { StatusBarViewProps } from "../../view/components/status-bar-view.js";
 import type { TranscriptViewProps } from "../../view/components/transcript-view.js";
@@ -61,6 +62,11 @@ export const selectTranscriptProps: GlobalSelector<TranscriptViewProps> = (state
 	text: state.transcript,
 	partial: state.partialTranscript,
 	placeholder: t("transcript.placeholder", "Listening..."),
+});
+
+export const selectEqualizerProps: GlobalSelector<EqualizerViewProps> = (state, _ctx) => ({
+	level: state.audioLevel,
+	status: state.status,
 });
 
 // `active`/`hint` are unconditional so the settings body height is stable —

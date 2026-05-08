@@ -6,10 +6,10 @@ import type { StatefulView } from "./stateful-view.js";
 
 const FALLBACK_TERMINAL_ROWS = 24;
 
-// Both strategies end with `[divider, statusBar]` — exactly two rows of
+// Both strategies end with `[divider, equalizer, statusBar]` — three rows of
 // "bottom chrome" we anchor against. Subtracting that count from total rows
 // gives the body row count that needs height equalization.
-const BOTTOM_CHROME_ROWS = 2;
+const BOTTOM_CHROME_ROWS = 3;
 
 export interface OverlayViewProps {
 	state: VoiceState;
