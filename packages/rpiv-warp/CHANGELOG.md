@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Package is now published to npm (previously `private: true`). The title-spinner module is included in the tarball.
+
 ## [1.2.1] - 2026-05-07
 
 ## [1.2.0] - 2026-05-07

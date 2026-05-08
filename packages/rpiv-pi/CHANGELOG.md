@@ -7,6 +7,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `frontend-design` skill for creating distinctive, production-grade frontend interfaces.
+
+### Changed
+- `/btw` command and `rpiv-btw` package are no longer bundled in the auto-install set. Existing installs keep working; new users install via `pi install npm:@juicesharp/rpiv-btw`.
+
+### Breaking / Upgrade Notes
+- `rpiv-btw` is removed from the `/rpiv-setup` auto-install bundle. Users who rely on `/btw` being present after a fresh install must add it explicitly: `pi install npm:@juicesharp/rpiv-btw`.
+
 ## [1.2.1] - 2026-05-07
 
 ### Changed

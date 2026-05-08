@@ -7,6 +7,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- GitHub masthead link in the top navigation bar.
+
+### Changed
+- Off-scale typography, motion, and radius values consolidated into shared CSS custom properties.
+- Skill key parity enforced at compile time; pipeline tokens use `color-mix()` instead of inline `rgba()` literals.
+
+### Fixed
+- Muted text color tokens lifted to pass WCAG AA contrast on small monospaced labels.
+
+### Performance
+- Critical CSS inlined into HTML to eliminate the render-blocking stylesheet chain.
+- Latin woff2 font preloaded to flatten the critical rendering path.
+- Scroll-spy offsets cached at layout time to avoid forced reflow during scroll.
+- JetBrains Mono self-hosted via Fontsource to remove the third-party CDN render-blocking delay.
+
 ## [1.2.1] - 2026-05-07
 
 ### Added
