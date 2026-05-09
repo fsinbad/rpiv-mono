@@ -60,7 +60,12 @@ Report-shape per slice: paths + match anchors (e.g. `file.ts:42`) + key function
 ### Step 4: Read key files for depth
 
 Compile every file reference from Step 3 into a single list. Rank by:
-1. Files referenced by 2+ slices (cross-cutting, highest priority)
+0. Definition sites for the anchor terms — files where the named symbol /
+   function / type / command is *defined*, not used. Resolve definitions
+   first; consumers follow. (Highest priority — analyzer agents read in
+   citation order, and the canonical definition anchors every downstream
+   trace.)
+1. Files referenced by 2+ slices (cross-cutting)
 2. Entry points and main implementation files
 3. Type/interface files (often short, high value)
 4. Config / wiring / registration files
@@ -71,6 +76,10 @@ Read 5-10 files (cap at 10): files <300 lines fully, files >=300 lines first 150
 
 Using combined knowledge from Steps 1-4, write 5-10 dense paragraphs:
 
+- **First citation = canonical definition.** The FIRST `file:line` reference
+  in each paragraph must be where the symbol the paragraph traces is
+  *defined*, not where it is consumed. Analyzer agents read in citation
+  order; leading with the definition anchors the entire downstream trace.
 - **3-6 sentences each**, naming specific files/functions/types at each step of the trace
 - **Self-contained** — an agent receiving only this paragraph has enough context to begin work
 - **Trace-quality** — names a complete path, not a generic theme
@@ -92,7 +101,7 @@ CRITICAL: Use EXACTLY this format. The `research` skill parses this block — fr
 # Research Questions: how does the plugin system load and initialize extensions
 
 ## Discovery Summary
-Swept the plugin loader and lifecycle anchors across `src/plugins/`. Key files for depth: `src/plugins/registry.ts` (scan + manifest validation), `src/plugins/loader.ts` (instantiation factory), `src/plugins/lifecycle.ts` (hook contract), `src/plugins/types.ts` (PluginManifest interface), `tests/plugins/registry.test.ts` (existing coverage shape). Two thoughts/ docs surfaced: `thoughts/shared/research/2026-03-12_plugin-architecture.md` (prior architectural decisions) and `thoughts/shared/plans/2026-04-01_plugin-lifecycle-extension.md` (recent lifecycle hook addition). The shape is a synchronous scan + lazy instantiate + lifecycle-hook chain pattern; no async loaders or hot-reload paths found.
+Swept the plugin loader and lifecycle anchors across `src/plugins/`. Key files for depth: `src/plugins/types.ts:8-30` (definition — PluginManifest interface), `src/plugins/registry.ts:23` (entry — scan + manifest validation), `src/plugins/loader.ts:45` (factory — instantiation), `src/plugins/lifecycle.ts:12-44` (contract — hook ordering), `tests/plugins/registry.test.ts` (coverage). Two thoughts/ docs surfaced: `thoughts/shared/research/2026-03-12_plugin-architecture.md` (prior architectural decisions) and `thoughts/shared/plans/2026-04-01_plugin-lifecycle-extension.md` (recent lifecycle hook addition). The shape is a synchronous scan + lazy instantiate + lifecycle-hook chain pattern; no async loaders or hot-reload paths found.
 
 ## Questions
 

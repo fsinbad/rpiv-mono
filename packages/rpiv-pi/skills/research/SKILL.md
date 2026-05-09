@@ -36,9 +36,11 @@ Input: `$ARGUMENTS`
 
 4. **Parse the agent's final message** as the questions artifact body. Extract: Discovery Summary (3-5 sentence file-landscape overview), Questions (numbered dense 3-6 sentence paragraphs).
 
-5. **Read key shared files** referenced across multiple questions into main context — especially shared utilities, type definitions, and integration points that multiple questions mention.
+5. **Hold questions for artifact**: keep the full numbered question paragraphs verbatim in main context — they're written into the `## Questions Investigated` section of the research artifact in Step 4, enabling posterity and future automated scoring.
 
-6. **Analyze question overlap for grouping:**
+6. **Read key shared files** referenced across multiple questions into main context — especially shared utilities, type definitions, and integration points that multiple questions mention.
+
+7. **Analyze question overlap for grouping:**
    - Parse all question paragraphs and extract file references from each
    - Identify questions that share 2+ file references — these are candidates for grouping
    - Group related questions together (2-3 questions per group max)
@@ -215,6 +217,9 @@ Findings go into Precedents & Lessons. Otherwise skip and note "git history unav
 
    ## Research Question
    {Original user query from questions artifact}
+
+   ## Questions Investigated
+   {N numbered question paragraphs verbatim from scope-tracer's Discovery Summary output}
 
    ## Summary
    {High-level findings answering the user's question}
