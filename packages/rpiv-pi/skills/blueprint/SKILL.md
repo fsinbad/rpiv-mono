@@ -286,7 +286,7 @@ Present a **condensed review** of the slice — NOT the full generated code. The
 
 **If the developer asks to see full code**, show it inline — exception, not default.
 
-Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name} — {files affected}. {1-line summary}. Approve?". Header: "Slice {N}". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice {N+1}); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition).
+Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name} — {files affected}. {1-line summary}. Approve?". Header: "Slice {N}". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice {N+1}); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition); "Revisit a decision" (A Step-5 decision is wrong — return to Step 5 for that decision before continuing).
 
 **Checkpoint cadence**: One slice per checkpoint. Present each slice individually, regardless of slice count.
 
@@ -304,6 +304,8 @@ Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name
 
 **Rethink**: Developer spotted a design issue. If a previously approved slice is affected, flag the conflict and offer cascade revision — developer decides whether to reopen (if yes, Edit the affected `## Phase N` entry).
 Update decomposition (add/remove/reorder remaining slices) and confirm before continuing.
+
+**Revisit a decision**: Re-run Step 5 for the flagged ambiguity (one question). If decomposition is unaffected, update `## Decisions` and resume 7a. If affected, cascade like Rethink — for each invalidated approved phase, ask reopen vs. annotate Plan History, then update remaining slices. Re-run 7b before re-presenting 7c; artifact untouched until approval.
 
 ## Step 8: Integration Verification
 
@@ -326,7 +328,7 @@ After all phases are complete, review cross-phase consistency:
 
 The artifact was created as a skeleton in Step 6 and filled progressively in Step 7d. This step fills per-phase Success Criteria and finalizes.
 
-1. **Verify all Phase code fences are filled**: Every `#### N. path/...` subsection inside every `## Phase N` must have a non-empty code block. If any are still empty (e.g., a slice was skipped), generate and fill them now.
+1. **Verify all Phase code fences are filled**: every `#### N. path/...` has a non-empty code block. If any are empty, **return to Step 7** — never fill at finalize time (bypasses 7c). Empty fence here = workflow off-rail.
 
 2. **Fill per-phase Success Criteria from Verification Notes**. For each `## Phase N` section, replace the placeholder bullets in `### Success Criteria:` with concrete checks derived from this phase's scope and the artifact's `## Verification Notes`:
 
@@ -354,9 +356,9 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
    - `unresolved_phase_count == 0` (every phase approved in Step 7d)
    - `phase_count` matches the number of `## Phase N` sections
 
-   If any check fails, return to Step 7 for the unresolved phase. Do NOT flip status to ready.
+   If any check fails, return to Step 7. Do NOT flip status. (9.1 and 9.3 guard the same invariant — empty fence ↔ unresolved counter.)
 
-4. **Update frontmatter** via Edit: set `status: ready`. `last_updated` and `last_updated_by` were set at skeleton creation — leave as-is.
+4. **Update frontmatter** via Edit: set `status: in-review` (Step 11 flips to `ready` after triage — keeps consumers off an artifact still being edited). Leave `last_updated` / `last_updated_by` as-is.
 
 5. **Verify template completeness**: Ensure all sections from the template reference in Step 6 are present and filled. Edit to fix any gaps.
 
@@ -364,15 +366,95 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
    - **NEW files**: `#### N. path/to/file.ext` + `**File**` + `**Changes**: NEW — {purpose}` + full implementation code block
    - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**` + `**Changes**: MODIFY — {summary}` + code block with only the modified/added code (no "Current" block — the original is on disk, implement reads it)
 
-## Step 10: Review & Iterate
+## Step 10: Independent Plan Review
 
-1. **Present the plan artifact location**:
+After Step 9 finalizes the artifact, dispatch an independent review subagent
+to walk every Phase code fence against the live codebase. The subagent runs
+in a fresh context window with replaced system prompt — it exploits the
+criticism > generation asymmetry plus fresh-context isolation. Inherits the
+orchestrator's model (no model upgrade required); the value comes from the
+fresh dispatch, not from a stronger model.
+
+### 10.1 Dispatch the plan-reviewer subagent
+
+```
+Agent({
+  subagent_type: "plan-reviewer",
+  description: "post-finalization plan review",
+  prompt: `Plan artifact: {ABSOLUTE_PATH_TO_FINALIZED_PLAN}
+
+Review the finalized plan against the live codebase at HEAD. Walk every Phase code fence, audit against code-quality / codebase-fit / actionability, emit one severity-tagged row per finding.`
+})
+```
+
+### 10.2 Persist the review table to the artifact
+
+The agent returns a markdown table with columns `plan-loc | codebase-loc | severity | dimension | finding | recommendation`. Append it to the plan artifact as a new section, with a `resolution` column appended (initially blank, filled progressively at Step 11):
+
+```markdown
+## Plan Review (Step 10)
+
+_Independent post-finalization review by plan-reviewer subagent. Findings triaged at Step 11._
+
+| plan-loc          | codebase-loc                | severity   | dimension      | finding | recommendation | resolution |
+| ----------------- | --------------------------- | ---------- | -------------- | ------- | -------------- | ---------- |
+| {agent row 1}                                                                  | (filled at Step 11)         |
+| {agent row 2}                                                                  | (filled at Step 11)         |
+| ...
+```
+
+If the agent emits zero rows, still emit the section with a single line: `_No findings — plan-reviewer cleared the artifact._`. Persistence is mandatory regardless of finding count — the section is the durable audit trail.
+
+### 10.3 Tally findings for Step 11's prompt
+
+Count rows by severity. Store the counts in main context for Step 11's developer prompt:
+
+```
+{B} blockers, {C} concerns, {S} suggestions
+```
+
+Do NOT auto-apply any finding. The orchestrator never makes the apply / defer / dismiss judgment alone — that lives with the developer at Step 11. The reviewer's role is to surface; the developer's role is to triage.
+
+### 10.4 Failure handling
+
+If plan-reviewer errors out (subprocess crash, malformed output, timeout):
+- Skip Step 10's findings; do not block on the failure.
+- Append `_Step 10 review failed: {one-line cause}._` under the `## Plan Review (Step 10)` heading instead of the row table.
+- Record the fallback in `## Developer Context`: `Step 10 review unavailable; proceeded to developer review without plan-reviewer findings.`
+- Proceed to Step 11.
+
+The developer review path at Step 11 absorbs the cost — that is how planning worked before this step existed.
+
+## Step 11: Review & Iterate
+
+1. **Triage plan-reviewer findings first** (skip if Step 10 returned no findings):
+
+   Present the Plan Review table from Step 10 to the developer with severity-grouped framing:
+
+   ```
+   Plan-reviewer findings: {B} blockers, {C} concerns, {S} suggestions
+
+   Triage each row before the freeform review below:
+   - applied — code change made; I'll Edit the affected `## Phase N` code fence and fill the row's resolution as `applied: {one-line summary}`
+   - deferred — noted but not fixing now; resolution cites why (e.g., "out of scope for this plan", "follow-up commit")
+   - dismissed — not a real issue; resolution explains why the reviewer was wrong (e.g., "X is intentional because Y")
+   ```
+
+   Use `ask_user_question` with options "applied / deferred / dismissed":
+   - **applied**: Edit the affected `## Phase N` code fence per the recommendation; fill `resolution`.
+   - **deferred** / **dismissed**: fill `resolution` with the reason.
+
+   **Order and batching**: blockers sequentially (resolution may invalidate later rows). Concerns and suggestions: batch up to 4 independent rows per `ask_user_question` call (Step 5's rule). Independent = different files AND neither recommendation references the other's location; otherwise sequential.
+
+2. **Flip status to ready**: once every row has a `resolution` (or the table is empty per Step 10's no-findings / failure-fallback path), Edit frontmatter `status: in-review` → `status: ready`. Artifact is now implement-ready.
+
+3. **Present the plan artifact location** (after triage is complete):
    ```
    Implementation plan written to:
    `thoughts/shared/plans/{filename}.md`
 
    {N} architectural decisions fixed, {P} phases generated, {M} new files, {K} existing files modified.
-   {R} revisions during generation.
+   {R} revisions during generation. {B+C+S} reviewer findings triaged at Step 11 ({A} applied, {D} deferred, {DD} dismissed).
 
    Please review and let me know:
    - Are the architectural decisions correct?
@@ -388,7 +470,7 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
    > 🆕 Tip: start a fresh session with `/new` first — chained skills work best with a clean context window.
    ```
 
-## Step 11: Handle Follow-ups
+## Step 12: Handle Follow-ups
 
 - **Edit in-place.** Use the Edit tool to update the plan artifact directly — phase code stays one source of truth.
 - **Bump frontmatter.** Update `last_updated` + `last_updated_by`; set `last_updated_note: "Updated <brief description>"`.
@@ -418,6 +500,7 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
 | Novel work (new library/pattern) | + web-search-researcher |
 | Step 5 correction path (developer flags missed area) | targeted codebase-analyzer (max 1-2) |
 | Step 7a mid-generation gap (specific anchor unclear) | targeted codebase-analyzer (max 1) |
+| Step 10 post-finalization review (mandatory) | plan-reviewer (fresh-context, inherited model) |
 
 Spawn multiple agents in parallel when they're searching for different things. Each agent runs in isolation — provide complete context in the prompt, including specific directory paths when the feature targets a known module. Don't write detailed prompts about HOW to search — just tell it what you're looking for and where.
 
@@ -432,6 +515,11 @@ Spawn multiple agents in parallel when they're searching for different things. E
   - ALWAYS complete holistic decomposition before generating any slice code (Step 7)
   - ALWAYS create the skeleton artifact immediately after decomposition approval (Step 6)
   - NEVER leave Phase code fences empty after their slice is approved — fill via Edit in Step 7d
+  - NEVER fill empty Phase code fences at Step 9 — empty fence at finalize time = return to Step 7 (preserves the 7c micro-checkpoint)
+  - ALWAYS dispatch plan-reviewer at Step 10 after Step 9 finalize, BEFORE the developer review at Step 11
+  - NEVER auto-apply a plan-reviewer finding at Step 10; triage is the developer's call at Step 11
+  - ALWAYS hold `status: in-review` from Step 9 through Step 11; flip to `ready` only after every row has a `resolution` (or the table is empty)
+  - Step 7c → Step 5 exists for late-discovered decision errors; revisit rather than force a wrong shape through remaining slices
 - NEVER skip the developer checkpoint — developer input on architectural decisions is the highest-value signal in the planning process
 - NEVER edit source files — all code goes into the plan document, not the codebase. This skill produces a document, not implementation. Source file editing is implement's job.
 - **Code is source of truth** — if a `## Phase N` code block conflicts with the Decisions prose, the code wins. Update the prose.
