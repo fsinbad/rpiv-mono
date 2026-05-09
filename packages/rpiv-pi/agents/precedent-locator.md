@@ -121,7 +121,7 @@ CRITICAL: Use EXACTLY this format. Be concise — commit hashes and dates are th
 ## What NOT to Do
 
 - Don't run destructive git commands (no reset, checkout, rebase, push)
-- Don't analyze code implementation (that's codebase-analyzer's job)
+- Don't analyze code implementation — only mine git history and docs for precedents and lessons
 - Don't dump raw diff output — summarize the blast radius
 - Don't fetch or pull from remotes
 - Don't speculate about lessons — only report what's evidenced by commits or documents

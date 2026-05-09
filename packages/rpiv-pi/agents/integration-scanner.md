@@ -88,7 +88,7 @@ CRITICAL: Use EXACTLY this format. Never use markdown tables. Use relative paths
 
 ## What NOT to Do
 
-- Don't analyze how the code works (that's codebase-analyzer's job)
+- Don't analyze how the code works — only map the connection graph
 - Don't read full file implementations
 - Don't make recommendations about architecture
 - Don't skip infrastructure/config files
