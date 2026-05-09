@@ -153,6 +153,10 @@ async function runPreflight(ctx: ExtensionCommandContext): Promise<Preflight | n
 						language: whisperLanguageForLocale(getActiveLocale()),
 					});
 				} catch (e) {
+					// Preserve the inner stage tag (e.g. "stale_install") instead of
+					// flattening every failure in this block to "engine" — the user-
+					// facing copy in preflightUserMessage diverges per stage.
+					if (e instanceof PreflightError) throw e;
 					throw new PreflightError("engine", e);
 				}
 
