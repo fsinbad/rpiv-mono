@@ -154,12 +154,13 @@ describe("VoiceSession", () => {
 			expect(deps.setPipelinePaused).toHaveBeenCalledWith(true);
 		});
 
-		it("toggle_hallucination_filter triggers setHallucinationFilterEnabled", () => {
+		it("toggle_focused_setting on hallucination focus triggers setHallucinationFilterEnabled", () => {
 			const deps = makeDeps();
 			const config = makeSessionConfig(deps);
 			const session = new VoiceSession(config);
 
-			session.dispatchAction({ kind: "toggle_hallucination_filter" });
+			// Default focus is "hallucination", so Enter toggles the filter.
+			session.dispatchAction({ kind: "toggle_focused_setting" });
 			expect(deps.setHallucinationFilterEnabled).toHaveBeenCalledWith(false);
 		});
 

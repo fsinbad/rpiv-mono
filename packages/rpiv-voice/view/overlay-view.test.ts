@@ -38,18 +38,19 @@ function withScreen(state: VoiceState, screen: VoiceState["currentScreen"]): Voi
 	return { ...state, currentScreen: screen };
 }
 
-const DRAFT = { hallucinationFilterEnabled: true };
+// Equalizer ON: bottom chrome = [DIVIDER, EQ-TOP, EQ-BOT, STATUS] = 4 rows.
+// All tests in this file exercise the eq-enabled layout because that's the
+// non-trivial chrome anchor. The eq-disabled path is exercised by the
+// equalizer-view tests (component returns []) and the projections tests.
+const DRAFT = { hallucinationFilterEnabled: true, equalizerEnabled: true };
+const CHROME = [["DIVIDER"], ["EQ-TOP"], ["EQ-BOT"], ["STATUS"]];
 
 describe("OverlayView height stabilization", () => {
-	// Lay out the strategies as: [body lines…, "DIVIDER", "STATUS"] so the last
-	// two rows count as bottom chrome (BOTTOM_CHROME_ROWS = 2 in production).
-	// `body` = total rendered lines minus 2.
-
 	it("renders empty when state has not been set yet", () => {
 		const overlay = makeOverlay({
 			rows: 24,
-			dictation: [["d1", "d2", "d3"], ["DIVIDER"], ["STATUS"]],
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			dictation: [["d1", "d2", "d3"], ...CHROME],
+			settings: [["s1"], ...CHROME],
 		});
 		expect(overlay.render(80)).toEqual([]);
 	});
@@ -57,106 +58,110 @@ describe("OverlayView height stabilization", () => {
 	it("pads the shorter screen up to the high-water-mark of the taller one", () => {
 		const overlay = makeOverlay({
 			rows: 24,
-			// dictation body = 5 rows: "d1".."d5"
-			dictation: [["d1", "d2", "d3", "d4", "d5"], ["DIVIDER"], ["STATUS"]],
+			// dictation body = 5 rows
+			dictation: [["d1", "d2", "d3", "d4", "d5"], ...CHROME],
 			// settings body = 1 row
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			settings: [["s1"], ...CHROME],
 		});
 
 		const dict = initialVoiceState(DRAFT);
 		overlay.setProps({ state: dict });
 		const dictRows = overlay.render(80);
-		// Should be 5 body + 2 chrome = 7 rows total, no padding needed.
-		expect(dictRows).toHaveLength(7);
+		// 5 body + 4 chrome = 9 rows, no padding needed.
+		expect(dictRows).toHaveLength(9);
 		expect(dictRows[dictRows.length - 1]).toContain("STATUS");
 
 		// Flip to settings — should pad up to 5 body rows even though settings
 		// only has 1 row of body content.
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const settRows = overlay.render(80);
-		expect(settRows).toHaveLength(7);
+		expect(settRows).toHaveLength(9);
 		expect(settRows[settRows.length - 1]).toContain("STATUS");
-		expect(settRows[settRows.length - 2]).toContain("DIVIDER");
-		// The first 4 lines should be empty padding, then "s1", then chrome.
+		expect(settRows[settRows.length - 2]).toContain("EQ-BOT");
+		expect(settRows[settRows.length - 3]).toContain("EQ-TOP");
+		expect(settRows[settRows.length - 4]).toContain("DIVIDER");
+		// First 4 rows should be empty padding, then "s1", then 4 chrome rows.
 		expect(settRows.slice(0, 4)).toEqual(["", "", "", ""]);
 		expect(settRows[4]).toContain("s1");
 	});
 
 	it("never shrinks the high-water-mark once established", () => {
-		// Boot on settings (small body), then flip to dictation (tall body),
-		// then back to settings — settings should be padded up.
 		const overlay = makeOverlay({
 			rows: 24,
-			dictation: [["d1", "d2", "d3", "d4"], ["DIVIDER"], ["STATUS"]],
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			dictation: [["d1", "d2", "d3", "d4"], ...CHROME],
+			settings: [["s1"], ...CHROME],
 		});
 		const dict = initialVoiceState(DRAFT);
 
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const before = overlay.render(80);
-		expect(before).toHaveLength(6); // 4 body (settings padded by dictation render) + 2 chrome
+		// 4 body (settings padded by dictation render) + 4 chrome = 8 rows.
+		expect(before).toHaveLength(8);
 
 		overlay.setProps({ state: dict });
-		expect(overlay.render(80)).toHaveLength(6);
+		expect(overlay.render(80)).toHaveLength(8);
 
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const after = overlay.render(80);
-		// Same height — chrome anchored at the bottom.
-		expect(after).toHaveLength(6);
+		expect(after).toHaveLength(8);
 	});
 
-	it("pins divider + status to the bottom row pair regardless of screen", () => {
+	it("pins divider + equalizer + status to the bottom four rows regardless of screen", () => {
 		const overlay = makeOverlay({
 			rows: 24,
-			dictation: [["d1", "d2", "d3"], ["DIVIDER"], ["STATUS"]],
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			dictation: [["d1", "d2", "d3"], ...CHROME],
+			settings: [["s1"], ...CHROME],
 		});
 		const dict = initialVoiceState(DRAFT);
 
 		overlay.setProps({ state: dict });
 		const dictRows = overlay.render(80);
-		const dictDivIdx = dictRows.findIndex((r) => r.includes("DIVIDER"));
-		const dictStatusIdx = dictRows.findIndex((r) => r.includes("STATUS"));
-		expect(dictStatusIdx).toBe(dictRows.length - 1);
-		expect(dictDivIdx).toBe(dictStatusIdx - 1);
+		expect(dictRows[dictRows.length - 1]).toContain("STATUS");
+		expect(dictRows[dictRows.length - 2]).toContain("EQ-BOT");
+		expect(dictRows[dictRows.length - 3]).toContain("EQ-TOP");
+		expect(dictRows[dictRows.length - 4]).toContain("DIVIDER");
 
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const settRows = overlay.render(80);
 		expect(settRows[settRows.length - 1]).toContain("STATUS");
-		expect(settRows[settRows.length - 2]).toContain("DIVIDER");
+		expect(settRows[settRows.length - 2]).toContain("EQ-BOT");
+		expect(settRows[settRows.length - 3]).toContain("EQ-TOP");
+		expect(settRows[settRows.length - 4]).toContain("DIVIDER");
 	});
 });
 
 describe("OverlayView clipToTerminalHeight integration", () => {
 	it("top-clips when content exceeds 85% of terminal height", () => {
-		// Terminal rows = 10 → maxRows = floor(10 * 0.85) = 8.
+		// Terminal rows = 16 → maxRows = floor(16 * 0.85) = 13.
 		const longBody = Array.from({ length: 12 }, (_, i) => `line-${i}`);
 		const overlay = makeOverlay({
-			rows: 10,
-			dictation: [longBody, ["DIVIDER"], ["STATUS"]],
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			rows: 16,
+			dictation: [longBody, ...CHROME],
+			settings: [["s1"], ...CHROME],
 		});
 		const dict = initialVoiceState(DRAFT);
 		overlay.setProps({ state: dict });
 
 		const rows = overlay.render(80);
-		// Total = 12 body + 2 chrome = 14, clipped to 8.
-		expect(rows.length).toBe(8);
+		// 12 body + 4 chrome = 16 rendered, clipped to 13.
+		expect(rows.length).toBe(13);
 		// Bottom chrome must survive — the clip is from the top.
 		expect(rows[rows.length - 1]).toContain("STATUS");
-		expect(rows[rows.length - 2]).toContain("DIVIDER");
+		expect(rows[rows.length - 2]).toContain("EQ-BOT");
+		expect(rows[rows.length - 3]).toContain("EQ-TOP");
+		expect(rows[rows.length - 4]).toContain("DIVIDER");
 		// First content row should be one of the later body lines (top was dropped).
 		const earliestSurvivingIdx = Number(rows[0].match(/line-(\d+)/)?.[1] ?? -1);
 		expect(earliestSurvivingIdx).toBeGreaterThan(0);
 	});
 
 	it("falls back to 24 rows when terminal.rows is undefined", () => {
-		// 24 rows → maxRows = 20. A 30-row payload should clip to 20.
-		const longBody = Array.from({ length: 28 }, (_, i) => `line-${i}`);
+		// 24 rows → maxRows = 20. A 28-row payload should clip to 20.
+		const longBody = Array.from({ length: 24 }, (_, i) => `line-${i}`);
 		const overlay = makeOverlay({
 			rows: undefined,
-			dictation: [longBody, ["DIVIDER"], ["STATUS"]],
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			dictation: [longBody, ...CHROME],
+			settings: [["s1"], ...CHROME],
 		});
 		overlay.setProps({ state: initialVoiceState(DRAFT) });
 		const rows = overlay.render(80);
@@ -168,8 +173,8 @@ describe("OverlayView clipToTerminalHeight integration", () => {
 		// 1 row * 0.85 = 0 → floor 4.
 		const overlay = makeOverlay({
 			rows: 1,
-			dictation: [["d1", "d2", "d3", "d4", "d5", "d6"], ["DIVIDER"], ["STATUS"]],
-			settings: [["s1"], ["DIVIDER"], ["STATUS"]],
+			dictation: [["d1", "d2", "d3", "d4", "d5", "d6"], ...CHROME],
+			settings: [["s1"], ...CHROME],
 		});
 		overlay.setProps({ state: initialVoiceState(DRAFT) });
 		const rows = overlay.render(80);

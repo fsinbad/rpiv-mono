@@ -13,6 +13,7 @@ import { VoiceOverlayPropsAdapter } from "../view/props-adapter.js";
 import { DictationScreenStrategy, SettingsScreenStrategy } from "../view/screen-content-strategy.js";
 import { routeKey, type VoiceAction } from "./key-router.js";
 import {
+	selectEqualizerFieldProps,
 	selectEqualizerProps,
 	selectHallucinationFilterFieldProps,
 	selectLanguageReadonlyFieldProps,
@@ -73,7 +74,10 @@ export class VoiceSession {
 		const micField = new SettingsFieldView(config.theme);
 		const languageField = new SettingsFieldView(config.theme);
 		const hallucinationField = new SettingsFieldView(config.theme);
-		const settingsForm = new SettingsFormView({ fields: [micField, languageField, hallucinationField] });
+		const equalizerField = new SettingsFieldView(config.theme);
+		const settingsForm = new SettingsFormView({
+			fields: [micField, languageField, hallucinationField, equalizerField],
+		});
 
 		const dictation = new DictationScreenStrategy({ transcript, divider, equalizer, statusBar });
 		const settings = new SettingsScreenStrategy({ settingsForm, divider, equalizer, statusBar });
@@ -93,6 +97,7 @@ export class VoiceSession {
 			globalBinding({ component: micField, select: selectMicReadonlyFieldProps }),
 			globalBinding({ component: languageField, select: selectLanguageReadonlyFieldProps }),
 			globalBinding({ component: hallucinationField, select: selectHallucinationFilterFieldProps }),
+			globalBinding({ component: equalizerField, select: selectEqualizerFieldProps }),
 			globalBinding({ component: this.overlay, select: (state) => ({ state }) }),
 		];
 

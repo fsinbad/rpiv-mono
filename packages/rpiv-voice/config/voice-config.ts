@@ -26,6 +26,7 @@ const VOICE_STATE_KEY = Symbol.for("rpiv-voice");
 
 export interface VoiceConfig {
 	readonly hallucinationFilterEnabled?: boolean;
+	readonly equalizerEnabled?: boolean;
 }
 
 /**
@@ -37,6 +38,15 @@ export interface VoiceConfig {
  */
 export function isHallucinationFilterEnabled(config: { hallucinationFilterEnabled?: boolean }): boolean {
 	return config.hallucinationFilterEnabled !== false;
+}
+
+/**
+ * The equalizer defaults to DISABLED. Mirror of the hallucination-filter
+ * decoding rule but with the inverted polarity: only the on-state is
+ * persisted, "field absent" reads as "disabled".
+ */
+export function isEqualizerEnabled(config: { equalizerEnabled?: boolean }): boolean {
+	return config.equalizerEnabled === true;
 }
 
 export function loadVoiceConfig(): VoiceConfig {

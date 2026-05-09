@@ -54,10 +54,12 @@ export class SettingsFieldView implements StatefulView<SettingsFieldViewProps> {
 		const valueWidth = Math.max(1, width - headWidth);
 		const clamped = truncateToWidth(valueText, valueWidth, TRUNCATE_ELLIPSIS, false);
 		const lines = [`${head}${clamped}`];
-		// Readonly rows show their hint unconditionally (purely informational).
-		// Interactive rows gate on `active` so unfocused toggles/editors stay quiet.
+		// Hints render unconditionally — gating on `active` made the form's row
+		// count change as focus moved between toggles, which translated to a
+		// visible jump of the bottom chrome each time the user pressed an arrow.
+		// A stable height is worth the extra noise of inactive hints.
 		const hint = this.props.hint;
-		if (hint && (this.props.active || this.props.field.kind === "readonly")) {
+		if (hint) {
 			const hintIndent = " ".repeat(visibleWidth(ACTIVE_POINTER));
 			const hintLine = `${hintIndent}${this.theme.fg(COLOR_DIM, hint)}`;
 			lines.push(truncateToWidth(hintLine, width, TRUNCATE_ELLIPSIS, false));

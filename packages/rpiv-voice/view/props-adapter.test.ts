@@ -5,7 +5,7 @@ import { initialVoiceState, type VoiceState } from "../state/state.js";
 import type { BoundGlobalBinding } from "./component-binding.js";
 import { VoiceOverlayPropsAdapter } from "./props-adapter.js";
 
-const DRAFT = { hallucinationFilterEnabled: true };
+const DRAFT = { hallucinationFilterEnabled: true, equalizerEnabled: false };
 const BASE = initialVoiceState(DRAFT);
 
 function fakeBinding() {

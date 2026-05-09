@@ -87,7 +87,7 @@ describe("SettingsFieldView", () => {
 			expect(lines[0]).toContain("[ off ]");
 		});
 
-		it("hides hint when inactive for toggle fields", () => {
+		it("renders hint unconditionally for toggle fields (height stays stable across focus)", () => {
 			const view = new SettingsFieldView(plain);
 			view.setProps({
 				label: "Filter noise",
@@ -96,8 +96,8 @@ describe("SettingsFieldView", () => {
 				hint: "Some hint",
 			});
 			const lines = view.render(WIDTH);
-			expect(lines).toHaveLength(1);
-			expect(lines[0]).not.toContain("Some hint");
+			expect(lines).toHaveLength(2);
+			expect(lines[1]).toContain("Some hint");
 		});
 
 		it("shows hint when active for toggle fields", () => {

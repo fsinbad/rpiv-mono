@@ -6,10 +6,13 @@ import type { StatefulView } from "./stateful-view.js";
 
 const FALLBACK_TERMINAL_ROWS = 24;
 
-// Both strategies end with `[divider, equalizer, statusBar]` — three rows of
-// "bottom chrome" we anchor against. Subtracting that count from total rows
-// gives the body row count that needs height equalization.
-const BOTTOM_CHROME_ROWS = 3;
+// Bottom chrome rows depend on whether the equalizer is enabled. With the
+// equalizer ON, the chrome is `[divider, eq-top, eq-bottom, statusBar]` (4
+// rows); with it OFF the equalizer renders zero rows and the chrome collapses
+// to `[divider, statusBar]` (2 rows). Subtracting the chrome count from total
+// rows gives the body row count that needs height equalization.
+const BOTTOM_CHROME_ROWS_WITH_EQ = 4;
+const BOTTOM_CHROME_ROWS_WITHOUT_EQ = 2;
 
 export interface OverlayViewProps {
 	state: VoiceState;
@@ -51,14 +54,17 @@ export class OverlayView implements StatefulView<OverlayViewProps> {
 		const state = this.liveState;
 		if (!state) return [];
 
+		const chromeRows = state.settingsDraft.equalizerEnabled
+			? BOTTOM_CHROME_ROWS_WITH_EQ
+			: BOTTOM_CHROME_ROWS_WITHOUT_EQ;
 		const dictRows = this.renderStrategy(this.config.dictation, width);
 		const settRows = this.renderStrategy(this.config.settings, width);
-		const dictBody = Math.max(0, dictRows.length - BOTTOM_CHROME_ROWS);
-		const settBody = Math.max(0, settRows.length - BOTTOM_CHROME_ROWS);
+		const dictBody = Math.max(0, dictRows.length - chromeRows);
+		const settBody = Math.max(0, settRows.length - chromeRows);
 		this.targetBodyHeight = Math.max(this.targetBodyHeight, dictBody, settBody);
 
 		const activeRows = state.currentScreen === "settings" ? settRows : dictRows;
-		const currentBody = Math.max(0, activeRows.length - BOTTOM_CHROME_ROWS);
+		const currentBody = Math.max(0, activeRows.length - chromeRows);
 		const padNeeded = this.targetBodyHeight - currentBody;
 		const padded = padNeeded > 0 ? [...new Array<string>(padNeeded).fill(""), ...activeRows] : activeRows;
 		return clipToTerminalHeight(padded, this.terminalRows());

@@ -7,7 +7,8 @@ export type FooterHintKey =
 	| "esc_cancel"
 	| "esc_back"
 	| "ctrl_s_save"
-	| "enter_toggle";
+	| "enter_toggle"
+	| "up_down_select";
 
 export interface ScreenIntentMeta {
 	label: string;
@@ -21,6 +22,6 @@ export const SCREEN_META: Record<ScreenKind, ScreenIntentMeta> = {
 	},
 	settings: {
 		label: "Settings",
-		footerHints: ["enter_toggle", "ctrl_s_save", "esc_back"],
+		footerHints: ["up_down_select", "enter_toggle", "ctrl_s_save", "esc_back"],
 	},
 };

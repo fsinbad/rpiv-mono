@@ -48,6 +48,8 @@ function hintLabel(key: FooterHintKey, status: { status: string }): string {
 			return t("footer.ctrl_s_save", "Ctrl-S to save");
 		case "enter_toggle":
 			return t("footer.enter_toggle", "Enter to toggle");
+		case "up_down_select":
+			return t("footer.up_down_select", "↑↓ to select");
 	}
 }
 
@@ -67,20 +69,28 @@ export const selectTranscriptProps: GlobalSelector<TranscriptViewProps> = (state
 export const selectEqualizerProps: GlobalSelector<EqualizerViewProps> = (state, _ctx) => ({
 	level: state.audioLevel,
 	status: state.status,
+	enabled: state.settingsDraft.equalizerEnabled,
 });
 
-// `active`/`hint` are unconditional so the settings body height is stable —
-// OverlayView renders the settings strategy off-screen on every tick to compute
-// the height-padding target, and the result must not depend on which screen is
-// currently visible.
+// `active` reflects the focused settings field — only one toggle wears the
+// pointer at a time. `hint` stays present so the settings body height is
+// stable across focus changes (the field hides its own hint when not active,
+// per settings-field-view's render gate).
 export const selectHallucinationFilterFieldProps: GlobalSelector<SettingsFieldViewProps> = (state, _ctx) => ({
 	label: t("settings.hallucination_filter_label", "Filter Whisper noise"),
-	active: true,
+	active: state.settingsFocus === "hallucination",
 	field: { kind: "toggle", enabled: state.settingsDraft.hallucinationFilterEnabled },
 	hint: t(
 		"settings.hallucination_filter_hint",
 		"Drops silence-segment artifacts. Turn off for single-word dictation.",
 	),
+});
+
+export const selectEqualizerFieldProps: GlobalSelector<SettingsFieldViewProps> = (state, _ctx) => ({
+	label: t("settings.equalizer_label", "Equalizer"),
+	active: state.settingsFocus === "equalizer",
+	field: { kind: "toggle", enabled: state.settingsDraft.equalizerEnabled },
+	hint: t("settings.equalizer_hint", "Show the live audio waveform under the transcript. Off by default."),
 });
 
 export const selectMicReadonlyFieldProps: GlobalSelector<SettingsFieldViewProps> = (_state, _ctx) => ({

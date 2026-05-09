@@ -1,8 +1,11 @@
 export type RecordingStatus = "recording" | "paused";
 export type ScreenKind = "dictation" | "settings";
 
+export type SettingsFieldKey = "hallucination" | "equalizer";
+
 export interface SettingsDraft {
 	hallucinationFilterEnabled: boolean;
+	equalizerEnabled: boolean;
 }
 
 export interface VoiceState {
@@ -17,9 +20,16 @@ export interface VoiceState {
 	 *  the utterance. Rendered after `transcript` in a dim style. */
 	partialTranscript: string;
 	audioLevel: number;
-	/** In-flight editor draft — not persisted until `settings_save`. */
+	/** In-flight editor draft — auto-persists on `close_settings` (Esc/Tab) so
+	 *  toggling and exiting saves; Ctrl-S (`settings_save`) is the explicit
+	 *  save+notify path. */
 	settingsDraft: SettingsDraft;
+	/** Which interactive settings field is currently focused. Up/Down arrows
+	 *  cycle through `SETTINGS_FIELD_ORDER`; Enter toggles the focused one. */
+	settingsFocus: SettingsFieldKey;
 }
+
+export const SETTINGS_FIELD_ORDER: readonly SettingsFieldKey[] = ["hallucination", "equalizer"];
 
 export interface VoiceRuntime {
 	keybindings: { matches(data: string, name: string): boolean };
@@ -33,5 +43,6 @@ export function initialVoiceState(draft: SettingsDraft): VoiceState {
 		partialTranscript: "",
 		audioLevel: 0,
 		settingsDraft: draft,
+		settingsFocus: SETTINGS_FIELD_ORDER[0]!,
 	};
 }

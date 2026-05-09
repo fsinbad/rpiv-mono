@@ -13,7 +13,7 @@ import {
 const DICTATION_CTX: BindingContext = { activeView: "dictation" };
 
 function makeState(overrides: Partial<VoiceState> = {}): VoiceState {
-	return { ...initialVoiceState({ hallucinationFilterEnabled: true }), ...overrides };
+	return { ...initialVoiceState({ hallucinationFilterEnabled: true, equalizerEnabled: false }), ...overrides };
 }
 
 describe("selectStatusBarProps", () => {
@@ -32,7 +32,7 @@ describe("selectStatusBarProps", () => {
 
 	it("emits settings footer hints on the settings screen", () => {
 		const props = selectStatusBarProps(makeState({ currentScreen: "settings" }), DICTATION_CTX);
-		expect(props.hints).toEqual(["Enter to toggle", "Ctrl-S to save", "Esc to go back"]);
+		expect(props.hints).toEqual(["↑↓ to select", "Enter to toggle", "Ctrl-S to save", "Esc to go back"]);
 	});
 });
 
@@ -71,7 +71,7 @@ describe("selectLanguageReadonlyFieldProps", () => {
 describe("selectHallucinationFilterFieldProps", () => {
 	it("reflects the current draft toggle state", () => {
 		const onProps = selectHallucinationFilterFieldProps(
-			makeState({ settingsDraft: { hallucinationFilterEnabled: true } }),
+			makeState({ settingsDraft: { hallucinationFilterEnabled: true, equalizerEnabled: false } }),
 			DICTATION_CTX,
 		);
 		expect(onProps.label).toBe("Filter Whisper noise");
@@ -80,7 +80,7 @@ describe("selectHallucinationFilterFieldProps", () => {
 		expect(onProps.hint).toContain("silence-segment artifacts");
 
 		const offProps = selectHallucinationFilterFieldProps(
-			makeState({ settingsDraft: { hallucinationFilterEnabled: false } }),
+			makeState({ settingsDraft: { hallucinationFilterEnabled: false, equalizerEnabled: false } }),
 			DICTATION_CTX,
 		);
 		expect(offProps.field).toEqual({ kind: "toggle", enabled: false });

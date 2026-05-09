@@ -19,7 +19,9 @@ export type VoiceAction =
 	| { kind: "cancel" }
 	| { kind: "open_settings" }
 	| { kind: "close_settings" }
-	| { kind: "toggle_hallucination_filter" }
+	| { kind: "toggle_focused_setting" }
+	| { kind: "focus_settings_next" }
+	| { kind: "focus_settings_prev" }
 	| { kind: "settings_save" }
 	| { kind: "ignore" };
 
@@ -30,7 +32,9 @@ export function routeKey(data: string, state: VoiceState, runtime: VoiceRuntime)
 		if (data === CTRL_S) return { kind: "settings_save" };
 		if (kb.matches(data, KEYBIND_CANCEL)) return { kind: "close_settings" };
 		if (matchesKey(data, Key.tab)) return { kind: "close_settings" };
-		if (kb.matches(data, KEYBIND_CONFIRM)) return { kind: "toggle_hallucination_filter" };
+		if (matchesKey(data, Key.up)) return { kind: "focus_settings_prev" };
+		if (matchesKey(data, Key.down)) return { kind: "focus_settings_next" };
+		if (kb.matches(data, KEYBIND_CONFIRM)) return { kind: "toggle_focused_setting" };
 		return { kind: "ignore" };
 	}
 

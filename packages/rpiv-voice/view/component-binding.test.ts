@@ -6,7 +6,7 @@ import { initialVoiceState } from "../state/state.js";
 import { globalBinding } from "./component-binding.js";
 import type { StatefulView } from "./stateful-view.js";
 
-const DRAFT = { hallucinationFilterEnabled: true };
+const DRAFT = { hallucinationFilterEnabled: true, equalizerEnabled: false };
 const BASE = initialVoiceState(DRAFT);
 const CTX: BindingContext = { activeView: "dictation" };
 

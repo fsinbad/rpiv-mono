@@ -59,8 +59,16 @@ describe("routeKey — settings screen", () => {
 		expect(routeKey(TAB, settingsState, runtime())).toEqual({ kind: "close_settings" });
 	});
 
-	it("Enter → toggle_hallucination_filter", () => {
-		expect(routeKey("\r", settingsState, runtime())).toEqual({ kind: "toggle_hallucination_filter" });
+	it("Enter → toggle_focused_setting", () => {
+		expect(routeKey("\r", settingsState, runtime())).toEqual({ kind: "toggle_focused_setting" });
+	});
+
+	it("Up arrow → focus_settings_prev", () => {
+		expect(routeKey(UP, settingsState, runtime())).toEqual({ kind: "focus_settings_prev" });
+	});
+
+	it("Down arrow → focus_settings_next", () => {
+		expect(routeKey(DOWN, settingsState, runtime())).toEqual({ kind: "focus_settings_next" });
 	});
 
 	it("Ctrl-S → settings_save", () => {

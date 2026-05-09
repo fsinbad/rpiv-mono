@@ -106,47 +106,97 @@ describe("reduce", () => {
 		expect(r.state.currentScreen).toBe("settings");
 	});
 
-	it("close_settings returns to dictation", () => {
-		const s = { ...freshState(), currentScreen: "settings" as const };
+	it("close_settings returns to dictation and persists the draft (no notify)", () => {
+		const s = {
+			...freshState(),
+			currentScreen: "settings" as const,
+			settingsDraft: { hallucinationFilterEnabled: true, equalizerEnabled: true },
+		};
 		const r = reduce(s, { kind: "close_settings" }, ctx);
 		expect(r.state.currentScreen).toBe("dictation");
+		expect(r.effects).toContainEqual({ kind: "save_config", config: { equalizerEnabled: true } });
+		expect(r.effects.some((e) => e.kind === "notify")).toBe(false);
 	});
 
-	it("toggle_hallucination_filter flips the draft and emits set_hallucination_filter", () => {
-		const s = freshState();
+	it("toggle_focused_setting on hallucination focus flips the filter draft and emits the effect", () => {
+		const s = { ...freshState(), settingsFocus: "hallucination" as const };
 		expect(s.settingsDraft.hallucinationFilterEnabled).toBe(true);
-		const r = reduce(s, { kind: "toggle_hallucination_filter" }, ctx);
+		const r = reduce(s, { kind: "toggle_focused_setting" }, ctx);
 		expect(r.state.settingsDraft.hallucinationFilterEnabled).toBe(false);
 		expect(r.effects).toContainEqual({ kind: "set_hallucination_filter", enabled: false });
 	});
 
-	it("settings_save with default-on filter writes an empty config", () => {
+	it("toggle_focused_setting on equalizer focus flips the equalizer draft (no pipeline effect)", () => {
+		const s = { ...freshState(), settingsFocus: "equalizer" as const };
+		expect(s.settingsDraft.equalizerEnabled).toBe(false);
+		const r = reduce(s, { kind: "toggle_focused_setting" }, ctx);
+		expect(r.state.settingsDraft.equalizerEnabled).toBe(true);
+		// Equalizer is purely view-side — no pipeline-reconfig effect.
+		expect(r.effects.some((e) => e.kind === "set_hallucination_filter")).toBe(false);
+		expect(r.effects).toContainEqual({ kind: "request_render" });
+	});
+
+	it("focus_settings_next / focus_settings_prev cycle through the field order", () => {
+		const start = { ...freshState(), settingsFocus: "hallucination" as const };
+		const next = reduce(start, { kind: "focus_settings_next" }, ctx);
+		expect(next.state.settingsFocus).toBe("equalizer");
+		const wrap = reduce(next.state, { kind: "focus_settings_next" }, ctx);
+		expect(wrap.state.settingsFocus).toBe("hallucination");
+		const prev = reduce(start, { kind: "focus_settings_prev" }, ctx);
+		expect(prev.state.settingsFocus).toBe("equalizer");
+	});
+
+	it("settings_save with all defaults writes an empty config", () => {
 		const s = freshState();
 		const r = reduce(s, { kind: "settings_save" }, ctx);
 		expect(r.effects).toContainEqual({ kind: "save_config", config: {} });
 	});
 
 	it("settings_save persists hallucinationFilterEnabled when user disables it", () => {
-		const s = { ...freshState(), settingsDraft: { hallucinationFilterEnabled: false } };
+		const s = { ...freshState(), settingsDraft: { hallucinationFilterEnabled: false, equalizerEnabled: false } };
 		const r = reduce(s, { kind: "settings_save" }, ctx);
 		expect(r.effects).toContainEqual({ kind: "save_config", config: { hallucinationFilterEnabled: false } });
+	});
+
+	it("settings_save persists equalizerEnabled when user enables it", () => {
+		const s = { ...freshState(), settingsDraft: { hallucinationFilterEnabled: true, equalizerEnabled: true } };
+		const r = reduce(s, { kind: "settings_save" }, ctx);
+		expect(r.effects).toContainEqual({ kind: "save_config", config: { equalizerEnabled: true } });
 	});
 });
 
 describe("configFromDraft / draftFromConfig", () => {
 	it("draftFromConfig defaults hallucination filter to enabled", () => {
-		expect(draftFromConfig({})).toEqual({ hallucinationFilterEnabled: true });
+		expect(draftFromConfig({})).toEqual({ hallucinationFilterEnabled: true, equalizerEnabled: false });
 	});
 
 	it("draftFromConfig preserves an explicit `false` disable", () => {
-		expect(draftFromConfig({ hallucinationFilterEnabled: false })).toEqual({ hallucinationFilterEnabled: false });
+		expect(draftFromConfig({ hallucinationFilterEnabled: false, equalizerEnabled: false })).toEqual({
+			hallucinationFilterEnabled: false,
+			equalizerEnabled: false,
+		});
 	});
 
-	it("configFromDraft drops the default-true filter flag", () => {
-		expect(configFromDraft({ hallucinationFilterEnabled: true })).toEqual({});
+	it("configFromDraft drops both default flags", () => {
+		expect(configFromDraft({ hallucinationFilterEnabled: true, equalizerEnabled: false })).toEqual({});
 	});
 
 	it("configFromDraft persists the off-state of the filter", () => {
-		expect(configFromDraft({ hallucinationFilterEnabled: false })).toEqual({ hallucinationFilterEnabled: false });
+		expect(configFromDraft({ hallucinationFilterEnabled: false, equalizerEnabled: false })).toEqual({
+			hallucinationFilterEnabled: false,
+		});
+	});
+
+	it("configFromDraft persists the on-state of the equalizer", () => {
+		expect(configFromDraft({ hallucinationFilterEnabled: true, equalizerEnabled: true })).toEqual({
+			equalizerEnabled: true,
+		});
+	});
+
+	it("draftFromConfig hydrates the equalizer flag from persisted on-state", () => {
+		expect(draftFromConfig({ equalizerEnabled: true })).toEqual({
+			hallucinationFilterEnabled: true,
+			equalizerEnabled: true,
+		});
 	});
 });
