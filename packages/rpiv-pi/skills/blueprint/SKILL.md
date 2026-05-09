@@ -16,7 +16,7 @@ You are tasked with planning how code will be shaped for a feature or change AND
 - Developer checkpoint — resolve genuine ambiguities one at a time (Step 5)
 - Decompose into vertical slices holistically before generating code (Step 6)
 - Generate code slice-by-slice with developer micro-checkpoints (Step 7)
-- Verify cross-slice integration consistency (Step 8)
+- Verify cross-slice integration consistency (Step 8 — internal, folded into final 7.3)
 - Finalize the design artifact (Step 9)
 - Review and iterate with the developer (Step 10)
 
@@ -64,7 +64,7 @@ This is NOT a discovery sweep. Focus on DEPTH (how things work, what patterns to
    Agent prompts should focus on (labeled by target agent):
    - **codebase-pattern-finder**: "Find the implementation pattern I should model after for {feature type}"
 
-   NOT: "Find all files related to X" — that's discovery's job, upstream of this skill. NOT: "Analyze {component} integration" — the integration surface is in research's `## Integration Points`; if a specific anchor needs deeper inspection, defer to the on-demand `codebase-analyzer` dispatch in Step 5 (correction path) or Step 7a (mid-generation gap).
+   NOT: "Find all files related to X" — that's discovery's job, upstream of this skill. NOT: "Analyze {component} integration" — the integration surface is in research's `## Integration Points`; if a specific anchor needs deeper inspection, defer to the on-demand `codebase-analyzer` dispatch in Step 5 (correction path) or Step 7.1 (mid-generation gap).
 
 2. **Read all key files identified by agents** into the main context — especially the pattern templates you'll model after.
 
@@ -206,13 +206,13 @@ After the design summary is confirmed, decompose the feature into vertical slice
    - Timestamp: run `date +"%Y-%m-%dT%H:%M:%S%z"` — raw for `date:` and `last_updated:`, first 19 chars (`T`→`_`, `:`→`-`) for filename slug.
    - Write skeleton using the Write tool with `status: in-progress` in frontmatter
    - **Include all prose sections filled** from Steps 1-5: Overview, Requirements, Current State Analysis, Desired End State, What We're NOT Doing, Decisions, Ordering Constraints, Verification Notes, Performance Considerations, Migration Notes, Pattern References, Developer Context, References
-   - **Phase sections**: one `## Phase N: {slice name}` heading per slice from the decomposition (in slice order), each with `### Overview`, `### Changes Required:` (one `#### N. path/to/file.ext` subsection per file with empty code fence + NEW/MODIFY label), and `### Success Criteria:` (Automated + Manual placeholders — filled in Step 9)
+   - **Phase sections**: one `## Phase N: {slice name}` heading per slice from the decomposition (in slice order), each with `### Overview`, `### Changes Required:` (one `#### N. path/to/file.ext` subsection per file with empty code fence + NEW/MODIFY label), and `### Success Criteria:` (empty Automated + Manual subsection headers — filled in Step 7.4 on approval)
    - **Plan History section**: list all phases with `— pending` status
    - This is the living artifact — all subsequent writes use the Edit tool
 
    **Artifact template sections** (all required in skeleton):
 
-   - **Frontmatter**: date, author, commit, branch, repository, topic, tags, `status: in-progress`, parent, phase_count, unresolved_phase_count (initialized to phase_count, decrements as each phase's code is approved in Step 7d), last_updated, last_updated_by
+   - **Frontmatter**: date, author, commit, branch, repository, topic, tags, `status: in-progress`, parent, phase_count, unresolved_phase_count (initialized to phase_count, decrements as each phase's code is approved in Step 7.4), last_updated, last_updated_by
    - **# {Feature Name} Implementation Plan**
    - **## Overview**: 2-3 sentences — what we're building and the chosen architectural approach. Settled decision, not a discussion.
    - **## Requirements**: Bullet list from ticket, research, or developer input.
@@ -222,32 +222,32 @@ After the design summary is confirmed, decompose the feature into vertical slice
    - **## Decisions**: `###` per decision. Complex: Ambiguity → Explored (Option A/B with `file:line` + pro/con) → Decision. Simple: just state decision with evidence.
    - **## Phase N: {slice name}** (one per slice, in slice order):
      - `### Overview`: one sentence describing what this phase delivers + parallelism note from `Depends on:` (e.g., "Depends on Phase 1; can run in parallel with Phase 3.").
-     - `### Changes Required:` — one `#### N. path/to/file.ext` subsection per file in this slice. Each subsection has `**File**: path`, `**Changes**: {NEW | MODIFY — summary}`, and an empty code fence (filled in Step 7d). NEW files get full implementation. MODIFY files get only modified/added code — no "Current" block, the original is on disk.
-     - `### Success Criteria:` with `#### Automated Verification:` and `#### Manual Verification:` subsections, each containing `- [ ] TBD` placeholder bullets (filled in Step 9 from Verification Notes).
+     - `### Changes Required:` — one `#### N. path/to/file.ext` subsection per file in this slice. Each subsection has `**File**: path`, `**Changes**: {NEW | MODIFY — summary}`, and an empty code fence (filled in Step 7.4). NEW files get full implementation. MODIFY files get only modified/added code — no "Current" block, the original is on disk.
+     - `### Success Criteria:` with empty `#### Automated Verification:` and `#### Manual Verification:` subsection headers — no TBD bullets; filled in Step 7.4 on phase approval, scoped to that phase's deliverables and matching `## Verification Notes`.
    - **## Ordering Constraints**: What must come before what. What can run in parallel. (Carries the cross-phase view; per-phase parallelism note also lives in each Phase Overview.)
-   - **## Verification Notes**: Carry forward from research — known risks, build/test warnings, precedent lessons. Format as verifiable checks (commands, grep patterns, visual inspection). Step 9 converts these to per-phase Success Criteria.
+   - **## Verification Notes**: Carry forward from research — known risks, build/test warnings, precedent lessons. Format as verifiable checks (commands, grep patterns, visual inspection). Step 7.4 lifts these into per-phase Success Criteria on approval.
    - **## Performance Considerations**: Any performance implications or optimizations.
    - **## Migration Notes**: If applicable — existing data, schema changes, rollback strategy, backwards compatibility. Empty if not applicable.
    - **## Pattern References**: `path/to/similar.ext:line-range` — what pattern to follow and why.
-   - **## Developer Context**: Record questions exactly as asked during checkpoint, including `file:line` evidence. Also record micro-checkpoint interactions from Step 7c.
+   - **## Developer Context**: Record questions exactly as asked during checkpoint, including `file:line` evidence. Also record micro-checkpoint interactions from Step 7.3.
    - **## Plan History**: Phase approval/revision log. `- Phase N: {name} — pending/approved as generated/revised: {what changed}`. implement ignores this section.
    - **## References**: Research artifacts, tickets, similar implementations.
 
    **Phase Changes Required format in skeleton**:
-   - **NEW files**: `#### N. path/to/file.ext` + `**File**: path` + `**Changes**: NEW — {purpose}` + empty code fence (filled with full implementation in Step 7d)
-   - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**: path` + `**Changes**: MODIFY — {summary}` + empty code fence (filled with only the modified code in Step 7d — no "Current" block, the original is on disk)
+   - **NEW files**: `#### N. path/to/file.ext` + `**File**: path` + `**Changes**: NEW — {purpose}` + empty code fence (filled with full implementation in Step 7.4)
+   - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**: path` + `**Changes**: MODIFY — {summary}` + empty code fence (filled with only the modified code in Step 7.4 — no "Current" block, the original is on disk)
 
 ## Step 7: Generate Slices (Iterative)
 
 Generate code one slice at a time. Each slice sees the fixed code from all previous slices.
 
-**Before slice 1**: look at the decomposition. For slices whose code shape isn't already covered by Step 2's pattern-finder result (different layer, different file kind, different concern), dispatch additional **codebase-pattern-finder** calls in parallel — one assistant message, one tool call per slice that needs its own template. Slices whose shape matches a sibling reuse that sibling's result. Hold the returned templates in context for 7a; do not re-dispatch per slice during generation.
+**Before slice 1**: look at the decomposition. For slices whose code shape isn't already covered by Step 2's pattern-finder result (different layer, different file kind, different concern), dispatch additional **codebase-pattern-finder** calls in parallel — one assistant message, one tool call per slice that needs its own template. Slices whose shape matches a sibling reuse that sibling's result. Hold the returned templates in context for 7.1; do not re-dispatch per slice during generation.
 
 **For each slice in the decomposition (sequential order):**
 
-### 7a. Generate slice code (internal)
+### 7.1. Generate slice code (internal)
 
-Generate complete, copy-pasteable code for every file in this slice — but **hold it for the artifact, do NOT present full code to the developer**. The developer sees a condensed review in 7c; the full code goes into the artifact in 7d.
+Generate complete, copy-pasteable code for every file in this slice — but **hold it for the artifact, do NOT present full code to the developer**. The developer sees a condensed review in 7.3; the full code goes into the artifact in 7.4.
 
 - **New files**: complete code — imports, types, implementation, exports. Follow the pattern template from Step 2.
 - **Modified files**: read current file FULLY, generate only the modified/added code scoped to changed sections (no full "Current" block — the original is on disk)
@@ -260,7 +260,7 @@ No pseudocode, no TODOs, no placeholders — the code must be copy-pasteable by 
 
 **Context grounding** (after slice 2): Before generating, re-read the artifact's prior `## Phase N` sections for files this slice touches (a file may appear in earlier phases; if so, this phase extends or revisits it). The artifact is the source of truth — generate code that extends what's already emitted, not what you remember from conversation.
 
-### 7b. Self-verify slice
+### 7.2. Self-verify slice
 
 Before presenting to the developer, cross-check this slice and produce a structured summary:
 
@@ -271,9 +271,9 @@ Self-verify Slice N:
 - Research: {OK / WARNING: constraint Y not satisfied — fix applied}
 ```
 
-If violations found: fix in-place before presenting. Include the self-verify summary in the 7c checkpoint presentation.
+If violations found: fix in-place before presenting. Include the self-verify summary in the 7.3 checkpoint presentation.
 
-### 7c. Developer micro-checkpoint
+### 7.3. Developer micro-checkpoint
 
 Present a **condensed review** of the slice — NOT the full generated code. The developer reviews the design shape, not every line. For each file in the slice, show:
 
@@ -288,56 +288,17 @@ Present a **condensed review** of the slice — NOT the full generated code. The
 
 Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name} — {files affected}. {1-line summary}. Approve?". Header: "Slice {N}". Options: "Approve (Recommended)" (Lock this slice, write to artifact, proceed to slice {N+1}); "Revise this slice" (Adjust code before proceeding — describe what to change); "Rethink remaining slices" (This slice reveals a design issue — revisit decomposition); "Revisit a decision" (A Step-5 decision is wrong — return to Step 5 for that decision before continuing).
 
+**Final slice**: run Step 8's internal check before asking. Prepend `Cross-phase: {OK | violations: ...}.` to the question. Approve subtext becomes "Lock, write, run Step 9 finalize automatically." Replace "Rethink remaining slices" with "Reopen earlier phase" (cascade per 7.4.Rethink) — no remaining slices to rethink.
+
 **Checkpoint cadence**: One slice per checkpoint. Present each slice individually, regardless of slice count.
 
-### 7d. Incorporate feedback
+### 7.4. Incorporate feedback
 
 **Approve**: Lock this slice's code and **Edit the artifact immediately**:
-1. For each file in this slice, Edit the skeleton artifact to replace the empty code fence under that file's `#### N. path/...` subsection inside this slice's `## Phase N: {slice name}` section with the full generated code from 7a
+1. For each file in this slice, Edit the skeleton artifact to replace the empty code fence under that file's `#### N. path/...` subsection inside this slice's `## Phase N: {slice name}` section with the full generated code from 7.1
 2. If a later slice contributes to a file already filled by an earlier phase: emit a NEW `#### N. path/to/file.ext` subsection inside the later phase with only that phase's incremental changes (do NOT mutate the earlier phase's code fence — implement runs phases sequentially and the codebase state evolves between them). Each phase's code fence is the change set for that phase, applied on top of the codebase state after the previous phase.
 3. After fill, verify within this phase: no duplicate function definitions inside the same code fence, imports deduplicated, exports list complete
-4. Update the Plan History section: `- Phase N: {name} — approved as generated`
-5. Decrement frontmatter `unresolved_phase_count` by 1
-- Proceed to next slice
-
-**Revise**: Update code per developer feedback. Re-run self-verify (7b). Re-present the same slice (7c). The artifact is NOT touched — only "Approve" writes to the artifact.
-
-**Rethink**: Developer spotted a design issue. If a previously approved slice is affected, flag the conflict and offer cascade revision — developer decides whether to reopen (if yes, Edit the affected `## Phase N` entry).
-Update decomposition (add/remove/reorder remaining slices) and confirm before continuing.
-
-**Revisit a decision**: Re-run Step 5 for the flagged ambiguity (one question). If decomposition is unaffected, update `## Decisions` and resume 7a. If affected, cascade like Rethink — for each invalidated approved phase, ask reopen vs. annotate Plan History, then update remaining slices. Re-run 7b before re-presenting 7c; artifact untouched until approval.
-
-## Step 8: Integration Verification
-
-After all phases are complete, review cross-phase consistency:
-
-1. **Present integration summary** (under 15 lines):
-   ```
-   Integration: {feature name} — {N} phases complete
-
-   Phases: {brief list of phase names and file counts}
-   Cross-phase: {types consistent / imports valid / wiring complete}
-   Research constraints: {all satisfied / N violations noted}
-   ```
-
-2. **Verify research constraints**: Check each Precedent & Lesson and Verification Note from the research artifact against the generated code. List satisfaction status.
-
-3. **Confirm using the `ask_user_question` tool**. Question: "{N} phases complete, {M} files total. Cross-phase consistency verified. Proceed to finalize?". Header: "Verify". Options: "Proceed (Recommended)" (Finalize the plan artifact (fill Success Criteria, update status)); "Revisit phase" (Reopen a specific phase for revision — Edit the artifact after); "Add missing" (A file or integration point is missing — add to artifact).
-
-## Step 9: Finalize Plan Artifact
-
-The artifact was created as a skeleton in Step 6 and filled progressively in Step 7d. This step fills per-phase Success Criteria and finalizes.
-
-1. **Verify all Phase code fences are filled**: every `#### N. path/...` has a non-empty code block. If any are empty, **return to Step 7** — never fill at finalize time (bypasses 7c). Empty fence here = workflow off-rail.
-
-2. **Fill per-phase Success Criteria from Verification Notes**. For each `## Phase N` section, replace the placeholder bullets in `### Success Criteria:` with concrete checks derived from this phase's scope and the artifact's `## Verification Notes`:
-
-   - `#### Automated Verification:` — start with project-standard baseline (`npm run check`, `npm test`) and add phase-specific automated checks: file existence (`test -f path`), grep patterns from Verification Notes (`grep -r "pattern" packages/ | wc -l` returns expected count), test names that should now pass, type-check / lint scoped to changed files.
-   - `#### Manual Verification:` — observable behaviors that can't be automated: UI/UX checks, performance under real load, edge cases requiring human judgment, precedent-lesson manual checks. Pull from Verification Notes that are visual or behavioral, scoped to what this phase delivers.
-
-   Convert prose Verification Notes by phase ownership: a constraint that lands inside Phase N's scope becomes a Phase N criterion. Cross-phase constraints (e.g., "production build still succeeds") repeat across the relevant terminal phases.
-
-   **Format** — each entry is a `- [ ]` markdown checkbox; commands wrapped in backticks. `implement` flips `- [ ]` to `- [x]` as it completes each criterion; `validate` extracts and runs each command listed under `#### Automated Verification:`. The example below illustrates the format only — actual per-phase content and bullet counts come from the guidance above (phase scope + `## Verification Notes`).
+4. **Fill `### Success Criteria:`** for this phase: Edit the empty Automated + Manual subsections with `- [ ]` bullets derived from this phase's file changes plus `## Verification Notes` entries that map to this phase's scope. Project-baseline checks (`npm run check`, `npm test`) go on the terminal phase only. Commands in backticks. Contract: `implement` flips `- [ ]` → `- [x]` as it completes each; `validate` extracts and runs every command under `#### Automated Verification:`.
 
    ```markdown
    ### Success Criteria:
@@ -351,18 +312,42 @@ The artifact was created as a skeleton in Step 6 and filled progressively in Ste
    - [ ] New widget renders correctly above the editor
    - [ ] Performance acceptable with 1000+ todo items
    ```
+5. Update the Plan History section: `- Phase N: {name} — approved as generated`
+6. Decrement frontmatter `unresolved_phase_count` by 1
+- Proceed to next slice
 
-3. **Verify frontmatter counters**:
-   - `unresolved_phase_count == 0` (every phase approved in Step 7d)
+**Revise**: Update code per developer feedback. Re-run self-verify (7.2). Re-present the same slice (7.3). The artifact is NOT touched — only "Approve" writes to the artifact.
+
+**Rethink**: Developer spotted a design issue. If a previously approved slice is affected, flag the conflict and offer cascade revision — developer decides whether to reopen (if yes, Edit the affected `## Phase N` entry).
+Update decomposition (add/remove/reorder remaining slices) and confirm before continuing.
+
+**Revisit a decision**: Re-run Step 5 for the flagged ambiguity (one question). If decomposition is unaffected, update `## Decisions` and resume 7.1. If affected, cascade like Rethink — for each invalidated approved phase, ask reopen vs. annotate Plan History, then update remaining slices. Re-run 7.2 before re-presenting 7.3; artifact untouched until approval.
+
+## Step 8: Integration Verification (internal)
+
+Runs during the final slice's 7.2 — no separate developer round-trip. Result feeds the final 7.3 question text.
+
+1. **Cross-phase walk**: types consistent, imports valid, wiring complete across all `## Phase N` code fences.
+2. **Constraint check**: every `## Verification Notes` and Precedent & Lesson entry from research is satisfied somewhere in the generated code.
+3. **Emit summary** for final 7.3: `OK` or `violations: {brief}`. No `ask_user_question` here — Step 7.3 absorbs the approval.
+
+## Step 9: Finalize Plan Artifact
+
+The artifact was created as a skeleton in Step 6 and filled progressively in Step 7.4 (code fences + Success Criteria). This step verifies and flips status.
+
+1. **Verify all Phase content is filled**: every `#### N. path/...` has a non-empty code block AND every `### Success Criteria:` has non-empty Automated + Manual subsections (filled in Step 7.4). If any are empty, **return to Step 7** — never fill at finalize time (bypasses 7.3). Empty here = workflow off-rail.
+
+2. **Verify frontmatter counters**:
+   - `unresolved_phase_count == 0` (every phase approved in Step 7.4)
    - `phase_count` matches the number of `## Phase N` sections
 
-   If any check fails, return to Step 7. Do NOT flip status. (9.1 and 9.3 guard the same invariant — empty fence ↔ unresolved counter.)
+   If any check fails, return to Step 7. Do NOT flip status. (9.1 and 9.2 guard the same invariant — empty content ↔ unresolved counter.)
 
-4. **Update frontmatter** via Edit: set `status: in-review` (Step 11 flips to `ready` after triage — keeps consumers off an artifact still being edited). Leave `last_updated` / `last_updated_by` as-is.
+3. **Update frontmatter** via Edit: set `status: in-review` (Step 11 flips to `ready` after triage — keeps consumers off an artifact still being edited). Leave `last_updated` / `last_updated_by` as-is.
 
-5. **Verify template completeness**: Ensure all sections from the template reference in Step 6 are present and filled. Edit to fix any gaps.
+4. **Verify template completeness**: Ensure all sections from the template reference in Step 6 are present and filled. Edit to fix any gaps.
 
-6. **Phase Changes Required format reminder**:
+5. **Phase Changes Required format reminder**:
    - **NEW files**: `#### N. path/to/file.ext` + `**File**` + `**Changes**: NEW — {purpose}` + full implementation code block
    - **MODIFY files**: `#### N. path/to/file.ext:line-range` + `**File**` + `**Changes**: MODIFY — {summary}` + code block with only the modified/added code (no "Current" block — the original is on disk, implement reads it)
 
@@ -375,7 +360,7 @@ criticism > generation asymmetry plus fresh-context isolation. Inherits the
 orchestrator's model (no model upgrade required); the value comes from the
 fresh dispatch, not from a stronger model.
 
-### 10.1 Dispatch the plan-reviewer subagent
+### 10.1. Dispatch the plan-reviewer subagent
 
 ```
 Agent({
@@ -387,7 +372,7 @@ Review the finalized plan against the live codebase at HEAD. Walk every Phase co
 })
 ```
 
-### 10.2 Persist the review table to the artifact
+### 10.2. Persist the review table to the artifact
 
 The agent returns a markdown table with columns `plan-loc | codebase-loc | severity | dimension | finding | recommendation`. Append it to the plan artifact as a new section, with a `resolution` column appended (initially blank, filled progressively at Step 11):
 
@@ -405,7 +390,7 @@ _Independent post-finalization review by plan-reviewer subagent. Findings triage
 
 If the agent emits zero rows, still emit the section with a single line: `_No findings — plan-reviewer cleared the artifact._`. Persistence is mandatory regardless of finding count — the section is the durable audit trail.
 
-### 10.3 Tally findings for Step 11's prompt
+### 10.3. Tally findings for Step 11's prompt
 
 Count rows by severity. Store the counts in main context for Step 11's developer prompt:
 
@@ -415,7 +400,7 @@ Count rows by severity. Store the counts in main context for Step 11's developer
 
 Do NOT auto-apply any finding. The orchestrator never makes the apply / defer / dismiss judgment alone — that lives with the developer at Step 11. The reviewer's role is to surface; the developer's role is to triage.
 
-### 10.4 Failure handling
+### 10.4. Failure handling
 
 If plan-reviewer errors out (subprocess crash, malformed output, timeout):
 - Skip Step 10's findings; do not block on the failure.
@@ -499,7 +484,7 @@ The developer review path at Step 11 absorbs the cost — that is how planning w
 | Default (research artifact provided) | codebase-pattern-finder |
 | Novel work (new library/pattern) | + web-search-researcher |
 | Step 5 correction path (developer flags missed area) | targeted codebase-analyzer (max 1-2) |
-| Step 7a mid-generation gap (specific anchor unclear) | targeted codebase-analyzer (max 1) |
+| Step 7.1 mid-generation gap (specific anchor unclear) | targeted codebase-analyzer (max 1) |
 | Step 10 post-finalization review (mandatory) | plan-reviewer (fresh-context, inherited model) |
 
 Spawn multiple agents in parallel when they're searching for different things. Each agent runs in isolation — provide complete context in the prompt, including specific directory paths when the feature targets a known module. Don't write detailed prompts about HOW to search — just tell it what you're looking for and where.
@@ -514,12 +499,13 @@ Spawn multiple agents in parallel when they're searching for different things. E
   - ALWAYS resolve all ambiguities (Step 5) before decomposing into slices (Step 6)
   - ALWAYS complete holistic decomposition before generating any slice code (Step 7)
   - ALWAYS create the skeleton artifact immediately after decomposition approval (Step 6)
-  - NEVER leave Phase code fences empty after their slice is approved — fill via Edit in Step 7d
-  - NEVER fill empty Phase code fences at Step 9 — empty fence at finalize time = return to Step 7 (preserves the 7c micro-checkpoint)
+  - NEVER leave Phase code fences or Success Criteria empty after their slice is approved — fill both via Edit in Step 7.4 (criteria are filled while phase scope is freshest, not deferred to Step 9)
+  - NEVER fill empty Phase content at Step 9 — empty at finalize time = return to Step 7 (preserves the 7.3 micro-checkpoint)
+  - Step 8 is internal-only — no developer round-trip; cross-phase summary inlines into the final 7.3 question
   - ALWAYS dispatch plan-reviewer at Step 10 after Step 9 finalize, BEFORE the developer review at Step 11
   - NEVER auto-apply a plan-reviewer finding at Step 10; triage is the developer's call at Step 11
   - ALWAYS hold `status: in-review` from Step 9 through Step 11; flip to `ready` only after every row has a `resolution` (or the table is empty)
-  - Step 7c → Step 5 exists for late-discovered decision errors; revisit rather than force a wrong shape through remaining slices
+  - Step 7.3 → Step 5 exists for late-discovered decision errors; revisit rather than force a wrong shape through remaining slices
 - NEVER skip the developer checkpoint — developer input on architectural decisions is the highest-value signal in the planning process
 - NEVER edit source files — all code goes into the plan document, not the codebase. This skill produces a document, not implementation. Source file editing is implement's job.
 - **Code is source of truth** — if a `## Phase N` code block conflicts with the Decisions prose, the code wins. Update the prose.
