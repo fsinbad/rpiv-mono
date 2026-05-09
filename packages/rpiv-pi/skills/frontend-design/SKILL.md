@@ -1,12 +1,14 @@
 ---
 name: frontend-design
-description: "Create distinctive, production-grade frontend interfaces with high design quality. Use when the user asks to build web components, pages, or applications, or wants design guidance. Also use during frontend UI work — pass `--headless` for projects with established styles to inject guidelines without the interview checkpoint."
+description: "Inject tailored visual design guidance for frontend work. Use when the user asks to build a page, full layout, or new application, or explicitly wants design direction. SKIP for single-component requests in codebases with an established style system. The skill auto-adapts: empty scan → 2-question micro-interview; established system → scan-only injection; otherwise full 7-dimension checkpoint with skip logic."
 argument-hint: "[--headless]"
 ---
 
 # Frontend Design
 
-You are tasked with injecting tailored visual design guidance into the agent's context, preventing generic "AI slop" aesthetics in frontend output. The workflow has three steps: (1) scan the project for existing style context, (2) run an adaptive aesthetic checkpoint across 7 dimensions (skipping settled ones), (3) synthesize tailored guidelines + anti-slop guardrails.
+Frontend code without aesthetic intent reads as AI slop — Inter, SaaS blue, three centered cards. This skill forces a deliberate aesthetic *before* a line of code. Scan what exists. Ask only what isn't settled. Synthesize a brief that primes every subsequent turn.
+
+The brief is the product. Boldness is the standard. Half-commitments produce the slop the skill exists to prevent.
 
 Two invocation modes:
 - **Full checkpoint** (default): scan → 7-dimension interview → inject guidelines
@@ -72,9 +74,19 @@ Read it FULLY using the Read tool. This is the primary style source — its deci
 2. Inject as assistant message (see Step 4 output format)
 3. **Stop — do not proceed to Step 3.**
 
+### Auto-mode resolution (full mode only)
+
+Before continuing, classify the scan result:
+
+- **Empty scan** (no DESIGN.md, no tokens, no framework config, no style guide, no component library): proceed to Step 3 but ask **only Dimension 1 (Tone) and Dimension 7 (Differentiation)**. Skip 2-6. Note in transcript: "Empty scan — running micro-interview to avoid interviewing into a void." Their guideline lines in Step 4 read: "{dimension}: open — pick to match the chosen tone."
+
+- **Near-complete scan** (DESIGN.md present, OR ≥4 of 5 categories had hits): auto-downgrade to headless. Note: "Established style system detected — switching to headless." Run Step 4 directly.
+
+- **Partial scan** (1-3 categories with hits, no DESIGN.md): proceed to full Step 3. Skip logic in Step 3 will trim the unsettled dimensions.
+
 ### Full checkpoint continuation
 
-**If mode is `full`:** Proceed to Step 3. Carry scan findings forward — they inform skip logic and pre-fill recommendations.
+Carry scan findings forward — they inform skip logic and pre-fill recommendations.
 
 ## Step 3: Aesthetic Checkpoint
 
@@ -98,90 +110,90 @@ When skipping, record: "Dimension X: [finding from scan] — respecting existing
 ### Dimension 1: Tone & Mood
 
 Ask via `ask_user_question`:
-- Question: "What aesthetic tone should this interface convey?"
+- Question: "Pick a tone and commit. What should this interface FEEL like on first glance?"
 - Header: "Tone"
 - Options (pick 3-4 that fit the project context, always include the first):
-  - "Editorial / magazine (Recommended)" (if no prior context) — refined typography, generous whitespace, content-first
-  - "Brutally minimal" — stripped to essentials, monochrome, no decoration
-  - "Playful / toy-like" — rounded shapes, bright colors, bouncy interactions
-  - "Retro-futuristic" — CRT textures, neon accents, terminal aesthetics
-  - "Luxury / refined" — dark palettes, serif fonts, gold accents, subtle motion
-  - "Brutalist / raw" — exposed structure, harsh contrasts, system fonts used intentionally
-  - "Art deco / geometric" — ornamental patterns, metallic accents, symmetrical layouts
-  - "Soft / pastel" — light tones, rounded corners, gentle gradients
+  - "Editorial (Recommended)" — magazine spread, not SaaS dashboard. Type does the work.
+  - "Brutally minimal" — strip everything that isn't load-bearing. Monochrome, no decoration, no apology.
+  - "Playful / toy-like" — rounded, bright, bouncy. Treat the cursor like it wants to play.
+  - "Retro-futuristic" — CRT scanlines, neon, terminal green. The future from 1985.
+  - "Luxury / refined" — dark palette, serif display, restrained gold. Expensive on purpose.
+  - "Brutalist / raw" — exposed structure, harsh contrast, system fonts as a statement.
+  - "Art deco / geometric" — ornament, symmetry, metallic accents. Decorative without apology.
+  - "Soft / pastel" — light, rounded, gentle. Should feel like a held breath.
 - If the DESIGN.md or scan findings suggest a tone, make that the `(Recommended)` option.
 
 ### Dimension 2: Color Direction
 
 Ask via `ask_user_question`:
-- Question: "What color direction fits this interface?"
+- Question: "What color direction? Commit to dominance — timid palettes are why everything looks the same."
 - Header: "Color"
 - Options:
-  - "Dark mode, warm accents" — dark backgrounds, amber/gold/orange highlights
-  - "Dark mode, cool accents" — dark backgrounds, blue/teal/purple highlights
-  - "Light mode, muted palette" — off-white backgrounds, desaturated earth tones
-  - "Light mode, vibrant" — white/light backgrounds, bold primary colors
-  - "High contrast" — stark black/white with one accent color
+  - "Dark, warm accents" — near-black ground, amber/rust/copper. Lit by candle, not screen.
+  - "Dark, cool accents" — near-black ground, electric blue/teal. Lit by neon.
+  - "Light, muted" — off-white ground, desaturated earth. Newsprint, not iCloud.
+  - "Light, vibrant" — paper-white ground, one bold primary doing all the talking.
+  - "High contrast" — stark black/white, one accent. Refuses to be background.
 - If scan found color tokens/theme, make the closest match the `(Recommended)` option.
 
 ### Dimension 3: Typography
 
 Ask via `ask_user_question`:
-- Question: "What typography direction for this interface?"
+- Question: "What typography direction? No Inter. No Space Grotesk. Pick something with a face."
 - Header: "Typography"
 - Options:
-  - "Serif display + sans body" — editorial feel, character in headings
-  - "All sans-serif, distinctive pairing" — modern, clean, pair unexpected fonts
-  - "Monospace-forward" — terminal/code aesthetic, developer tools
-  - "Mixed: display serif + monospace accents" — editorial meets technical
+  - "Serif display + sans body" — editorial. Headings carry the character.
+  - "All sans, distinctive pairing" — modern, but pair unexpected weights/widths. Not Inter on Inter.
+  - "Monospace-forward" — terminal aesthetic. For tools, dev surfaces, anything that earns it.
+  - "Display serif + mono accents" — editorial meets technical. Best for content with structure.
 - If scan found font imports/type scale, pre-fill the `(Recommended)` option from what exists.
 
 ### Dimension 4: Motion
 
 Ask via `ask_user_question`:
-- Question: "How much motion and animation?"
+- Question: "How much motion? One orchestrated reveal beats ten random hovers."
 - Header: "Motion"
 - Options:
-  - "Subtle micro-interactions" — hover effects, smooth transitions, gentle reveals
-  - "Bold page-load choreography" — staggered reveals, dramatic entrances, scroll-triggered
-  - "CSS-only, no JS" — pure CSS transitions and animations, lightweight
-  - "Static / minimal" — no animation, focus on typography and layout
+  - "Subtle micro-interactions" — hover, focus, transition. Felt, not noticed.
+  - "Bold page-load choreography" — staggered reveals, scroll-triggered. The entrance is the show.
+  - "CSS-only, no JS" — pure CSS transitions. Lightweight, no runtime cost.
+  - "Static" — zero animation. Type and layout do everything. Hardest to do well.
 - If scan found animation tokens/motion library, pre-fill the `(Recommended)` option.
 
 ### Dimension 5: Spatial Composition
 
 Ask via `ask_user_question`:
-- Question: "What spatial composition approach?"
+- Question: "What spatial composition? Symmetry is the default — pick it on purpose or break it on purpose."
 - Header: "Spatial"
 - Options:
-  - "Generous whitespace, asymmetric" — editorial layout, breathing room, offset elements
-  - "Dense, information-rich" — dashboard-style, maximum content per viewport
-  - "Grid-breaking, overlapping" — elements that break the grid, layered composition
-  - "Structured grid, symmetric" — traditional layout, predictable alignment
+  - "Generous whitespace, asymmetric" — editorial. Offset, breathe, refuse to fill the screen.
+  - "Dense, information-rich" — dashboard. Every pixel has a job. Density as the aesthetic.
+  - "Grid-breaking, overlapping" — layered, intentional rule-violation. Elements bleed past each other.
+  - "Structured grid, symmetric" — predictable alignment. Earns it through type and color, not layout drama.
 - If scan found spacing tokens/grid system, pre-fill the `(Recommended)` option.
 
 ### Dimension 6: Backgrounds & Texture
 
 Ask via `ask_user_question`:
-- Question: "What background treatment?"
+- Question: "What background treatment? Background is atmosphere — flat solids are the slop default."
 - Header: "Backgrounds"
 - Options:
-  - "Solid with subtle noise/grain" — flat color with texture overlay for depth
-  - "Gradient mesh" — multi-color gradients, blurred shapes, atmospheric
-  - "Geometric patterns" — repeating shapes, lines, or decorative elements
-  - "Clean solid, no texture" — pure flat color, let content be the visual
+  - "Solid with noise/grain" — flat color, texture overlay. Cheap depth, big payoff.
+  - "Gradient mesh" — multi-color, blurred shapes. Atmospheric. Avoid the purple-blue cliche.
+  - "Geometric patterns" — repeating shapes, lines, decorative motifs. Earns the maximalist tag.
+  - "Clean solid, no texture" — pure flat. Only when content is doing all the visual work.
 - If scan found background/texture definitions, pre-fill the `(Recommended)` option.
 
 ### Dimension 7: Differentiation
 
 Ask via `ask_user_question`:
-- Question: "What makes this interface UNFORGETTABLE? What's the one thing someone will remember?"
+- Question: "What makes this UNFORGETTABLE? Name the one thing someone will remember a week later."
 - Header: "Differentiation"
 - Options (pick 2-3 that fit, always include an open-ended):
-  - "Typography as art" — oversized, expressive type as the primary visual element
-  - "Unexpected interaction" — a signature interaction pattern that surprises
-  - "Atmosphere" — immersive background/texture that sets a mood
-  - "Layout rebellion" — breaks every grid convention intentionally
+  - "Typography as art" — oversized, expressive type IS the visual. Heading does what an image would.
+  - "Unexpected interaction" — a signature pattern that surprises. Cursor, scroll, or hover that no one else does.
+  - "Atmosphere" — immersive background/texture that sets a mood before content loads.
+  - "Layout rebellion" — breaks every grid convention on purpose. Visible intent in the structure.
 - This dimension is always asked — it cannot be derived from scan findings.
 
 ### Record Checkpoint Answers
@@ -203,6 +215,8 @@ Structure the guidelines as a concise, actionable brief:
 ```markdown
 ## Frontend Design Guidelines
 
+**Commit to the vision.** Pick an extreme and execute it with precision — bold maximalism and refined minimalism both work, timid middles don't. Match implementation complexity to the aesthetic: maximalist designs need elaborate animations and effects; minimalist designs need restraint, precision, careful spacing. Elegance comes from executing the vision well, not from playing it safe.
+
 **Tone**: {chosen tone} — {1-sentence description of how it manifests}
 **Color**: {chosen direction} — {specific palette suggestion: primary, accent, background}
 **Typography**: {chosen direction} — {specific font suggestions: display + body}
@@ -216,11 +230,11 @@ Structure the guidelines as a concise, actionable brief:
 
 ### NEVER Generate
 
-- Overused display fonts: Inter, Roboto, Arial, system-ui as hero/display type
-- Clichéd color schemes: purple-to-blue gradients on white backgrounds, generic "SaaS blue"
-- Predictable layouts: centered card stacks, hero-image-then-three-columns, cookie-cutter navbars
-- Cookie-cutter component patterns: identical rounded cards with shadow-md, every section with max-w-7xl mx-auto
-- Generic motion: fade-in on every scroll, identical bounce animations, no intentional choreography
+- **Default fonts**: Inter, Roboto, Arial, system-ui as display type. Also avoid the "distinctive but overused" trap — Space Grotesk, Geist, Satoshi appear in every AI demo. Pick something with actual character for the chosen tone.
+- **Clichéd color**: purple-to-blue gradients on white, generic "SaaS blue" (#3B82F6 family), evenly-distributed pastel palettes. Commit to dominant colors with sharp accents.
+- **Predictable layout**: centered card stacks, hero-then-three-columns, cookie-cutter navbars, every section wrapped in `max-w-7xl mx-auto`. Asymmetry, overlap, and grid-breaking beat symmetry.
+- **Cookie-cutter components**: identical `rounded-xl shadow-md` cards, generic ghost buttons.
+- **Generic motion**: fade-in on every scroll, identical bounce easings, scattered micro-interactions with no choreography. One well-orchestrated page-load reveal beats ten random hover effects.
 
 {If DESIGN.md was NOT found in Step 2:}
 
