@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: "Inject tailored visual design guidance for frontend work. Use when the user asks to build a page, full layout, or new application, or explicitly wants design direction. SKIP for single-component requests in codebases with an established style system. The skill auto-adapts: empty scan → 2-question micro-interview; established system → scan-only injection; otherwise full 7-dimension checkpoint with skip logic."
+description: "Inject tailored visual design guidance for frontend work. Scope: web frontends (HTML/CSS/JS, React, Vue, Svelte, Astro, etc.). Aesthetic principles generalize to native/TUI but examples assume web. Use when the user asks to build a page, full layout, or new application, or explicitly wants design direction. SKIP for single-component requests in codebases with an established style system. The skill auto-adapts: empty scan → 2-question micro-interview; established system → scan-only injection; otherwise full 7-dimension checkpoint with skip logic."
 argument-hint: "[--headless]"
 ---
 
@@ -39,7 +39,13 @@ Two invocation modes:
 3. **Otherwise** — full checkpoint mode:
    - Set mode to `full`. Proceed to Step 2.
 
-4. **Read any context files mentioned** in the prompt (DESIGN.md, style guides, tickets) FULLY before proceeding.
+4. **Extract design intent from `$ARGUMENTS` itself** — both files and inline phrasing.
+   - **Read referenced files fully** (DESIGN.md, style guides, brand decks, tickets, named paths). Each dimension the file commits to (tone, color, type, motion, spatial, backgrounds, differentiation) counts as user-settled.
+   - **Parse inline aesthetic commitments**: phrases like "editorial dark with copper accents", "brutalist serif on cream", "1985 terminal aesthetic". Record each named dimension as user-settled.
+   - **Do not count vague adjectives.** "Modern", "clean", "fresh", "professional", "polished", "minimal-ish" are non-commitments — they do not settle any dimension. The user must name a specific direction for it to count.
+   - **External references** (URLs, Figma links, screenshot paths) cannot be fetched from inside this skill. If the user supplies one without an inline excerpt, ask them to paste the relevant tokens/text — do not proceed with a guess.
+
+Carry the resulting **user-settled dimensions** forward. They merge with scan findings in the auto-resolution step.
 
 **No agent dispatch in Step 1.** Only `Read` on user-named paths.
 
@@ -76,13 +82,15 @@ Read it FULLY using the Read tool. This is the primary style source — its deci
 
 ### Auto-mode resolution (full mode only)
 
-Before continuing, classify the scan result:
+**Combine** scan findings (Step 2) with user-settled dimensions (Step 1 item 4) into a single tally of pre-settled dimensions across the 7 axes. Then classify:
 
-- **Empty scan** (no DESIGN.md, no tokens, no framework config, no style guide, no component library): proceed to Step 3 but ask **only Dimension 1 (Tone) and Dimension 7 (Differentiation)**. Skip 2-6. Note in transcript: "Empty scan — running micro-interview to avoid interviewing into a void." Their guideline lines in Step 4 read: "{dimension}: open — pick to match the chosen tone."
+- **No evidence** (empty scan AND no user intent): proceed to Step 3 but ask **only Dimension 1 (Tone) and Dimension 7 (Differentiation)**. Skip 2-6. Note: "No project context, no inline intent — running micro-interview to avoid interviewing into a void." Step 4 lines for skipped dimensions read: "{dimension}: open — pick to match the chosen tone."
 
-- **Near-complete scan** (DESIGN.md present, OR ≥4 of 5 categories had hits): auto-downgrade to headless. Note: "Established style system detected — switching to headless." Run Step 4 directly.
+- **Near-complete** (DESIGN.md present, OR ≥4 of 7 dimensions settled across scan + user intent combined): auto-downgrade to headless. Note the source(s): "Established style system detected" and/or "User intent covers {N}/7 dimensions — switching to headless." Run Step 4 directly.
 
-- **Partial scan** (1-3 categories with hits, no DESIGN.md): proceed to full Step 3. Skip logic in Step 3 will trim the unsettled dimensions.
+- **Partial** (1-3 dimensions settled, no DESIGN.md): proceed to full Step 3. Skip logic in Step 3 trims dimensions already settled by either scan or user intent — only ask the unsettled axes.
+
+**Project context leads on conflict.** Scan-found tokens/configs override inline intent that contradicts them, unless the user explicitly signals override ("ignore tokens.css and lean dark", "override DESIGN.md", etc.). When intent and scan don't conflict, they merge — scan covers Color via tokens, user supplies Tone, both count.
 
 ### Full checkpoint continuation
 
@@ -230,11 +238,12 @@ Structure the guidelines as a concise, actionable brief:
 
 ### NEVER Generate
 
-- **Default fonts**: Inter, Roboto, Arial, system-ui as display type. Also avoid the "distinctive but overused" trap — Space Grotesk, Geist, Satoshi appear in every AI demo. Pick something with actual character for the chosen tone.
+- **Default fonts**: Inter, Roboto, Arial, system-ui as display type. Also avoid the "distinctive but overused" trap — Space Grotesk, Geist, Satoshi for sans; Fraunces, Cormorant, EB Garamond for editorial serif. These appear in every AI demo. Pick something with actual character for the chosen tone (Old Standard TT, Bodoni Moda, Newsreader, IBM Plex Serif, Tiempos, GT Sectra all carry more weight without being defaults yet).
 - **Clichéd color**: purple-to-blue gradients on white, generic "SaaS blue" (#3B82F6 family), evenly-distributed pastel palettes. Commit to dominant colors with sharp accents.
 - **Predictable layout**: centered card stacks, hero-then-three-columns, cookie-cutter navbars, every section wrapped in `max-w-7xl mx-auto`. Asymmetry, overlap, and grid-breaking beat symmetry.
 - **Cookie-cutter components**: identical `rounded-xl shadow-md` cards, generic ghost buttons.
 - **Generic motion**: fade-in on every scroll, identical bounce easings, scattered micro-interactions with no choreography. One well-orchestrated page-load reveal beats ten random hover effects.
+- **Inert interactive surfaces**: anything that looks clickable/tappable must actually be. Web: real `<a href>` or `<button>`, not styled `<div>`/`<span>`. React/Vue: real `<Link>` or `@click` handler. SwiftUI: `Button`/`NavigationLink`, not styled `Text`. Native: real tap target. The visual affordance promises behavior — keep the promise or remove the affordance.
 
 {If DESIGN.md was NOT found in Step 2:}
 
