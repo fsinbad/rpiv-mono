@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Load skill directories from cross-harness locations, fixing a case where installed skills were not discoverable.
+
 ## [1.3.1] - 2026-05-10
 
 ## [1.3.0] - 2026-05-08
