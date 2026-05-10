@@ -7,6 +7,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Bundled agent sync is now self-healing on session start. New bundled agents are auto-installed; existing agents auto-update when their on-disk content matches the hash recorded for that file in `.rpiv-managed.json` (i.e. the user hasn't edited it); stale managed files auto-remove under the same gate. User-edited agents still go through the manual `/rpiv-update-agents` override.
+- One-shot legacy migration on the first session after upgrade: when no v2 hash data is present in `.rpiv-managed.json` (legacy `string[]` manifest, missing manifest, or corrupt JSON), the package wins on conflict — agents are silently overwritten to the bundled version, stale entries removed, and the manifest is rewritten as `Record<string, sha256>`. This single trust-the-package window closes as soon as the v2 manifest exists; from session #2 onward, user customizations are protected by the smart gate. **Tradeoff:** any local edits to `.pi/agents/*.md` made before this upgrade will be overwritten on first session start. If you intentionally customized an agent, copy it aside before upgrading.
+
 ## [1.3.1] - 2026-05-10
 
 ### Added
