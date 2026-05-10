@@ -21,6 +21,27 @@ const BTW_SYMBOL = Symbol.for("rpiv-btw");
 const I18N_SYMBOL = Symbol.for("rpiv-i18n");
 const VOICE_SYMBOL = Symbol.for("rpiv-voice");
 
+// Package modules are imported dynamically inside beforeEach (NOT statically at
+// the top of this file) by deliberate design — DO NOT "optimize" by hoisting.
+//
+// Two failure modes that hoisting re-introduces:
+//
+// 1. Real-homedir leak: ES module spec hoists `import` statements above all
+//    other top-level statements. If these imports were static here they would
+//    execute BEFORE `process.env.HOME = TEST_HOME` above, so production
+//    modules' `homedir()` captures would resolve to the developer's REAL
+//    $HOME — silently reading/writing actual ~/.config/* files during tests.
+//
+// 2. vi.mock bypass: many test files register `vi.mock("node:fs")` (or other
+//    transitive mocks) and rely on being the FIRST loader of the package
+//    under test. If setup.ts statically imports those packages first, the
+//    package's bindings are sealed against unmocked deps and the test's
+//    vi.mock never reaches the cached module.
+//
+// Cost: cold-cache resolution of the 9 dynamic imports below can exceed
+// vitest's default 10s hookTimeout on the very first test of a worker. The
+// hookTimeout is therefore raised in vitest.config.ts. The cost is paid once
+// per worker; subsequent tests reuse the module cache and beforeEach is fast.
 beforeEach(async () => {
 	const todo = await import("../packages/rpiv-todo/todo.js");
 	todo.__resetState();
