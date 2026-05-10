@@ -11,6 +11,20 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Bundled agent sync is now self-healing on session start. New bundled agents are auto-installed; existing agents auto-update when their on-disk content matches the hash recorded for that file in `.rpiv-managed.json` (i.e. the user hasn't edited it); stale managed files auto-remove under the same gate. User-edited agents still go through the manual `/rpiv-update-agents` override.
 - One-shot legacy migration on the first session after upgrade: when no v2 hash data is present in `.rpiv-managed.json` (legacy `string[]` manifest, missing manifest, or corrupt JSON), the package wins on conflict — agents are silently overwritten to the bundled version, stale entries removed, and the manifest is rewritten as `Record<string, sha256>`. This single trust-the-package window closes as soon as the v2 manifest exists; from session #2 onward, user customizations are protected by the smart gate. **Tradeoff:** any local edits to `.pi/agents/*.md` made before this upgrade will be overwritten on first session start. If you intentionally customized an agent, copy it aside before upgrading.
 
+### Security
+- **agent-sync**: Reject path-traversal manifest keys in `.rpiv-managed.json`. Crafted entries (`../../etc/foo.md`, absolute paths, NUL-injection, non-`.md` extensions) are now dropped at the manifest reader boundary; `path.resolve` + prefix check provides defence-in-depth at every read/copy/unlink site. Closes review **I2**.
+
+### Fixed
+- **agent-sync**: Replace content-derived `hasV2Data` with a `.rpiv-managed.v2` sidecar marker file. The legacy-migration "package wins" branch now closes deterministically once-per-project and survives JSON corruption, partial truncation, and empty-hash collapse. Closes review **I1** (and **Q1**, **Q16**).
+- **agent-sync**: `notifyAgentSyncDrift` now surfaces `result.updated`, `result.removed`, and `result.errors` on `session_start`. Self-healing overwrites and removes are no longer silent. Closes review **I3**.
+- **agent-sync**: `writeManifest` failures now produce `{ op: "manifest-write" }` `SyncError` rows instead of being swallowed. `mkdirSync` failures are tagged honestly with `op: "mkdir"`. Closes review **Q11**, **Q18**.
+- **agent-sync**: Always carry forward an entry's prior `knownHash` on transient I/O instead of dropping empty-hash entries from the next manifest. Closes review **Q2**, **Q3**, **Q4**.
+- **agent-sync**: Sequence the manifest write before the destructive `unlinkSync` loop so a crash mid-sync leaves recoverable state on next run. Closes review **Q14**.
+- **agent-sync**: A manifest-tracked file vanishing from disk is now reported as `result.removed` instead of being silently dropped. Closes review **Q5**.
+
+### Known Limitations
+- **agent-sync**: `syncBundledAgents` is not concurrent-safe across multiple Pi sessions sharing one project directory. Two sessions racing in the same `cwd` may produce a partial manifest where the loser's mutations are untracked. Workaround: avoid running two Pi sessions in the same `cwd` simultaneously. Per-cwd advisory locking is tracked as a follow-up (review **Q12**/**Q13**).
+
 ## [1.3.1] - 2026-05-10
 
 ### Added

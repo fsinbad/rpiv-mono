@@ -140,6 +140,97 @@ describe("session_start hook — notifications", () => {
 		await captured.events.get("session_start")?.[0]({ reason: "startup" } as never, ctx as never);
 		expect(ctx.ui.notify).not.toHaveBeenCalled();
 	});
+
+	it("I3: emits a 'Synced bundled agent(s)' info combining updated + removed", async () => {
+		vi.mocked(syncBundledAgents).mockReturnValueOnce({
+			...emptySync,
+			updated: ["a.md", "b.md"],
+			removed: ["c.md"],
+		});
+		vi.mocked(findMissingSiblings).mockReturnValueOnce([]);
+		const { pi, captured } = createMockPi({ exec: stubGitExec({}) as never });
+		registerSessionHooks(pi);
+		const ctx = createMockCtx({ cwd: projectDir, hasUI: true });
+		await captured.events.get("session_start")?.[0]({ reason: "startup" } as never, ctx as never);
+		const healCall = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.find(
+			(c) => typeof c[0] === "string" && /Synced bundled/.test(c[0]),
+		);
+		expect(healCall).toBeDefined();
+		expect(healCall?.[0]).toContain("2 updated");
+		expect(healCall?.[0]).toContain("1 removed");
+		expect(healCall?.[1]).toBe("info");
+	});
+
+	it("I3: emits a 'sync errors' warning when result.errors > 0", async () => {
+		vi.mocked(syncBundledAgents).mockReturnValueOnce({
+			...emptySync,
+			errors: [{ op: "manifest-write", message: "EACCES" }],
+		});
+		vi.mocked(findMissingSiblings).mockReturnValueOnce([]);
+		const { pi, captured } = createMockPi({ exec: stubGitExec({}) as never });
+		registerSessionHooks(pi);
+		const ctx = createMockCtx({ cwd: projectDir, hasUI: true });
+		await captured.events.get("session_start")?.[0]({ reason: "startup" } as never, ctx as never);
+		const errCall = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.find((c) => c[1] === "warning");
+		expect(errCall).toBeDefined();
+		expect(errCall?.[0]).toContain("1 error");
+	});
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// G0 — Integration: real syncBundledAgents through registerSessionHooks
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("G0: session_start → real syncBundledAgents → notifyAgentSyncDrift", () => {
+	// Restore the suite-level mock between tests to prevent the real implementation
+	// from leaking into adjacent unit tests that depend on the mocked default.
+	afterEach(() => {
+		vi.mocked(syncBundledAgents).mockReset();
+		vi.mocked(syncBundledAgents).mockImplementation(() => emptySync);
+	});
+
+	it("on a fresh tmp cwd, copies bundled agents and emits a single 'Copied N agents' info", async () => {
+		const real = await vi.importActual<typeof import("./agents.js")>("./agents.js");
+		vi.mocked(syncBundledAgents).mockImplementationOnce((cwd, apply) => real.syncBundledAgents(cwd, apply));
+
+		const { pi, captured } = createMockPi({ exec: stubGitExec({}) as never });
+		registerSessionHooks(pi);
+		const ctx = createMockCtx({ cwd: projectDir, hasUI: true });
+		await captured.events.get("session_start")?.[0]({ reason: "startup" } as never, ctx as never);
+
+		const agentsDir = join(projectDir, ".pi", "agents");
+		expect(existsSync(agentsDir)).toBe(true);
+		expect(existsSync(join(agentsDir, ".rpiv-managed.json"))).toBe(true);
+		expect(existsSync(join(agentsDir, ".rpiv-managed.v2"))).toBe(true);
+
+		const addedCalls = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.filter(
+			(c) => typeof c[0] === "string" && /Copied \d+ rpiv-pi agent/.test(c[0]),
+		);
+		expect(addedCalls.length).toBe(1);
+
+		const driftCalls = (ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.filter(
+			(c) => typeof c[0] === "string" && (c[0].includes("outdated") || c[0].includes("Synced bundled")),
+		);
+		expect(driftCalls.length).toBe(0);
+	});
+
+	it("on a second cold-start, reports unchanged (no Copied / no Synced / no drift)", async () => {
+		const real = await vi.importActual<typeof import("./agents.js")>("./agents.js");
+		vi.mocked(syncBundledAgents).mockImplementation((cwd, apply) => real.syncBundledAgents(cwd, apply));
+
+		const { pi, captured } = createMockPi({ exec: stubGitExec({}) as never });
+		registerSessionHooks(pi);
+		const ctx1 = createMockCtx({ cwd: projectDir, hasUI: true });
+		await captured.events.get("session_start")?.[0]({ reason: "startup" } as never, ctx1 as never);
+
+		const ctx2 = createMockCtx({ cwd: projectDir, hasUI: true });
+		await captured.events.get("session_start")?.[0]({ reason: "startup" } as never, ctx2 as never);
+
+		const noisyCalls = (ctx2.ui.notify as ReturnType<typeof vi.fn>).mock.calls.filter(
+			(c) => typeof c[0] === "string" && /Copied|Synced bundled|outdated|removed from bundle/.test(c[0]),
+		);
+		expect(noisyCalls.length).toBe(0);
+	});
 });
 
 describe("session_compact hook", () => {

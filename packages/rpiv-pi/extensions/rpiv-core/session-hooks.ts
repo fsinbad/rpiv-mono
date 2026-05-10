@@ -29,7 +29,9 @@ const THOUGHTS_DIRS = [
 ] as const;
 
 const msgAgentsAdded = (n: number) => `Copied ${n} rpiv-pi agent(s) to .pi/agents/`;
+const msgAgentsHealed = (parts: string[]) => `Synced bundled agent(s): ${parts.join(", ")}.`;
 const msgAgentsDrift = (parts: string[]) => `${parts.join(", ")} agent(s). Run /rpiv-update-agents to sync.`;
+const msgAgentsErrors = (n: number) => `Agent sync reported ${n} error(s). Run /rpiv-update-agents for details.`;
 const msgMissingSiblings = (n: number, list: string) =>
 	`rpiv-pi requires ${n} sibling extension(s): ${list}. Run /rpiv-setup to install them.`;
 
@@ -99,11 +101,22 @@ function notifyAgentSyncDrift(ui: UI, result: SyncResult): void {
 	if (result.added.length > 0) {
 		ui.notify(msgAgentsAdded(result.added.length), "info");
 	}
-	const parts: string[] = [];
-	if (result.pendingUpdate.length > 0) parts.push(`${result.pendingUpdate.length} outdated`);
-	if (result.pendingRemove.length > 0) parts.push(`${result.pendingRemove.length} removed from bundle`);
-	if (parts.length > 0) {
-		ui.notify(msgAgentsDrift(parts), "info");
+	// Self-healing events on session_start: legacy-migration overwrites + smart-gate
+	// auto-removes. Surface these explicitly so the user knows local files were touched.
+	const healed: string[] = [];
+	if (result.updated.length > 0) healed.push(`${result.updated.length} updated`);
+	if (result.removed.length > 0) healed.push(`${result.removed.length} removed`);
+	if (healed.length > 0) {
+		ui.notify(msgAgentsHealed(healed), "info");
+	}
+	const drift: string[] = [];
+	if (result.pendingUpdate.length > 0) drift.push(`${result.pendingUpdate.length} outdated`);
+	if (result.pendingRemove.length > 0) drift.push(`${result.pendingRemove.length} removed from bundle`);
+	if (drift.length > 0) {
+		ui.notify(msgAgentsDrift(drift), "info");
+	}
+	if (result.errors.length > 0) {
+		ui.notify(msgAgentsErrors(result.errors.length), "warning");
 	}
 }
 
