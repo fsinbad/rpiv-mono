@@ -7,6 +7,15 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `plan-reviewer` agent with adversarial plan vetting, wired into the `blueprint` skill as a mandatory review gate before developer hand-off.
+
+### Changed
+- `blueprint` skill structurally streamlined — Success Criteria inlined into phase definitions and internal steps consolidated, yielding faster plan execution. The latency gain was traded for a gated adversarial review that validates plan quality before hand-off.
+- `frontend-design` skill auto-resolves scan findings into empty, near-complete, or partial mode and tailors the interview depth accordingly; checkpoint questions now demand commitment over hedging.
+- Research artifacts omit the redundant "Questions Investigated" section (questions are preserved in their own artifact).
+- Scope-tracer citations now lead with canonical definition sites, following the definition-first ranking insight from [Entire's agentic search study](https://entire.io/blog/improving-agentic-search-in-coding-agents), yielding faster and higher-quality question generation.
+
 ## [1.3.0] - 2026-05-08
 
 ### Added

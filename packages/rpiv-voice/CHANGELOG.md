@@ -7,6 +7,16 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Settings screen with ↑/↓ field navigation, equalizer toggle (default off), and auto-persist on close.
+- Live audio-level equalizer bar in the overlay chrome.
+
+### Changed
+- README rewritten with feature overview, key-binding table, and configuration reference.
+
+### Fixed
+- Preflight stage tag preserved across voice-session initialization.
+
 ## [1.3.0] - 2026-05-08
 
 ### Added
