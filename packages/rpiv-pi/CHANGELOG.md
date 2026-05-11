@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- `blueprint` skill reuses the resolved plan path for `plan-reviewer` dispatch, fixing a path-resolution failure on Windows.
+
 ## [1.4.0] - 2026-05-10
 
 ### Added
