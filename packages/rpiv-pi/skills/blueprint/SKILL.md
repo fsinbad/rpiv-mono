@@ -362,11 +362,13 @@ fresh dispatch, not from a stronger model.
 
 ### 10.1. Dispatch the plan-reviewer subagent
 
+Reuse the exact `file_path` string passed to `Write` at Step 6 — the runtime already resolved it for this platform; do not rebuild it from `pwd`. `ls` to verify it still exists; abort dispatch on miss.
+
 ```
 Agent({
   subagent_type: "plan-reviewer",
   description: "post-finalization plan review",
-  prompt: `Plan artifact: {ABSOLUTE_PATH_TO_FINALIZED_PLAN}
+  prompt: `Plan artifact: {Step-6 Write file_path, ls-verified}
 
 Review the finalized plan against the live codebase at HEAD. Walk every Phase code fence, audit against code-quality / codebase-fit / actionability, emit one severity-tagged row per finding.`
 })
