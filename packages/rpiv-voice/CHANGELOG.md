@@ -7,6 +7,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Equalizer redesigned with a centered bell silhouette, truecolor accent gradient, and smoother audio-level animation.
+
 ## [1.4.2] - 2026-05-11
 
 ### Changed
