@@ -1,4 +1,4 @@
-import { type Component, Spacer } from "@earendil-works/pi-tui";
+import type { Component } from "@earendil-works/pi-tui";
 import type { EqualizerViewProps } from "./components/equalizer-view.js";
 import type { SettingsFormViewProps } from "./components/settings-form-view.js";
 import type { StatusBarViewProps } from "./components/status-bar-view.js";
@@ -7,10 +7,11 @@ import type { StatefulView } from "./stateful-view.js";
 
 /**
  * Per-screen layout. Returns the ordered list of pi-tui Components that the
- * overlay container renders top-down. Both screens share the same bottom
- * chrome (mint divider + equalizer + status row) so the equalizer column and
- * key hints stay vertically pinned when flipping between dictation and
- * settings.
+ * overlay container renders top-down: body component → divider → equalizer →
+ * status row. Both screens share the same bottom chrome so the equalizer
+ * column and key hints stay vertically pinned when flipping between dictation
+ * and settings; nothing is inserted above the body or between the equalizer
+ * and the status row, so the overlay reads flush against both edges.
  */
 export interface ScreenContentStrategy {
 	readonly kind: "dictation" | "settings";
@@ -30,7 +31,7 @@ export class DictationScreenStrategy implements ScreenContentStrategy {
 	constructor(private readonly config: DictationScreenStrategyConfig) {}
 
 	children(): readonly Component[] {
-		return [new Spacer(1), this.config.transcript, this.config.divider, this.config.equalizer, this.config.statusBar];
+		return [this.config.transcript, this.config.divider, this.config.equalizer, this.config.statusBar];
 	}
 }
 
@@ -47,12 +48,6 @@ export class SettingsScreenStrategy implements ScreenContentStrategy {
 	constructor(private readonly config: SettingsScreenStrategyConfig) {}
 
 	children(): readonly Component[] {
-		return [
-			new Spacer(1),
-			this.config.settingsForm,
-			this.config.divider,
-			this.config.equalizer,
-			this.config.statusBar,
-		];
+		return [this.config.settingsForm, this.config.divider, this.config.equalizer, this.config.statusBar];
 	}
 }

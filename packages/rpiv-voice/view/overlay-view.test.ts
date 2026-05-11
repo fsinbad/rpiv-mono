@@ -38,12 +38,15 @@ function withScreen(state: VoiceState, screen: VoiceState["currentScreen"]): Voi
 	return { ...state, currentScreen: screen };
 }
 
-// Equalizer ON: bottom chrome = [DIVIDER, EQ-TOP, EQ-BOT, STATUS] = 4 rows.
-// All tests in this file exercise the eq-enabled layout because that's the
-// non-trivial chrome anchor. The eq-disabled path is exercised by the
-// equalizer-view tests (component returns []) and the projections tests.
+// Equalizer ON: bottom chrome = [DIVIDER, EQ-1…EQ-7, STATUS] = 9 rows. The
+// equalizer's mirrored vertical-bar design reserves 7 rows (centerline + 3
+// above + 3 below) so each amp step is symmetric around the centre. All tests
+// in this file exercise the eq-enabled layout because that's the non-trivial
+// chrome anchor. The eq-disabled path is exercised by the equalizer-view
+// tests (component returns []) and the projections tests.
 const DRAFT = { hallucinationFilterEnabled: true, equalizerEnabled: true };
-const CHROME = [["DIVIDER"], ["EQ-TOP"], ["EQ-BOT"], ["STATUS"]];
+const CHROME = [["DIVIDER"], ["EQ-1"], ["EQ-2"], ["EQ-3"], ["EQ-4"], ["EQ-5"], ["EQ-6"], ["EQ-7"], ["STATUS"]];
+const CHROME_ROWS = CHROME.length;
 
 describe("OverlayView height stabilization", () => {
 	it("renders empty when state has not been set yet", () => {
@@ -67,20 +70,19 @@ describe("OverlayView height stabilization", () => {
 		const dict = initialVoiceState(DRAFT);
 		overlay.setProps({ state: dict });
 		const dictRows = overlay.render(80);
-		// 5 body + 4 chrome = 9 rows, no padding needed.
-		expect(dictRows).toHaveLength(9);
+		// 5 body + 9 chrome = 14 rows, no padding needed.
+		expect(dictRows).toHaveLength(5 + CHROME_ROWS);
 		expect(dictRows[dictRows.length - 1]).toContain("STATUS");
 
 		// Flip to settings — should pad up to 5 body rows even though settings
 		// only has 1 row of body content.
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const settRows = overlay.render(80);
-		expect(settRows).toHaveLength(9);
-		expect(settRows[settRows.length - 1]).toContain("STATUS");
-		expect(settRows[settRows.length - 2]).toContain("EQ-BOT");
-		expect(settRows[settRows.length - 3]).toContain("EQ-TOP");
-		expect(settRows[settRows.length - 4]).toContain("DIVIDER");
-		// First 4 rows should be empty padding, then "s1", then 4 chrome rows.
+		expect(settRows).toHaveLength(5 + CHROME_ROWS);
+		for (let i = 0; i < CHROME_ROWS; i++) {
+			expect(settRows[settRows.length - CHROME_ROWS + i]).toContain(CHROME[i]![0]);
+		}
+		// First 4 rows should be empty padding, then "s1", then chrome rows.
 		expect(settRows.slice(0, 4)).toEqual(["", "", "", ""]);
 		expect(settRows[4]).toContain("s1");
 	});
@@ -95,18 +97,18 @@ describe("OverlayView height stabilization", () => {
 
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const before = overlay.render(80);
-		// 4 body (settings padded by dictation render) + 4 chrome = 8 rows.
-		expect(before).toHaveLength(8);
+		// 4 body (settings padded by dictation render) + 9 chrome = 13 rows.
+		expect(before).toHaveLength(4 + CHROME_ROWS);
 
 		overlay.setProps({ state: dict });
-		expect(overlay.render(80)).toHaveLength(8);
+		expect(overlay.render(80)).toHaveLength(4 + CHROME_ROWS);
 
 		overlay.setProps({ state: withScreen(dict, "settings") });
 		const after = overlay.render(80);
-		expect(after).toHaveLength(8);
+		expect(after).toHaveLength(4 + CHROME_ROWS);
 	});
 
-	it("pins divider + equalizer + status to the bottom four rows regardless of screen", () => {
+	it("pins divider + equalizer + status to the bottom chrome rows regardless of screen", () => {
 		const overlay = makeOverlay({
 			rows: 24,
 			dictation: [["d1", "d2", "d3"], ...CHROME],
@@ -114,19 +116,17 @@ describe("OverlayView height stabilization", () => {
 		});
 		const dict = initialVoiceState(DRAFT);
 
+		const expectChromePinned = (rows: string[]) => {
+			for (let i = 0; i < CHROME_ROWS; i++) {
+				expect(rows[rows.length - CHROME_ROWS + i]).toContain(CHROME[i]![0]);
+			}
+		};
+
 		overlay.setProps({ state: dict });
-		const dictRows = overlay.render(80);
-		expect(dictRows[dictRows.length - 1]).toContain("STATUS");
-		expect(dictRows[dictRows.length - 2]).toContain("EQ-BOT");
-		expect(dictRows[dictRows.length - 3]).toContain("EQ-TOP");
-		expect(dictRows[dictRows.length - 4]).toContain("DIVIDER");
+		expectChromePinned(overlay.render(80));
 
 		overlay.setProps({ state: withScreen(dict, "settings") });
-		const settRows = overlay.render(80);
-		expect(settRows[settRows.length - 1]).toContain("STATUS");
-		expect(settRows[settRows.length - 2]).toContain("EQ-BOT");
-		expect(settRows[settRows.length - 3]).toContain("EQ-TOP");
-		expect(settRows[settRows.length - 4]).toContain("DIVIDER");
+		expectChromePinned(overlay.render(80));
 	});
 });
 
@@ -143,13 +143,12 @@ describe("OverlayView clipToTerminalHeight integration", () => {
 		overlay.setProps({ state: dict });
 
 		const rows = overlay.render(80);
-		// 12 body + 4 chrome = 16 rendered, clipped to 13.
+		// 12 body + 9 chrome = 21 rendered, clipped to 13.
 		expect(rows.length).toBe(13);
 		// Bottom chrome must survive — the clip is from the top.
-		expect(rows[rows.length - 1]).toContain("STATUS");
-		expect(rows[rows.length - 2]).toContain("EQ-BOT");
-		expect(rows[rows.length - 3]).toContain("EQ-TOP");
-		expect(rows[rows.length - 4]).toContain("DIVIDER");
+		for (let i = 0; i < CHROME_ROWS; i++) {
+			expect(rows[rows.length - CHROME_ROWS + i]).toContain(CHROME[i]![0]);
+		}
 		// First content row should be one of the later body lines (top was dropped).
 		const earliestSurvivingIdx = Number(rows[0].match(/line-(\d+)/)?.[1] ?? -1);
 		expect(earliestSurvivingIdx).toBeGreaterThan(0);

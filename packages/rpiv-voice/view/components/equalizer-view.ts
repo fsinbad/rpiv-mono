@@ -3,61 +3,66 @@ import type { RecordingStatus } from "../../state/state.js";
 import type { StatefulView } from "../stateful-view.js";
 
 const COLOR_ACCENT = "accent";
-const COLOR_MUTED = "muted";
 const COLOR_DIM = "dim";
 
-// Lower-block glyph ladder: each cell fills from its baseline upward in
-// eighths. Used for BOTH cell rows now — the bottom row fills first, the top
-// row continues filling above it, giving us 16 distinct amplitude steps
-// (vs. 8 in the old mirrored design) for the same two-row chrome height.
-const BAR_GLYPHS = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"] as const;
-const SUB_LEVELS_PER_ROW = BAR_GLYPHS.length - 1; // 8 — the highest non-empty index
-const MAX_AMP = SUB_LEVELS_PER_ROW * 2; // 16 sub-levels stacked across two rows
+// Vertical gradient: parse the theme's `accent` truecolor SGR and scale each
+// channel per ring outward from the centerline. Falls back to Pi's discrete
+// shade keys when the accent isn't truecolor (256/8-color themes, test mocks).
+const GRADIENT_BRIGHTNESS = [1.0, 0.65, 0.4, 0.22] as const;
+const SHADE_FALLBACK = ["accent", "borderAccent", "muted", "dim"] as const;
+const ANSI_FG_RESET = "\x1b[39m";
+const TRUECOLOR_FG_REGEX = /\x1b\[38;2;(\d+);(\d+);(\d+)m/;
 
-// Perceptual gain on the live RMS reading. RMS for normal speech sits around
-// 0.02–0.15; sqrt(level * 5) reaches roughly 0.7 at quiet talking volume and
-// saturates on loud peaks.
-const PERCEPTUAL_GAIN = 5;
+// Vertical lattice geometry. Amp counts rings outward from CENTER_ROW so
+// every bar is mirror-symmetric (amp=1 lights only the centerline, amp=MAX
+// fills the whole column).
+const HALF_SPAN = 3;
+const CENTER_ROW = HALF_SPAN;
+const ROW_COUNT = HALF_SPAN * 2 + 1;
+const MAX_AMP = HALF_SPAN + 1;
 
-// Single-pole low-pass on `level`. Half-life ~25 ms at 10 Hz updates — fast
-// enough that loud peaks visibly punch through, slow enough to suppress the
-// glyph-quantization shimmer.
+// Bars sit on even column indices; odd columns are mandatory spacing so
+// adjacent strokes never visually merge.
+const BAR_GLYPH = "█";
+const SPACE_GLYPH = " ";
+const BAR_STRIDE = 2;
+
+// fBm noise drives the silhouette pattern. Three octaves at decreasing
+// spatial scale + decorrelated time drift give an organic, non-periodic
+// waveform that still clusters smoothly (adjacent bars share a trend).
+const NOISE_OCTAVES = [
+	{ spacing: 10, weight: 0.55, drift: 0.04, seed: 13.7 },
+	{ spacing: 5, weight: 0.3, drift: 0.07, seed: 29.3 },
+	{ spacing: 2.5, weight: 0.15, drift: 0.11, seed: 47.1 },
+] as const;
+
+// Standard fract(sin) shader hash. Multiplier and offset are arbitrary but
+// well-tested for irrational-looking distribution.
+const HASH_FREQ = 12.9898;
+const HASH_AMP = 43758.5453;
+
+// Mild over-gain on noise so constructive peaks saturate the quantizer at
+// MAX_AMP — keeps the top of the lattice in use without flattening every
+// cluster into a mesa.
+const NOISE_PEAK_GAIN = 1.15;
+
+// Perceptual mapping from RMS to display gain. sqrt(level * 15) saturates
+// around level≈0.067 so normal speaking volume reaches full bars without
+// projecting.
+const PERCEPTUAL_GAIN = 15;
+
+// Single-pole smoother on the live RMS — ~1 s natural decay to blank during
+// silences, fast enough that onsets still punch through.
 const SMOOTHING = 0.3;
 
-// Trapezoid envelope: flat plateau across the middle PLATEAU_HALF_WIDTH × 2 of
-// the row, linear fade to zero over FADE_WIDTH on each side, hard zero past
-// that. This is the cover-art silhouette: confident centred bell with tails
-// that go fully blank, so the equalizer never reads as filling the whole row.
-const PLATEAU_HALF_WIDTH = 0.4;
-const FADE_WIDTH = 0.08;
-
-// Per-column noise floor on the static envelope. Keeps adjacent bars at
-// different heights even when held at peak so the silhouette has texture.
-const SHAPE_FLOOR = 0.15;
-
-// Per-tick fall range. Each column draws a deterministic decay rate from
-// [FALL_MIN, FALL_MAX] — that's what makes adjacent bars fall back at
-// different speeds after a loud onset, so the lattice dances instead of
-// pulsing in lockstep. Range is tuned to the canonical voice-meter release
-// window: at 10 Hz update rate, FALL_MIN=0.10 ⇒ ~1.0 s tail, FALL_MAX=0.22 ⇒
-// ~450 ms. Audio-engineering literature (IEC 60268-17 / BS 6840 PPM) puts the
-// "feels alive on speech" sweet spot at 300–500 ms release, faster than VU's
-// 300 ms symmetric and slower than PPM's 1.5 s decay-to-−20 dB.
-const FALL_MIN = 0.1;
-const FALL_MAX = 0.22;
-
-// Peak-hold latency: every new local maximum latches the column at its peak
-// height for HOLD_TICKS frames before the per-column gravity kicks in. At
-// 10 Hz tick that is ~600 ms — the recognisable "memory of the loudest recent
-// moment" you see in Winamp / classic VU plug-ins. We can't dedicate a
-// separate cap row in two-row chrome, so the ballistic lives inside the bar
-// itself: the bar freezes briefly at its peak, then resumes its asymmetric
-// release.
-const HOLD_TICKS = 6;
-
-interface ColumnTuning {
-	envelope: number;
-	fall: number;
+// Blended Hann window: 0.5·rc² + 0.5·rc⁵. The rc² term keeps shoulders broad
+// (smooth taper through every amp bucket); the rc⁵ term sharpens the centre
+// tip (few slots reach MAX_AMP). Produces a parabolic bell silhouette.
+function bellEnvelope(t: number): number {
+	const rc = 0.5 - 0.5 * Math.cos(2 * Math.PI * t);
+	const rc2 = rc * rc;
+	const rc5 = rc2 * rc2 * rc;
+	return 0.5 * rc2 + 0.5 * rc5;
 }
 
 export interface EqualizerViewProps {
@@ -68,25 +73,17 @@ export interface EqualizerViewProps {
 
 export class EqualizerView implements StatefulView<EqualizerViewProps> {
 	private props: EqualizerViewProps = { level: 0, status: "recording", enabled: false };
-	private smoothedLevel = 0;
-	private tuning: ColumnTuning[] = [];
-	private level: Float64Array = new Float64Array(0);
-	// Ticks remaining in each column's peak-hold latch. Reset to HOLD_TICKS
-	// every time level[i] rises to a new local max; counts down on every
-	// non-rise tick. While > 0 the column's gravity is suppressed.
-	private holdLeft: Uint8Array = new Uint8Array(0);
-	// Each setProps tick that should advance the lattice queues one step here;
-	// render() consumes them. Decoupling keeps render() idempotent for the same
-	// audio frame even if the TUI calls it more than once.
+	private envelope: Float64Array = new Float64Array(0);
+	private currentBarCount = 0;
+	private phase = 0;
 	private pendingTicks = 0;
+	private smoothedLevel = 0;
+	private gradient: readonly string[] | null = null;
+	private gradientResolved = false;
 
 	constructor(private readonly theme: Theme) {}
 
 	setProps(props: EqualizerViewProps): void {
-		// Live RMS only feeds the smoother + lattice while recording AND enabled.
-		// Pausing freezes the silhouette at its last shape (the dim colour carries
-		// the paused state). Disabling drops to zero rows from render() so the
-		// dictation pane reclaims the space.
 		if (props.enabled && props.status === "recording") {
 			this.smoothedLevel = (1 - SMOOTHING) * this.smoothedLevel + SMOOTHING * props.level;
 			this.pendingTicks += 1;
@@ -100,135 +97,110 @@ export class EqualizerView implements StatefulView<EqualizerViewProps> {
 
 	render(width: number): string[] {
 		if (!this.props.enabled) return [];
-		if (width <= 0) return ["", ""];
+		if (width <= 0) return new Array<string>(ROW_COUNT).fill("");
 
-		if (this.tuning.length !== width) {
-			this.tuning = buildTuning(width);
-			this.level = new Float64Array(width);
-			this.holdLeft = new Uint8Array(width);
+		const nBars = Math.ceil(width / BAR_STRIDE);
+		if (this.currentBarCount !== nBars) {
+			this.envelope = new Float64Array(nBars);
+			for (let i = 0; i < nBars; i++) {
+				const t = nBars === 1 ? 0.5 : i / (nBars - 1);
+				this.envelope[i] = bellEnvelope(t);
+			}
+			this.currentBarCount = nBars;
 		}
 
-		const recording = this.props.status === "recording";
-		const gain = recording ? Math.min(1, Math.sqrt(this.smoothedLevel * PERCEPTUAL_GAIN)) : 0;
-		// Drain queued ticks; while paused pendingTicks is always 0, so the level
-		// array holds whatever shape it had at the moment of pause.
-		for (let n = 0; n < this.pendingTicks; n++) advanceLevels(this.level, this.holdLeft, this.tuning, gain);
+		this.phase += this.pendingTicks;
 		this.pendingTicks = 0;
 
-		const amps = new Uint8Array(width);
-		let topRow = "";
-		let botRow = "";
-		for (let i = 0; i < width; i++) {
-			const amp = quantize(this.level[i] ?? 0);
-			amps[i] = amp;
-			// Bottom row holds the first SUB_LEVELS_PER_ROW eighths; once it's
-			// saturated, the top row picks up the rest. Both rows draw from the
-			// same lower-block ladder so the bar visibly grows from the bottom.
-			const botIdx = amp >= SUB_LEVELS_PER_ROW ? SUB_LEVELS_PER_ROW : amp;
-			const topIdx = amp > SUB_LEVELS_PER_ROW ? amp - SUB_LEVELS_PER_ROW : 0;
-			botRow += BAR_GLYPHS[botIdx]!;
-			topRow += BAR_GLYPHS[topIdx]!;
+		// smoothedLevel only advances while recording, so freezing it during
+		// pause naturally preserves the last bar heights.
+		const audioGain = Math.min(1, Math.sqrt(this.smoothedLevel * PERCEPTUAL_GAIN));
+		// Fold the noise lookup around the centerline so slot i and its mirror
+		// see identical noise — silhouette stays centred every frame.
+		const center = (nBars - 1) / 2;
+		const amps = new Uint8Array(nBars);
+		for (let i = 0; i < nBars; i++) {
+			const shape = fbmShape(Math.abs(i - center), this.phase);
+			amps[i] = quantize(shape * this.envelope[i]! * audioGain);
 		}
 
-		return [this.paint(topRow, amps, recording), this.paint(botRow, amps, recording)];
-	}
-
-	// Run-length encode the row into theme.fg() segments — one segment per
-	// contiguous run of cells that share the same shade tier. Paused state
-	// collapses to a single dim segment, matching the "frozen, gone quiet"
-	// semantic the rest of the overlay uses.
-	private paint(row: string, amps: Uint8Array, recording: boolean): string {
-		if (!recording) return this.theme.fg(COLOR_DIM, row);
-		const width = row.length;
-		if (width === 0) return "";
-		const cells = [...row];
-		let out = "";
-		let runStart = 0;
-		let currentShade = pickShade(amps[0] ?? 0);
-		for (let i = 1; i < width; i++) {
-			const shade = pickShade(amps[i] ?? 0);
-			if (shade !== currentShade) {
-				out += this.theme.fg(currentShade, cells.slice(runStart, i).join(""));
-				runStart = i;
-				currentShade = shade;
+		this.ensureGradient();
+		const recording = this.props.status === "recording";
+		const out: string[] = new Array(ROW_COUNT);
+		for (let r = 0; r < ROW_COUNT; r++) {
+			let raw = "";
+			for (let c = 0; c < width; c++) {
+				if (c % BAR_STRIDE !== 0) {
+					raw += SPACE_GLYPH;
+					continue;
+				}
+				raw += rowLit(amps[c / BAR_STRIDE]!, r) ? BAR_GLYPH : SPACE_GLYPH;
 			}
+			out[r] = this.paintRow(raw, r, recording);
 		}
-		out += this.theme.fg(currentShade, cells.slice(runStart).join(""));
 		return out;
 	}
-}
 
-// Three-tier shade picker over the 0..MAX_AMP amplitude range. Splits roughly
-// thirds: lower bottom-row eighths render dim, the upper bottom-row + lower
-// top-row eighths render muted, anything in the upper top-row burns accent.
-function pickShade(amp: number): "dim" | "muted" | "accent" {
-	if (amp <= 5) return COLOR_DIM;
-	if (amp <= 10) return COLOR_MUTED;
-	return COLOR_ACCENT;
-}
-
-function buildTuning(width: number): ColumnTuning[] {
-	const out: ColumnTuning[] = new Array(width);
-	for (let i = 0; i < width; i++) {
-		const t = width === 1 ? 0.5 : i / (width - 1);
-		const envelope = trapezoidEnvelope(t) * columnShape(i);
-		const fall = FALL_MIN + columnHash(i) * (FALL_MAX - FALL_MIN);
-		out[i] = { envelope, fall };
+	private ensureGradient(): void {
+		if (this.gradientResolved) return;
+		this.gradientResolved = true;
+		const themeWithAnsi = this.theme as { getFgAnsi?: (key: string) => string };
+		if (typeof themeWithAnsi.getFgAnsi !== "function") return;
+		const accentAnsi = themeWithAnsi.getFgAnsi(COLOR_ACCENT);
+		const match = accentAnsi.match(TRUECOLOR_FG_REGEX);
+		if (!match) return;
+		const r = Number(match[1]);
+		const g = Number(match[2]);
+		const b = Number(match[3]);
+		this.gradient = GRADIENT_BRIGHTNESS.map((factor) => rgbAnsi(r * factor, g * factor, b * factor));
 	}
-	return out;
-}
 
-// Rise-fast / hold / fall-slow per column. The latch refreshes on every
-// rising-or-stable tick so sustained loud audio keeps the column pinned to
-// peak; only when target drops below prev does the HOLD_TICKS countdown
-// start, and only after it expires does the column-specific gravity (release
-// time) take over. End result: bars freeze at the loudest recent moment for
-// ~600 ms, then start dropping at their per-column rates — the classic
-// peak-hold ballistic of Winamp-class meters.
-function advanceLevels(level: Float64Array, holdLeft: Uint8Array, tuning: ColumnTuning[], gain: number): void {
-	for (let i = 0; i < level.length; i++) {
-		const t = tuning[i]!;
-		const target = gain * t.envelope;
-		const prev = level[i]!;
-		if (target >= prev) {
-			level[i] = target;
-			holdLeft[i] = HOLD_TICKS;
-		} else if (holdLeft[i]! > 0) {
-			holdLeft[i] = holdLeft[i]! - 1;
-		} else {
-			level[i] = Math.max(0, prev - t.fall);
+	private paintRow(raw: string, row: number, recording: boolean): string {
+		if (!recording) return this.theme.fg(COLOR_DIM, raw);
+		const dist = Math.abs(row - CENTER_ROW);
+		if (this.gradient) {
+			const idx = Math.min(dist, this.gradient.length - 1);
+			return `${this.gradient[idx]}${raw}${ANSI_FG_RESET}`;
 		}
+		const fallbackIdx = Math.min(dist, SHADE_FALLBACK.length - 1);
+		return this.theme.fg(SHADE_FALLBACK[fallbackIdx]!, raw);
 	}
 }
 
-// Trapezoid centered at t=0.5: flat 1.0 across [0.5±PLATEAU_HALF_WIDTH], linear
-// fade to 0 over the next FADE_WIDTH, then hard zero at the very edges.
-function trapezoidEnvelope(t: number): number {
-	const d = Math.abs(t - 0.5);
-	if (d <= PLATEAU_HALF_WIDTH) return 1;
-	const fadeT = (d - PLATEAU_HALF_WIDTH) / FADE_WIDTH;
-	if (fadeT >= 1) return 0;
-	return 1 - fadeT;
+function valueNoise(x: number, seed: number): number {
+	const xi = Math.floor(x);
+	const xf = x - xi;
+	const u = xf * xf * (3 - 2 * xf);
+	const a = valueHash(xi, seed);
+	const b = valueHash(xi + 1, seed);
+	return a + (b - a) * u;
 }
 
-// Deterministic per-column multiplier in [SHAPE_FLOOR, 1]. Two hash phases are
-// summed so adjacent columns vary like a frozen audio snapshot — dense peaks
-// and dips, no obvious periodicity.
-function columnShape(i: number): number {
-	const a = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
-	const b = Math.sin(i * 7.523 + 41.31) * 13371.337;
-	const fa = a - Math.floor(a);
-	const fb = b - Math.floor(b);
-	const f = (fa + fb) / 2;
-	return SHAPE_FLOOR + (1 - SHAPE_FLOOR) * f;
+function valueHash(x: number, seed: number): number {
+	const v = Math.sin(x * HASH_FREQ + seed) * HASH_AMP;
+	return v - Math.floor(v);
 }
 
-// Independent per-column [0, 1) hash for fall rates — different sine phases
-// from columnShape so envelope-tall columns don't all share a single fall
-// speed.
-function columnHash(i: number): number {
-	const a = Math.sin(i * 97.13 + 12.345) * 43758.5453;
-	return a - Math.floor(a);
+function fbmShape(i: number, phase: number): number {
+	let sum = 0;
+	for (const o of NOISE_OCTAVES) {
+		sum += valueNoise(i / o.spacing + phase * o.drift, o.seed) * o.weight;
+	}
+	return sum * NOISE_PEAK_GAIN;
+}
+
+function rgbAnsi(r: number, g: number, b: number): string {
+	return `\x1b[38;2;${clamp8(r)};${clamp8(g)};${clamp8(b)}m`;
+}
+
+function clamp8(v: number): number {
+	const rounded = Math.round(v);
+	return rounded < 0 ? 0 : rounded > 255 ? 255 : rounded;
+}
+
+function rowLit(amp: number, row: number): boolean {
+	if (amp <= 0) return false;
+	return Math.abs(row - CENTER_ROW) < amp;
 }
 
 function quantize(level: number): number {

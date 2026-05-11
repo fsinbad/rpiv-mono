@@ -34,7 +34,7 @@ describe("DictationScreenStrategy", () => {
 		expect(strategy.kind).toBe("dictation");
 	});
 
-	it("returns [Spacer, transcript, divider, equalizer, statusBar] children", () => {
+	it("returns [transcript, divider, equalizer, statusBar] children", () => {
 		const transcript = fakeStateful<TranscriptViewProps>();
 		const divider = fakeComponent();
 		const equalizer = fakeStateful<EqualizerViewProps>();
@@ -42,13 +42,11 @@ describe("DictationScreenStrategy", () => {
 		const strategy = new DictationScreenStrategy({ transcript, divider, equalizer, statusBar });
 
 		const children = strategy.children();
-		expect(children).toHaveLength(5);
-		// First child is a Spacer (has render method)
-		expect(children[0]).toHaveProperty("render");
-		expect(children[1]).toBe(transcript);
-		expect(children[2]).toBe(divider);
-		expect(children[3]).toBe(equalizer);
-		expect(children[4]).toBe(statusBar);
+		expect(children).toHaveLength(4);
+		expect(children[0]).toBe(transcript);
+		expect(children[1]).toBe(divider);
+		expect(children[2]).toBe(equalizer);
+		expect(children[3]).toBe(statusBar);
 	});
 });
 
@@ -63,7 +61,7 @@ describe("SettingsScreenStrategy", () => {
 		expect(strategy.kind).toBe("settings");
 	});
 
-	it("returns [Spacer, settingsForm, divider, equalizer, statusBar] children", () => {
+	it("returns [settingsForm, divider, equalizer, statusBar] children", () => {
 		const settingsForm = fakeStateful<SettingsFormViewProps>();
 		const divider = fakeComponent();
 		const equalizer = fakeStateful<EqualizerViewProps>();
@@ -71,10 +69,10 @@ describe("SettingsScreenStrategy", () => {
 		const strategy = new SettingsScreenStrategy({ settingsForm, divider, equalizer, statusBar });
 
 		const children = strategy.children();
-		expect(children).toHaveLength(5);
-		expect(children[1]).toBe(settingsForm);
-		expect(children[2]).toBe(divider);
-		expect(children[3]).toBe(equalizer);
-		expect(children[4]).toBe(statusBar);
+		expect(children).toHaveLength(4);
+		expect(children[0]).toBe(settingsForm);
+		expect(children[1]).toBe(divider);
+		expect(children[2]).toBe(equalizer);
+		expect(children[3]).toBe(statusBar);
 	});
 });

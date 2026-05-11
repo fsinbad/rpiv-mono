@@ -5,6 +5,9 @@ import { describe, expect, it } from "vitest";
 import { EqualizerView } from "./equalizer-view.js";
 
 const WIDTH = 60;
+const ROW_COUNT = 7;
+const CENTER_ROW = 3;
+const BAR_GLYPH = "█";
 
 const taggedTheme = makeTheme({
 	fg: (color: string, text: string) => `<${color}>${text}</${color}>`,
@@ -14,9 +17,6 @@ function payload(line: string): string {
 	return line.replace(/<\/?[^>]+>/g, "");
 }
 
-// All colour keys present in the row, in first-appearance order. Rows are
-// painted as run-length-encoded shade segments — the gradient across the
-// trapezoid silhouette emits multiple tags per row.
 function colorKeys(line: string): string[] {
 	const seen = new Set<string>();
 	const order: string[] = [];
@@ -29,84 +29,120 @@ function colorKeys(line: string): string[] {
 	return order;
 }
 
-// Both rows now use the same lower-block ladder (bars grow from the bottom).
-const BAR_AMP: Record<string, number> = {
-	" ": 0,
-	"▁": 1,
-	"▂": 2,
-	"▃": 3,
-	"▄": 4,
-	"▅": 5,
-	"▆": 6,
-	"▇": 7,
-	"█": 8,
-};
-
-function rowAmps(line: string): number[] {
-	return [...line].map((g) => BAR_AMP[g] ?? -1);
+function barCellsForRow(line: string): string[] {
+	const cells = [...line];
+	const out: string[] = [];
+	for (let c = 0; c < cells.length; c += 2) out.push(cells[c]!);
+	return out;
 }
 
-// Bottom row holds eighths 0..8; top row continues 9..16. Stacking gives the
-// full 0..16 amplitude per column for the new design.
-function totalAmps(top: string, bot: string): number[] {
-	const t = rowAmps(top);
-	const b = rowAmps(bot);
-	return t.map((tv, i) => tv + (b[i] ?? 0));
+function barHeights(rows: string[]): number[] {
+	const stripped = rows.map(payload);
+	const perRow = stripped.map(barCellsForRow);
+	const nBars = perRow[0]?.length ?? 0;
+	const h = new Array<number>(nBars).fill(0);
+	for (const row of perRow) {
+		for (let s = 0; s < nBars; s++) if (row[s] === BAR_GLYPH) h[s]! += 1;
+	}
+	return h;
 }
 
-describe("EqualizerView.render() — bottom-anchored lattice", () => {
-	it("renders two rows", () => {
+describe("EqualizerView.render() — traveling-wave bar lattice", () => {
+	it("renders ROW_COUNT rows while recording", () => {
 		const view = new EqualizerView(taggedTheme);
-		view.setProps({ level: 0.3, status: "recording", enabled: true });
-		expect(view.render(WIDTH)).toHaveLength(2);
+		view.setProps({ level: 0.1, status: "recording", enabled: true });
+		expect(view.render(WIDTH)).toHaveLength(ROW_COUNT);
 	});
 
-	it("is fully invisible at silence (both rows entirely spaces)", () => {
+	it("keeps odd column indices blank — bars never touch each other", () => {
 		const view = new EqualizerView(taggedTheme);
-		// Settle smoother + lattice to zero.
-		for (let i = 0; i < 50; i++) view.setProps({ level: 0, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-		expect(top!.replace(/ /g, "")).toBe("");
-		expect(bot!.replace(/ /g, "")).toBe("");
-	});
-
-	it("fills the bottom row before any top-row activity (bars grow upward)", () => {
-		const view = new EqualizerView(taggedTheme);
-		// Quiet input — total amp on most columns should stay within the bottom
-		// row (0..8), so the top row has no activity even where the bottom row
-		// is partially filled.
-		for (let i = 0; i < 30; i++) view.setProps({ level: 0.04, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-		const tops = rowAmps(top!);
-		const bots = rowAmps(bot!);
-		for (let i = 0; i < WIDTH; i++) {
-			// If top row is lit, the bottom row beneath it must be saturated.
-			if (tops[i]! > 0) expect(bots[i]).toBe(8);
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const rows = view.render(WIDTH).map(payload);
+		for (const row of rows) {
+			for (let c = 1; c < row.length; c += 2) {
+				expect(row[c]).toBe(" ");
+			}
 		}
 	});
 
-	it("renders a center-tall, edge-short silhouette", () => {
+	it("paints every bar symmetrically around the centerline", () => {
 		const view = new EqualizerView(taggedTheme);
-		for (let i = 0; i < 30; i++) view.setProps({ level: 0.3, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-		const h = totalAmps(top!, bot!);
-		const left = h.slice(0, 8).reduce((a, b) => a + b, 0);
-		const middle = h.slice(WIDTH / 2 - 4, WIDTH / 2 + 4).reduce((a, b) => a + b, 0);
-		const right = h.slice(-8).reduce((a, b) => a + b, 0);
-		expect(middle).toBeGreaterThan(left);
-		expect(middle).toBeGreaterThan(right);
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const rows = view.render(WIDTH).map(payload);
+		const perRow = rows.map(barCellsForRow);
+		const nBars = perRow[0]!.length;
+		for (let s = 0; s < nBars; s++) {
+			for (let k = 1; k <= CENTER_ROW; k++) {
+				expect(perRow[CENTER_ROW - k]![s]).toBe(perRow[CENTER_ROW + k]![s]);
+			}
+		}
 	});
 
-	it("keeps the very edges at zero — equalizer never fills the row, however loud", () => {
+	it("lights the centerline row first (centre-out fill)", () => {
 		const view = new EqualizerView(taggedTheme);
-		for (let i = 0; i < 30; i++) view.setProps({ level: 1.0, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-		const h = totalAmps(top!, bot!);
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const rows = view.render(WIDTH).map(payload);
+		const perRow = rows.map(barCellsForRow);
+		const nBars = perRow[0]!.length;
+		const center = perRow[CENTER_ROW]!;
+		for (let s = 0; s < nBars; s++) {
+			const anyLit = perRow.some((row) => row[s] === BAR_GLYPH);
+			if (anyLit) expect(center[s]).toBe(BAR_GLYPH);
+		}
+	});
+
+	it("clusters adjacent bars at similar heights (smooth traveling wave, not per-bar shimmer)", () => {
+		const view = new EqualizerView(taggedTheme);
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const h = barHeights(view.render(WIDTH));
+		let maxRun = 1;
+		let currentRun = 1;
+		for (let i = 1; i < h.length; i++) {
+			if (h[i] === h[i - 1]) {
+				currentRun += 1;
+				if (currentRun > maxRun) maxRun = currentRun;
+			} else {
+				currentRun = 1;
+			}
+		}
+		expect(maxRun).toBeGreaterThanOrEqual(3);
+	});
+
+	it("keeps the very edges at zero — equalizer never fills the row, however the wave is phased", () => {
+		const view = new EqualizerView(taggedTheme);
+		for (let i = 0; i < 100; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const h = barHeights(view.render(WIDTH));
 		// Trapezoid envelope hits hard-zero past PLATEAU+FADE — the leftmost and
-		// rightmost cells stay blank, so the silhouette reads as a centred bell
-		// rather than a full-width strip even at saturation.
+		// rightmost slots stay blank at every phase of the traveling wave.
 		expect(h[0]).toBe(0);
-		expect(h[WIDTH - 1]).toBe(0);
+		expect(h[h.length - 1]).toBe(0);
+	});
+
+	it("animates: the silhouette changes between successive recording ticks", () => {
+		const view = new EqualizerView(taggedTheme);
+		view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const frame0 = view.render(WIDTH).map(payload).join("\n");
+		view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const frame1 = view.render(WIDTH).map(payload).join("\n");
+		expect(frame1).not.toBe(frame0);
+	});
+
+	it("travels: the silhouette eventually visits a meaningfully different shape", () => {
+		const view = new EqualizerView(taggedTheme);
+		view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const startHeights = barHeights(view.render(WIDTH));
+		let diverged = false;
+		for (let i = 0; i < 30; i++) {
+			view.setProps({ level: 0.1, status: "recording", enabled: true });
+			const h = barHeights(view.render(WIDTH));
+			let diff = 0;
+			for (let s = 0; s < h.length; s++) diff += Math.abs(h[s]! - startHeights[s]!);
+			if (diff > h.length / 2) {
+				diverged = true;
+				break;
+			}
+		}
+		expect(diverged).toBe(true);
 	});
 
 	it("scales overall amplitude with audio level (loud taller than quiet)", () => {
@@ -114,154 +150,139 @@ describe("EqualizerView.render() — bottom-anchored lattice", () => {
 		const loud = new EqualizerView(taggedTheme);
 		for (let i = 0; i < 30; i++) {
 			quiet.setProps({ level: 0.02, status: "recording", enabled: true });
-			loud.setProps({ level: 0.6, status: "recording", enabled: true });
+			loud.setProps({ level: 0.5, status: "recording", enabled: true });
 		}
-		const sum = (top: string, bot: string) => totalAmps(top, bot).reduce((a, b) => a + b, 0);
-		const [qt, qb] = quiet.render(WIDTH).map((r) => payload(r!));
-		const [lt, lb] = loud.render(WIDTH).map((r) => payload(r!));
-		expect(sum(lt!, lb!)).toBeGreaterThan(sum(qt!, qb!));
+		const sum = (rows: string[]) => barHeights(rows).reduce((a, b) => a + b, 0);
+		expect(sum(loud.render(WIDTH))).toBeGreaterThan(sum(quiet.render(WIDTH)));
 	});
 
-	it("rises instantly on a loud onset — one tick is enough to reach the centre", () => {
+	it("stays blank while recording is silent (level=0)", () => {
 		const view = new EqualizerView(taggedTheme);
-		view.setProps({ level: 1, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-		const h = totalAmps(top!, bot!);
-		expect(h[Math.floor(WIDTH / 2)]).toBeGreaterThan(0);
+		// Pump 30 ticks of true silence (level=0) — the lattice should never
+		// animate even though status=recording.
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0, status: "recording", enabled: true });
+		const rows = view.render(WIDTH).map(payload);
+		expect(rows).toHaveLength(ROW_COUNT);
+		for (const row of rows) expect(row.replace(/ /g, "")).toBe("");
 	});
 
-	it("holds peaks briefly after audio drops — silhouette freezes, then decays", () => {
+	it("blanks the silhouette after sustained silence following speech (grace window expires)", () => {
 		const view = new EqualizerView(taggedTheme);
-		// Saturate the lattice on a peak.
-		for (let i = 0; i < 30; i++) view.setProps({ level: 0.6, status: "recording", enabled: true });
-		const peakRow = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
-		// First few silent ticks: hold latch keeps the level frozen at peak height.
-		for (let n = 0; n < 4; n++) view.setProps({ level: 0, status: "recording", enabled: true });
-		const heldRow = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
-		expect(heldRow).toBe(peakRow);
-		// After the hold window expires gravity takes over — the silhouette
-		// must be measurably shorter than it was at peak.
-		for (let n = 0; n < 12; n++) view.setProps({ level: 0, status: "recording", enabled: true });
-		const fallenRow = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
-		expect(fallenRow).not.toBe(peakRow);
-		const [pt, pb] = peakRow.split("\n");
-		const [ft, fb] = fallenRow.split("\n");
-		const peakSum = totalAmps(pt!, pb!).reduce((a, b) => a + b, 0);
-		const fallenSum = totalAmps(ft!, fb!).reduce((a, b) => a + b, 0);
-		expect(fallenSum).toBeLessThan(peakSum);
+		// Speak for a while so the wave runs.
+		for (let i = 0; i < 20; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const speakingFrame = view.render(WIDTH).map(payload).join("\n");
+		expect(speakingFrame.replace(/[\n ]/g, "")).not.toBe("");
+		// Drop to silence and wait past the grace window.
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0, status: "recording", enabled: true });
+		const silentFrame = view.render(WIDTH).map(payload);
+		for (const row of silentFrame) expect(row.replace(/ /g, "")).toBe("");
 	});
 
-	it("decays asynchronously after silence — adjacent columns reach zero at different ticks", () => {
+	it("keeps animating across brief inter-word silences (grace window bridges them)", () => {
 		const view = new EqualizerView(taggedTheme);
-		for (let i = 0; i < 30; i++) view.setProps({ level: 0.6, status: "recording", enabled: true });
-		view.render(WIDTH); // drain warm-up ticks
-		const firstZeroAt = new Array<number>(WIDTH).fill(-1);
-		for (let tick = 1; tick <= 60; tick++) {
-			view.setProps({ level: 0, status: "recording", enabled: true });
-			const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-			const row = totalAmps(top!, bot!);
-			for (let i = 0; i < WIDTH; i++) {
-				if (firstZeroAt[i] === -1 && row[i] === 0) firstZeroAt[i] = tick;
-			}
-		}
-		const distinctZeroTicks = new Set(firstZeroAt.filter((v) => v > 0));
-		// If every bar fell at the same rate we'd see a single tick value here.
-		expect(distinctZeroTicks.size).toBeGreaterThan(1);
+		// Warm up with speech.
+		for (let i = 0; i < 10; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const a = view.render(WIDTH).map(payload).join("\n");
+		// One quick silent gap and back to speech for a few ticks. With the
+		// sharp parabolic bell envelope only a handful of centre slots are
+		// ever lit, so the post-silence frame needs enough phase advance to
+		// guarantee the noise field has moved meaningfully — 6 speech ticks
+		// covers it without exceeding the natural fade window.
+		for (let i = 0; i < 3; i++) view.setProps({ level: 0, status: "recording", enabled: true });
+		for (let i = 0; i < 6; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const b = view.render(WIDTH).map(payload).join("\n");
+		// Lattice still shows bars (not all spaces) and has advanced beyond `a`.
+		expect(b.replace(/[\n ]/g, "")).not.toBe("");
+		expect(b).not.toBe(a);
 	});
 
-	it("keeps the silhouette static across renders when no new audio arrives", () => {
+	it("freezes the silhouette while paused (no phase advance)", () => {
 		const view = new EqualizerView(taggedTheme);
-		view.setProps({ level: 0.25, status: "recording", enabled: true });
-		const a = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
-		const b = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
-		expect(b).toBe(a);
-	});
-
-	it("freezes the silhouette while paused (no live RMS ingest)", () => {
-		const view = new EqualizerView(taggedTheme);
-		for (let i = 0; i < 20; i++) view.setProps({ level: 0.4, status: "recording", enabled: true });
-		const before = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
-		for (let i = 0; i < 20; i++) view.setProps({ level: 0.95, status: "paused", enabled: true });
-		const during = view
-			.render(WIDTH)
-			.map((r) => payload(r!))
-			.join("\n");
+		for (let i = 0; i < 20; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const before = view.render(WIDTH).map(payload).join("\n");
+		for (let i = 0; i < 20; i++) view.setProps({ level: 0.1, status: "paused", enabled: true });
+		const during = view.render(WIDTH).map(payload).join("\n");
+		// Stripped of colour, the lattice shape is identical — pause only swaps
+		// the shade tag to dim.
 		expect(during).toBe(before);
 	});
 
-	it("paints the silhouette as a dim → muted → accent gradient while recording", () => {
-		const view = new EqualizerView(taggedTheme);
-		// Settle to a peak-ish gain so all three tiers are present in the row.
-		for (let i = 0; i < 30; i++) view.setProps({ level: 0.6, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH);
-		const keysT = colorKeys(top!);
-		const keysB = colorKeys(bot!);
-		expect(keysT).toContain("accent");
-		// Bottom row carries the full 0..8 range of the silhouette so all three
-		// tiers must appear there. Top row only lights up where total amp > 8,
-		// so it may be only accent depending on the gain.
-		expect(keysB).toContain("accent");
-		expect(keysB).toContain("muted");
-		expect(keysB).toContain("dim");
+	it("derives a 4-tier truecolor gradient from the theme's accent when getFgAnsi is available", () => {
+		// Plug a truecolor accent (R=126, G=231, B=208 — a typical mint) into a
+		// mock theme that exposes getFgAnsi. The view should multiply the
+		// channels by GRADIENT_BRIGHTNESS=[1.0, 0.65, 0.4, 0.22] and emit each
+		// row with the corresponding ANSI escape.
+		const truecolorTheme = {
+			...makeTheme({ fg: (color: string, text: string) => `<${color}>${text}</${color}>` }),
+			getFgAnsi: (key: string) => (key === "accent" ? "\x1b[38;2;126;231;208m" : "\x1b[0m"),
+		} as unknown as Theme;
+		const view = new EqualizerView(truecolorTheme);
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const rows = view.render(WIDTH);
+		const escapes = rows.map((row) => row.match(/\x1b\[38;2;\d+;\d+;\d+m/)?.[0] ?? null);
+		// Centerline uses the unscaled accent RGB.
+		expect(escapes[CENTER_ROW]).toBe("\x1b[38;2;126;231;208m");
+		// Symmetric mirror around the centerline — equidistant rows share an escape.
+		for (let k = 1; k <= CENTER_ROW; k++) {
+			expect(escapes[CENTER_ROW - k]).toBe(escapes[CENTER_ROW + k]);
+		}
+		// Edges are visibly dimmer than the centerline.
+		expect(escapes[0]).not.toBe(escapes[CENTER_ROW]);
+		// Each row terminates with the foreground-reset SGR so colours don't bleed.
+		for (const row of rows) expect(row.endsWith("\x1b[39m")).toBe(true);
 	});
 
-	it("collapses to a single dim segment per row while paused", () => {
+	it("paints a vertical gradient: accent at the centerline, dimmer shades toward the edges", () => {
 		const view = new EqualizerView(taggedTheme);
-		view.setProps({ level: 0.3, status: "paused", enabled: true });
-		const [top, bot] = view.render(WIDTH);
-		expect(colorKeys(top!)).toEqual(["dim"]);
-		expect(colorKeys(bot!)).toEqual(["dim"]);
+		for (let i = 0; i < 30; i++) view.setProps({ level: 0.1, status: "recording", enabled: true });
+		const rows = view.render(WIDTH);
+		// Each row still uses exactly one fg() segment.
+		for (const row of rows) expect(colorKeys(row)).toHaveLength(1);
+		// Centerline = accent (the full theme colour), edges = dim, with
+		// progressively subtler shades in between. Equidistant rows share a
+		// shade — the gradient is vertically symmetric.
+		const expected = ["dim", "muted", "borderAccent", "accent", "borderAccent", "muted", "dim"];
+		const actual = rows.map((row) => colorKeys(row)[0]);
+		expect(actual).toEqual(expected);
 	});
 
-	it("returns two empty rows when width is zero", () => {
+	it("collapses every row to a single dim segment while paused", () => {
 		const view = new EqualizerView(taggedTheme);
-		view.setProps({ level: 0.5, status: "recording", enabled: true });
-		expect(view.render(0)).toEqual(["", ""]);
+		view.setProps({ level: 0.1, status: "paused", enabled: true });
+		for (const row of view.render(WIDTH)) expect(colorKeys(row)).toEqual(["dim"]);
+	});
+
+	it("returns ROW_COUNT empty rows when width is zero", () => {
+		const view = new EqualizerView(taggedTheme);
+		view.setProps({ level: 0.1, status: "recording", enabled: true });
+		expect(view.render(0)).toEqual(new Array<string>(ROW_COUNT).fill(""));
 	});
 
 	it("renders zero rows when disabled (component absent from layout)", () => {
 		const view = new EqualizerView(taggedTheme);
-		// Pump audio while disabled — view must not contribute any rows.
-		for (let i = 0; i < 20; i++) view.setProps({ level: 0.4, status: "recording", enabled: false });
+		for (let i = 0; i < 20; i++) view.setProps({ level: 0.1, status: "recording", enabled: false });
 		expect(view.render(WIDTH)).toEqual([]);
 	});
 
-	it("does not ingest live RMS while disabled (silhouette stays at silence)", () => {
-		const view = new EqualizerView(taggedTheme);
-		// Pump loud audio while disabled.
-		for (let i = 0; i < 20; i++) view.setProps({ level: 0.9, status: "recording", enabled: false });
-		// Now enable — internal smoothed level should still be at zero, not 0.9.
-		view.setProps({ level: 0, status: "recording", enabled: true });
-		const [top, bot] = view.render(WIDTH).map((r) => payload(r!));
-		expect(top!.replace(/ /g, "")).toBe("");
-		expect(bot!.replace(/ /g, "")).toBe("");
+	it("does not advance the wave while disabled (silhouette stays at its initial phase)", () => {
+		const ticking = new EqualizerView(taggedTheme);
+		const idle = new EqualizerView(taggedTheme);
+		for (let i = 0; i < 20; i++) ticking.setProps({ level: 0.1, status: "recording", enabled: false });
+		// Both views are now enabled for a single tick — the ticking one should
+		// not have accumulated phase from the disabled period.
+		ticking.setProps({ level: 0.1, status: "recording", enabled: true });
+		idle.setProps({ level: 0.1, status: "recording", enabled: true });
+		const tickedFrame = ticking.render(WIDTH).map(payload).join("\n");
+		const idleFrame = idle.render(WIDTH).map(payload).join("\n");
+		expect(tickedFrame).toBe(idleFrame);
 	});
 
-	it("keeps both rows the same character count at any width", () => {
+	it("keeps every row the same character count at any width", () => {
 		const view = new EqualizerView(taggedTheme);
-		view.setProps({ level: 0.4, status: "recording", enabled: true });
+		view.setProps({ level: 0.1, status: "recording", enabled: true });
 		for (const w of [20, 40, 80, 120]) {
-			const [top, bot] = view.render(w).map((r) => payload(r!));
-			expect([...top!]).toHaveLength(w);
-			expect([...bot!]).toHaveLength(w);
+			const rows = view.render(w).map(payload);
+			for (const row of rows) expect([...row]).toHaveLength(w);
 		}
 	});
 });

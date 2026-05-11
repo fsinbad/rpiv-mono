@@ -7,11 +7,11 @@ import type { StatefulView } from "./stateful-view.js";
 const FALLBACK_TERMINAL_ROWS = 24;
 
 // Bottom chrome rows depend on whether the equalizer is enabled. With the
-// equalizer ON, the chrome is `[divider, eq-top, eq-bottom, statusBar]` (4
-// rows); with it OFF the equalizer renders zero rows and the chrome collapses
-// to `[divider, statusBar]` (2 rows). Subtracting the chrome count from total
-// rows gives the body row count that needs height equalization.
-const BOTTOM_CHROME_ROWS_WITH_EQ = 4;
+// equalizer ON, the chrome is `[divider, eq×7, statusBar]` (9 rows); with it
+// OFF the equalizer renders zero rows and the chrome collapses to `[divider,
+// statusBar]` (2 rows). Subtracting the chrome count from total rows gives
+// the body row count that needs height equalization.
+const BOTTOM_CHROME_ROWS_WITH_EQ = 9;
 const BOTTOM_CHROME_ROWS_WITHOUT_EQ = 2;
 
 export interface OverlayViewProps {
