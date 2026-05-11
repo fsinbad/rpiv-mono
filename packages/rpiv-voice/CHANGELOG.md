@@ -5,7 +5,7 @@ All notable changes to `@juicesharp/rpiv-voice` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.2] - 2026-05-11
 
 ### Changed
 - Published to npm — install via `pi install npm:@juicesharp/rpiv-voice`.
