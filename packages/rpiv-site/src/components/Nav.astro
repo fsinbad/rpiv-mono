@@ -6,7 +6,7 @@ const isHome = Astro.url.pathname === "/";
 
 <header class="nav" data-nav>
 	<div class="container nav__inner">
-		<div class="nav__head">
+		<div class="nav__brand-group">
 			<a href={isHome ? "#top" : "/"} class="nav__brand mono">rpiv-pi</a>
 			<a
 				class="nav__version mono"
@@ -15,6 +15,9 @@ const isHome = Astro.url.pathname === "/";
 				target="_blank"
 				rel="noopener"
 			>v{VERSION}</a>
+		</div>
+
+		<div class="nav__utility">
 			<a
 				class="nav__github mono"
 				href="https://github.com/juicesharp/rpiv-mono"
@@ -22,16 +25,12 @@ const isHome = Astro.url.pathname === "/";
 				rel="noopener"
 				aria-label="rpiv-mono on GitHub"
 			>github</a>
+			<span class="nav__dot" aria-hidden="true">·</span>
 			<a class="nav__blog mono" href="/blog">blog</a>
-			{isHome && (
-			<span class="nav__counter mono" aria-hidden="true">
-				<span class="nav__counter-rule"></span>
-				<span class="nav__counter-num" data-nav-counter>—</span>
-				<span class="nav__counter-sep">/</span>
-				<span class="nav__counter-total">06</span>
-			</span>
-			)}
 		</div>
+
+		<a href={isHome ? "#install" : "/#install"} class="nav__cta mono">install</a>
+
 		<nav class="nav__links mono" aria-label="primary">
 			<a href={isHome ? "#pipeline" : "/#pipeline"} data-nav-link="pipeline">pipeline</a>
 			<a href={isHome ? "#guidance" : "/#guidance"} data-nav-link="guidance">guidance</a>
@@ -40,7 +39,15 @@ const isHome = Astro.url.pathname === "/";
 			<a href={isHome ? "#agents"   : "/#agents"}   data-nav-link="agents">agents</a>
 			<a href={isHome ? "#siblings" : "/#siblings"} data-nav-link="siblings">siblings</a>
 		</nav>
-		<a href={isHome ? "#install" : "/#install"} class="nav__cta mono">install</a>
+
+		{isHome && (
+		<span class="nav__counter mono" aria-hidden="true">
+			<span class="nav__counter-rule"></span>
+			<span class="nav__counter-num" data-nav-counter>—</span>
+			<span class="nav__counter-sep">/</span>
+			<span class="nav__counter-total">06</span>
+		</span>
+		)}
 	</div>
 </header>
 
@@ -54,17 +61,30 @@ const isHome = Astro.url.pathname === "/";
 		-webkit-backdrop-filter: blur(8px);
 		border-bottom: 1px solid var(--rule);
 	}
+
+	/* Two-tier grid: masthead row (brand | utility | cta) + nav row (links, full-width). */
 	.nav__inner {
-		display: flex;
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		grid-template-areas:
+			"brand utility cta"
+			"links links   links";
 		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--space-5);
+		column-gap: var(--space-5);
+		row-gap: 0;
 		padding-top: var(--space-3);
 		padding-bottom: var(--space-3);
 	}
-	.nav__head {
-		display: contents;
+
+	/* ── Tier 1: Masthead ── */
+
+	.nav__brand-group {
+		grid-area: brand;
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
 	}
+
 	.nav__brand {
 		font-size: var(--type-small);
 		color: var(--washi);
@@ -73,10 +93,9 @@ const isHome = Astro.url.pathname === "/";
 	}
 	.nav__brand:hover { color: var(--sage); }
 
-	/* Version imprint — masthead-style edition mark sitting between brand and
-	   counter. Tabular numerics so 1.1.5 → 1.1.10 stays aligned across builds.
-	   Hairline divider + half-em ochre tick echo the .nav__cta border and the
-	   ScrollIndicator hanko seal — one chromatic event, no badge geometry. */
+	/* Version imprint — masthead-style edition mark. Tabular numerics so
+	   1.1.5 → 1.1.10 stays aligned across builds. Hairline divider + ochre
+	   tick echo the .nav__cta border and the ScrollIndicator hanko seal. */
 	.nav__version {
 		display: inline-flex;
 		align-items: center;
@@ -102,40 +121,107 @@ const isHome = Astro.url.pathname === "/";
 	}
 	.nav__version:hover { color: var(--washi); }
 
-	/* GitHub link — sits in the masthead row alongside the version imprint.
-	   Same tiny mono treatment but without the hairline divider; the text
-	   itself is the affordance. Sage hover echoes the SiblingCard CTA idiom
-	   and signals "external resource" without a full icon. */
-	.nav__github {
-		font-size: var(--type-tiny);
-		letter-spacing: 0.14em;
-		color: var(--text-distant);
-		border-bottom: none;
-		text-decoration: none;
-		padding: 0 var(--space-2);
-		line-height: 1;
-		transition: color var(--dur-ink) var(--ease-ink);
+	/* Utility cluster — github · blog, grouped right-of-center. The middot
+	   is a typographic separator (not a pipe or slash) that echoes the
+	   editorial/ink aesthetic. Sage hover matches sibling card CTAs. */
+	.nav__utility {
+		grid-area: utility;
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		justify-self: end;
 	}
-	.nav__github:hover { color: var(--sage); }
-
-	/* Blog link — sits in the masthead row alongside GitHub.
-	   Same tiny mono treatment. Sage hover matches nav__github. */
+	.nav__dot {
+		color: var(--ochre);
+		opacity: 0.6;
+		font-size: var(--type-tiny);
+		line-height: 1;
+	}
+	.nav__github,
 	.nav__blog {
 		font-size: var(--type-tiny);
 		letter-spacing: 0.14em;
 		color: var(--text-distant);
 		border-bottom: none;
 		text-decoration: none;
-		padding: 0 var(--space-2);
 		line-height: 1;
 		transition: color var(--dur-ink) var(--ease-ink);
 	}
+	.nav__github:hover,
 	.nav__blog:hover { color: var(--sage); }
 
-	/* Section counter — mobile-only flourish that echoes
-	   ScrollIndicator's `.indicator__foot` (tabular numerals + 0.14em
-	   tracking + faint hairline). Restores the orientation cue the side
-	   rail provides on desktop, where the rail is hidden below 960px. */
+	/* CTA chip — install is an action, not a wayfinding tab. Echoes the
+	   .chip--ochre idiom. Ochre border is the single chromatic event. */
+	.nav__cta {
+		grid-area: cta;
+		align-self: center;
+		font-size: var(--type-tiny);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--washi);
+		border: 1px solid var(--ochre);
+		border-radius: var(--radius-sm);
+		padding: 4px 10px;
+		text-decoration: none;
+		transition:
+			color var(--dur-ink) var(--ease-ink),
+			background var(--dur-ink) var(--ease-ink),
+			border-color var(--dur-ink) var(--ease-ink);
+	}
+	.nav__cta:hover {
+		color: var(--ink);
+		background: var(--ochre);
+		border-color: var(--ochre);
+	}
+
+	/* ── Tier 2: Section navigation ── */
+
+	.nav__links {
+		grid-area: links;
+		display: flex;
+		gap: var(--space-4);
+		font-size: var(--type-tiny);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		border-top: 1px solid var(--rule);
+		padding-top: var(--space-3);
+		margin-top: var(--space-3);
+	}
+	.nav__links a {
+		position: relative;
+		color: var(--text-distant);
+		border-bottom: none;
+		transition: color var(--dur-ink) var(--ease-ink);
+	}
+	.nav__links a:hover { color: var(--washi); }
+
+	/* Active-section state — agrees with the side ScrollIndicator's hanko seal.
+	   Active link gets washi text + a 1px ochre underline tick that grows from
+	   left, matching the indicator's `.indicator__line` widening behavior. */
+	.nav__links a.is-active {
+		color: var(--washi);
+	}
+	.nav__links a.is-active::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -4px;
+		height: 1px;
+		background: var(--ochre);
+		transform-origin: left center;
+		animation: nav-tick-in var(--dur-tick) var(--ease-ink) forwards;
+	}
+	@keyframes nav-tick-in {
+		from { transform: scaleX(0); }
+		to   { transform: scaleX(1); }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.nav__links a.is-active::after { animation: none; }
+	}
+
+	/* Section counter — hidden on desktop (ScrollIndicator handles it).
+	   Shown on mobile where the side rail is hidden. */
 	.nav__counter {
 		display: none;
 		align-items: baseline;
@@ -166,114 +252,47 @@ const isHome = Astro.url.pathname === "/";
 	.nav__counter-sep { color: var(--rule-strong); }
 	.nav__counter-total { color: var(--text-distant); }
 
-	.nav__links {
-		display: flex;
-		gap: var(--space-4);
-		font-size: var(--type-tiny);
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
-	}
-	.nav__links a {
-		position: relative;
-		color: var(--text-distant);
-		border-bottom: none;
-		transition: color var(--dur-ink) var(--ease-ink);
-	}
-	.nav__links a:hover { color: var(--washi); }
-
-	/* CTA chip — install is an action, not a wayfinding tab. The chip
-	   gives it visual hierarchy distinct from the lowercase tracked-out
-	   wayfinding links. Echoes the .chip--ochre idiom from flows.css. */
-	.nav__cta {
-		font-size: var(--type-tiny);
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
-		color: var(--washi);
-		border: 1px solid var(--ochre);
-		border-radius: var(--radius-sm);
-		padding: 4px 10px;
-		text-decoration: none;
-		transition:
-			color var(--dur-ink) var(--ease-ink),
-			background var(--dur-ink) var(--ease-ink),
-			border-color var(--dur-ink) var(--ease-ink);
-	}
-	.nav__cta:hover {
-		color: var(--ink);
-		background: var(--ochre);
-		border-color: var(--ochre);
-	}
-
-	/* Active-section state — agrees with the side ScrollIndicator's hanko seal.
-	   Active link gets washi text + a 1px ochre underline tick that grows from
-	   left, matching the indicator's `.indicator__line` widening behavior. */
-	.nav__links a.is-active {
-		color: var(--washi);
-	}
-	.nav__links a.is-active::after {
-		content: "";
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: -4px;
-		height: 1px;
-		background: var(--ochre);
-		transform-origin: left center;
-		animation: nav-tick-in var(--dur-tick) var(--ease-ink) forwards;
-	}
-	@keyframes nav-tick-in {
-		from { transform: scaleX(0); }
-		to   { transform: scaleX(1); }
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.nav__links a.is-active::after { animation: none; }
-	}
-
-	/* Mobile (≤720px) — the side ScrollIndicator is hidden below 960px,
-	   so the top nav has to carry both wayfinding and section-progress.
-	   Stack into two rows: brand + tabular counter on top, a full-width
-	   6-column grid of links below. The grid distributes evenly across
-	   any viewport, eliminating the overflow that the previous
-	   shrink-the-gap approach hit on narrow phones. */
+	/* ── Mobile (≤720px) ── */
 	@media (max-width: 720px) {
-		/* Grid: top row = brand+counter (left) | CTA (right);
-		   bottom row = full-width 6-col links grid. */
 		.nav__inner {
-			display: grid;
 			grid-template-columns: 1fr auto;
 			grid-template-areas:
-				"head cta"
+				"brand cta"
 				"links links";
-			align-items: center;
 			column-gap: var(--space-3);
-			row-gap: var(--space-3);
-			padding-top: var(--space-3);
+			row-gap: 0;
 			padding-bottom: 0;
 		}
-		.nav__head {
-			grid-area: head;
+
+		/* Utility links move into the brand group on mobile.
+		   Brand | counter | github · blog on one row, CTA on the right. */
+		.nav__brand-group {
 			display: flex;
-			justify-content: flex-start;
 			align-items: baseline;
 			gap: var(--space-3);
 		}
-		.nav__counter { display: inline-flex; }
 
-		/* Mobile masthead row is baseline-flex; the hairline divider reads
-		   cluttered against the brand at this density. Drop it. On mobile,
-		   the GitHub link carries the divider instead — keeps one separator
-		   in the masthead row without cluttering the brand. */
-		.nav__version {
-			border-left: none;
-			padding-left: 0;
+		.nav__utility {
+			display: contents;
 		}
+		/* On mobile, github carries the hairline divider (replaces the
+		   version's divider which is hidden at this breakpoint). */
 		.nav__github {
 			padding-left: var(--space-2);
 			border-left: 1px solid var(--rule);
 		}
+		.nav__dot {
+			/* middot stays inline between github and blog in the brand-group flex */
+		}
+
+		.nav__version {
+			border-left: none;
+			padding-left: 0;
+		}
+
+		.nav__counter { display: inline-flex; }
 
 		.nav__cta {
-			grid-area: cta;
 			align-self: center;
 			padding: 3px 8px;
 			font-size: var(--type-micro);
@@ -281,18 +300,17 @@ const isHome = Astro.url.pathname === "/";
 		}
 
 		.nav__links {
-			grid-area: links;
 			display: grid;
 			grid-template-columns: repeat(6, 1fr);
 			gap: 0;
 			font-size: var(--type-micro);
 			letter-spacing: 0.12em;
-			border-top: 1px solid var(--rule);
 			padding-top: var(--space-3);
+			padding-bottom: var(--space-3);
 		}
 		.nav__links a {
 			text-align: center;
-			padding: 2px 4px var(--space-3);
+			padding: 2px 4px;
 		}
 		.nav__links a.is-active::after {
 			left: 18%;
@@ -301,15 +319,10 @@ const isHome = Astro.url.pathname === "/";
 		}
 	}
 
-	/* Sub-480px — six tracked-out words can't share a single row gracefully
-	   below ~440px. Reflow to a 3-column / 2-row plate, still equal-width,
-	   still anchored to the same active-tick rhythm. */
+	/* ── Sub-480px ── */
 	@media (max-width: 480px) {
-		/* Sub-480 the masthead row gets tight (brand + counter + version + CTA
-		   on one line). Drop the version off-screen and let the colophon
-		   carry it. CTA is non-negotiable; the version is. GitHub stays —
-		   it's a key traffic driver. */
 		.nav__version { display: none; }
+
 		.nav__github {
 			border-left: none;
 			padding-left: 0;
@@ -318,7 +331,6 @@ const isHome = Astro.url.pathname === "/";
 		.nav__links {
 			grid-template-columns: repeat(3, 1fr);
 			row-gap: var(--space-3);
-			padding-bottom: var(--space-3);
 		}
 		.nav__links a { padding-bottom: 2px; }
 		.nav__links a.is-active::after {

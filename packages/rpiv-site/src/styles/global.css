@@ -94,7 +94,7 @@ pre {
 }
 
 section[id] {
-	scroll-margin-top: var(--space-7);
+	scroll-margin-top: var(--space-8);
 }
 section {
 	padding: var(--space-9) 0;
