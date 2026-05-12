@@ -262,12 +262,18 @@ No pseudocode, no TODOs, no placeholders — the code must be copy-pasteable by 
 
 ### 7.2. Verify slice
 
-Dispatch the `slice-verifier` agent with:
-- `artifact_path`: the Step-6 Write `file_path`
+Mandatory for every slice — no skipping, no shortcuts. Dispatch the `slice-verifier` agent with:
+- `artifact_path`: the Step-6 Write `file_path` (contains the skeleton plus locked prior phases; the current slice's code fence is still empty per 7.1/7.4 timing)
 - `slice_id`: `Phase N`
+- `current_slice_code`: inline the just-generated slice code verbatim — every `#### N. path/...` block with its full code fence — since 7.1 holds the code in context and only 7.4 (on approval) writes it to the artifact. Without this the verifier audits an empty slice and emits false-positive emptiness VIOLATIONs.
 - `target_files`: files this slice modifies, plus key files prior phases introduced
 
-The agent emits a 3-row summary (`Decisions / Cross-slice / Research`). If any VIOLATION: fix slice in-place per the citation, re-dispatch until OK. Include the OK summary in the 7.3 checkpoint presentation.
+The agent emits a 3-row summary (`Decisions / Cross-slice / Research`). On any VIOLATION, take one of:
+
+- **Fix-and-re-dispatch**: when the finding is a real gap, fix the slice in-place per the citation and re-dispatch until OK.
+- **Surface-and-proceed**: when the finding is plausibly by-design (e.g. foundation-phase atomicity tension, deferred resolution covered by ordering constraints), include the verbatim VIOLATION row in the 7.3 slice presentation with a one-line by-design rationale. The existing 7.3 approve question is the ratification — no separate prompt.
+
+Never proceed to 7.3 with a VIOLATION absent from the presentation.
 
 ### 7.3. Developer micro-checkpoint
 
@@ -500,6 +506,8 @@ Spawn multiple agents in parallel when they're searching for different things. E
   - ALWAYS create the skeleton artifact immediately after decomposition approval (Step 6)
   - NEVER leave Phase code fences or Success Criteria empty after their slice is approved — fill both via Edit in Step 7.4 (criteria are filled while phase scope is freshest, not deferred to Step 9)
   - NEVER fill empty Phase content at Step 9 — empty at finalize time = return to Step 7 (preserves the 7.3 micro-checkpoint)
+  - ALWAYS dispatch slice-verifier at Step 7.2 for every slice before presenting at 7.3; never skip, never batch across slices
+  - NEVER silently dismiss a slice-verifier VIOLATION — either fix and re-dispatch, or surface the verbatim finding to the developer at 7.3 for ratification
   - Step 8 is internal-only — no developer round-trip; cross-phase summary inlines into the final 7.3 question
   - ALWAYS dispatch artifact-reviewer at Step 10 after Step 9 finalize, BEFORE the developer review at Step 11
   - NEVER auto-apply an artifact-reviewer finding at Step 10; triage is the developer's call at Step 11

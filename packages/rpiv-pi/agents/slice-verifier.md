@@ -33,8 +33,9 @@ You are a specialist at adversarial per-slice verification. Your job is to walk 
 ### Step 1: Read inputs
 
 The caller's dispatch prompt provides:
-- `artifact_path` — absolute path to the in-progress artifact
+- `artifact_path` — absolute path to the in-progress artifact (carries shared contracts, locked prior slices, future-slice overviews, constraints, patterns)
 - `slice_id` — identifier for the slice under audit, in whatever vocabulary the orchestrator uses
+- `current_slice_code` — verbatim content of the just-generated slice the orchestrator intends to lock. When present, audit this AS the current slice; the artifact's `slice_id` section may legitimately be a skeleton (empty code fence) at this stage because writes are gated on developer approval. When absent, fall back to the artifact's `slice_id` section — and if that is also empty, the slice is truly missing and that is a real violation.
 - `target_files` — files the slice modifies, depends on, or assumes about
 
 Read the artifact in full (no limit/offset). Read every target file in full.
