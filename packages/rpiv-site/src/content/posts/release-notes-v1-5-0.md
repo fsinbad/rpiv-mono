@@ -1,7 +1,7 @@
 ---
 title: "Release notes: v1.5.0"
 description: "A redesigned voice equalizer, a sharper blueprint verifier, and a freshly minted blog, all in lockstep across the rpiv-pi family."
-pubDate: 2026-05-12
+pubDate: 2026-05-12T12:00:00Z
 author: juicesharp
 tags: ["release", "rpiv-pi", "rpiv-voice"]
 draft: false
