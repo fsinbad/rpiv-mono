@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- `blueprint` skill now uses a dedicated adversarial verifier for per-slice micro-checkpoints, improving output quality.
+
+### Fixed
+- `web-search-researcher` agent now runs with a fresh context on each invocation.
+
 ## [1.4.2] - 2026-05-11
 
 ## [1.4.1] - 2026-05-11
