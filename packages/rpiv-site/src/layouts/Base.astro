@@ -11,11 +11,17 @@ import latinWoff2Url from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin
 interface Props {
 	title?: string;
 	description?: string;
+	article?: {
+		datePublished: string;
+		dateModified?: string;
+		author?: string;
+	};
 }
 
 const {
 	title = "rpiv-pi",
 	description = "A pipeline of skills, subagents, and extensions for the Pi coding agent.",
+	article,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 // Square logo for X cards. X has been suppressing `summary_large_image` previews
@@ -44,6 +50,25 @@ const jsonLd = {
 			offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
 			license: "https://opensource.org/licenses/MIT",
 		},
+		...(article
+			? [
+					{
+						"@type": "BlogPosting" as const,
+						headline: title,
+						datePublished: article.datePublished,
+						...(article.dateModified && { dateModified: article.dateModified }),
+						author: {
+							"@type": "Person" as const,
+							name: article.author ?? "juicesharp",
+						},
+						publisher: {
+							"@type": "Organization" as const,
+							name: "juicesharp",
+						},
+						url: canonical,
+					},
+				]
+			: []),
 	],
 };
 ---
@@ -66,7 +91,7 @@ const jsonLd = {
 
 		<meta property="og:site_name" content="rpiv-pi" />
 		<meta property="og:locale" content="en_US" />
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content={article ? "article" : "website"} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
@@ -85,6 +110,7 @@ const jsonLd = {
 		<meta name="twitter:image:alt" content="rpiv-pi · research → design → ship" />
 
 		<link rel="sitemap" href="/sitemap-index.xml" />
+		<link rel="alternate" type="application/rss+xml" title="rpiv-pi Blog" href={new URL("/blog/rss.xml", Astro.site).toString()} />
 
 		<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 	</head>
@@ -96,7 +122,9 @@ const jsonLd = {
 		<footer>
 			<div class="container">
 				<p class="mono">
-					<a href="https://www.npmjs.com/package/@juicesharp/rpiv-pi">npm</a>
+					<a href="/blog">blog</a>
+				&nbsp;·&nbsp;
+				<a href="https://www.npmjs.com/package/@juicesharp/rpiv-pi">npm</a>
 					&nbsp;·&nbsp;
 					<a href="https://github.com/juicesharp/rpiv-mono">github</a>
 					&nbsp;·&nbsp;

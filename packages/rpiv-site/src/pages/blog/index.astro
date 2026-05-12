@@ -1,0 +1,107 @@
+---
+import Base from "../../layouts/Base.astro";
+import Nav from "../../components/Nav.astro";
+import { getAllPosts } from "../../lib/posts";
+
+const posts = await getAllPosts();
+const count = String(posts.length).padStart(2, "0");
+---
+
+<Base
+	title="Blog · rpiv-pi"
+	description="Updates, deep dives, and release notes for rpiv-pi."
+>
+	<Nav />
+	<main>
+		<section>
+			<div class="container">
+				<p class="kicker">blog</p>
+				<p class="post-count mono">{count} posts</p>
+				<div class="post-list">
+					{posts.map((post) => (
+						<article class="post-item">
+							<a href={`/blog/${post.id}`} class="post-item__title">
+								<h3>{post.data.title}</h3>
+							</a>
+							<div class="post-item__meta mono">
+								<time datetime={post.data.pubDate.toISOString()}>
+									{post.data.pubDate.toLocaleDateString("en-US", {
+										year: "numeric",
+										month: "long",
+										day: "numeric",
+									})}
+								</time>
+								<span class="post-item__sep" aria-hidden="true">·</span>
+								<span>{post.readingTime} min</span>
+							</div>
+							<p class="post-item__desc">{post.data.description}</p>
+						</article>
+					))}
+				</div>
+			</div>
+		</section>
+	</main>
+</Base>
+
+<style>
+	.post-count {
+		font-size: var(--type-tiny);
+		color: var(--text-distant);
+		letter-spacing: 0.14em;
+		font-variant-numeric: tabular-nums;
+		margin: 0 0 var(--space-7);
+	}
+
+	.post-list {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.post-item {
+		padding: var(--space-6) 0;
+		border-bottom: 1px solid var(--rule);
+	}
+
+	.post-item__title {
+		color: var(--washi);
+		border-bottom: none;
+		text-decoration: none;
+		display: block;
+		margin-bottom: var(--space-2);
+		transition: color var(--dur-ink) var(--ease-ink);
+	}
+	.post-item__title:hover {
+		color: var(--sage);
+	}
+	.post-item__title h3 {
+		font-size: var(--type-h3);
+		line-height: var(--leading-snug);
+		margin: 0;
+	}
+
+	.post-item__meta {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+		font-size: var(--type-tiny);
+		color: var(--text-distant);
+		letter-spacing: 0.14em;
+		margin-bottom: var(--space-3);
+	}
+
+	.post-item__sep {
+		color: var(--rule-strong);
+	}
+
+	.post-item__desc {
+		color: var(--text-quiet);
+		font-size: var(--type-small);
+		line-height: var(--leading-relaxed);
+		margin: 0;
+		max-width: 64ch;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+</style>

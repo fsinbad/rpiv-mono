@@ -1,11 +1,13 @@
 ---
 import { VERSION } from "../lib/version";
+
+const isHome = Astro.url.pathname === "/";
 ---
 
 <header class="nav" data-nav>
 	<div class="container nav__inner">
 		<div class="nav__head">
-			<a href="#top" class="nav__brand mono">rpiv-pi</a>
+			<a href={isHome ? "#top" : "/"} class="nav__brand mono">rpiv-pi</a>
 			<a
 				class="nav__version mono"
 				href={`https://www.npmjs.com/package/@juicesharp/rpiv-pi/v/${VERSION}`}
@@ -20,22 +22,25 @@ import { VERSION } from "../lib/version";
 				rel="noopener"
 				aria-label="rpiv-mono on GitHub"
 			>github</a>
+			<a class="nav__blog mono" href="/blog">blog</a>
+			{isHome && (
 			<span class="nav__counter mono" aria-hidden="true">
 				<span class="nav__counter-rule"></span>
 				<span class="nav__counter-num" data-nav-counter>—</span>
 				<span class="nav__counter-sep">/</span>
 				<span class="nav__counter-total">06</span>
 			</span>
+			)}
 		</div>
 		<nav class="nav__links mono" aria-label="primary">
-			<a href="#pipeline" data-nav-link="pipeline">pipeline</a>
-			<a href="#guidance" data-nav-link="guidance">guidance</a>
-			<a href="#flows"    data-nav-link="flows">blueprint</a>
-			<a href="#review"   data-nav-link="review">review</a>
-			<a href="#agents"   data-nav-link="agents">agents</a>
-			<a href="#siblings" data-nav-link="siblings">siblings</a>
+			<a href={isHome ? "#pipeline" : "/#pipeline"} data-nav-link="pipeline">pipeline</a>
+			<a href={isHome ? "#guidance" : "/#guidance"} data-nav-link="guidance">guidance</a>
+			<a href={isHome ? "#flows"    : "/#flows"}    data-nav-link="flows">blueprint</a>
+			<a href={isHome ? "#review"   : "/#review"}   data-nav-link="review">review</a>
+			<a href={isHome ? "#agents"   : "/#agents"}   data-nav-link="agents">agents</a>
+			<a href={isHome ? "#siblings" : "/#siblings"} data-nav-link="siblings">siblings</a>
 		</nav>
-		<a href="#install" class="nav__cta mono">install</a>
+		<a href={isHome ? "#install" : "/#install"} class="nav__cta mono">install</a>
 	</div>
 </header>
 
@@ -112,6 +117,20 @@ import { VERSION } from "../lib/version";
 		transition: color var(--dur-ink) var(--ease-ink);
 	}
 	.nav__github:hover { color: var(--sage); }
+
+	/* Blog link — sits in the masthead row alongside GitHub.
+	   Same tiny mono treatment. Sage hover matches nav__github. */
+	.nav__blog {
+		font-size: var(--type-tiny);
+		letter-spacing: 0.14em;
+		color: var(--text-distant);
+		border-bottom: none;
+		text-decoration: none;
+		padding: 0 var(--space-2);
+		line-height: 1;
+		transition: color var(--dur-ink) var(--ease-ink);
+	}
+	.nav__blog:hover { color: var(--sage); }
 
 	/* Section counter — mobile-only flourish that echoes
 	   ScrollIndicator's `.indicator__foot` (tabular numerals + 0.14em

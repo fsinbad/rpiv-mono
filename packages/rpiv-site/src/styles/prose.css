@@ -1,0 +1,150 @@
+/* Article typography for blog posts — imported only by [slug].astro.
+   All values reference tokens.css custom properties.
+   Scoped via .prose class on the article wrapper. */
+
+.prose {
+	font-family: var(--font-serif);
+	font-size: var(--type-base);
+	line-height: var(--leading-body);
+	color: var(--text);
+	max-width: 64ch;
+}
+
+/* Headings — mono to match site-wide heading convention */
+.prose h2,
+.prose h3,
+.prose h4 {
+	font-family: var(--font-mono);
+	font-weight: 400;
+	letter-spacing: -0.01em;
+	color: var(--washi);
+}
+
+.prose h2 {
+	margin-top: var(--space-8);
+	margin-bottom: var(--space-4);
+	font-size: var(--type-h2);
+	line-height: var(--leading-snug);
+}
+
+.prose h3 {
+	margin-top: var(--space-7);
+	margin-bottom: var(--space-3);
+	font-size: var(--type-h3);
+	line-height: var(--leading-snug);
+}
+
+.prose h4 {
+	margin-top: var(--space-6);
+	margin-bottom: var(--space-3);
+	font-size: var(--type-lead);
+	line-height: var(--leading-snug);
+}
+
+/* Paragraphs */
+.prose p {
+	margin-bottom: var(--space-5);
+}
+
+/* Links — sage with underline matching global a style */
+.prose a {
+	color: var(--sage);
+	border-bottom-color: var(--underline);
+}
+.prose a:hover {
+	color: var(--washi);
+	border-bottom-color: var(--underline-hover);
+}
+
+/* Lists */
+.prose ul,
+.prose ol {
+	margin-bottom: var(--space-5);
+	padding-left: var(--space-6);
+}
+.prose li {
+	margin-bottom: var(--space-2);
+	line-height: var(--leading-relaxed);
+}
+.prose li::marker {
+	color: var(--text-distant);
+}
+
+/* Blockquotes — sage-deep left border, quiet text */
+.prose blockquote {
+	border-left: 1px solid var(--sage-deep);
+	padding-left: var(--space-5);
+	margin: var(--space-6) 0;
+	color: var(--text-quiet);
+}
+
+/* Inline code — ink-raised background, mono */
+.prose code {
+	font-family: var(--font-mono);
+	font-size: var(--type-small);
+	background: var(--ink-raised);
+	padding: 2px 6px;
+	border-radius: var(--radius-xs);
+}
+
+/* Code inside pre — reset inline-code styling that leaks via .prose code */
+.prose pre code {
+	background: none;
+	padding: 0;
+	border-radius: 0;
+	font-size: inherit;
+}
+
+/* Code blocks — extends global pre styles */
+.prose pre {
+	margin-bottom: var(--space-5);
+}
+
+/* Images — fluid width, subtle radius */
+.prose img {
+	max-width: 100%;
+	height: auto;
+	border-radius: var(--radius-sm);
+	margin: var(--space-6) 0;
+}
+
+/* Horizontal rules — rule-strong, consistent with card borders */
+.prose hr {
+	border: none;
+	border-top: 1px solid var(--rule-strong);
+	margin: var(--space-7) 0;
+}
+
+/* Strong — washi for emphasis */
+.prose strong {
+	color: var(--washi);
+	font-weight: 600;
+}
+
+/* Emphasis — ochre tint for gentle highlight */
+.prose em {
+	font-style: italic;
+	color: var(--washi-soft);
+}
+
+/* Tables — minimal, rule borders */
+.prose table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: var(--space-5);
+	font-size: var(--type-small);
+}
+.prose th,
+.prose td {
+	border-bottom: 1px solid var(--rule);
+	padding: var(--space-3) var(--space-4);
+	text-align: left;
+}
+.prose th {
+	font-family: var(--font-mono);
+	color: var(--text-distant);
+	font-weight: 400;
+	font-size: var(--type-tiny);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
