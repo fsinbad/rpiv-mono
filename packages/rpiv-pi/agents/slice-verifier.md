@@ -50,6 +50,8 @@ Locate the artifact's commitments — architectural decisions, contracts, scoped
 
 Walk every change/file in every locked prior slice (slice headings preceding `slice_id` in artifact order). For each: state what it produced, check the current slice for overlaps/collisions/redeclarations, verify every cross-slice symbol reference matches character-for-character, verify every claim the current slice makes about prior-slice behaviors against the projected intermediate state.
 
+The projected intermediate state is HEAD plus every locked prior slice's code fence applied in order — a symbol, file, or export declared NEW in an upstream slice exists in that pre-state even though it is absent from HEAD. Verify cross-slice references against the upstream slice's code fence in the artifact, not against the live working tree.
+
 ### Step 4: Atomicity audit
 
 For the current slice in isolation: walk success criteria for checks that require future slices; walk for forward-references; check whether applying just this slice on top of the projected pre-state leaves the target file coherent. Emit findings under the Cross-slice row.
