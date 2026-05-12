@@ -110,6 +110,9 @@ const jsonLd = {
 		<meta name="twitter:image:alt" content="rpiv-pi · research → design → ship" />
 
 		<link rel="sitemap" href="/sitemap-index.xml" />
+		<!-- RSS auto-discovery is emitted on every page (conventional pattern —
+		     the homepage and blog detail pages all advertise the single feed).
+		     If a future non-blog page type should opt out, gate this on a prop. -->
 		<link rel="alternate" type="application/rss+xml" title="rpiv-pi Blog" href={new URL("/blog/rss.xml", Astro.site).toString()} />
 
 		<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
