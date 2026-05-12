@@ -25,6 +25,19 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { FLAG_DEBUG, MSG_TYPE_GUIDANCE } from "./constants.js";
 
 // ---------------------------------------------------------------------------
+// Module-local constants
+// ---------------------------------------------------------------------------
+
+const AGENTS_MD = "AGENTS.md";
+const CLAUDE_MD = "CLAUDE.md";
+const RPIV_DIR = ".rpiv";
+const GUIDANCE_SUBDIR = "guidance";
+const ARCHITECTURE_MD = "architecture.md";
+/** Forward-slash dedup key for root guidance — must NOT use join() for cross-platform compat. */
+const ROOT_GUIDANCE_KEY = `${RPIV_DIR}/${GUIDANCE_SUBDIR}/${ARCHITECTURE_MD}`;
+const FILE_WRITE_TOOLS = ["read", "edit", "write"] as const;
+
+// ---------------------------------------------------------------------------
 // Guidance Resolution
 // ---------------------------------------------------------------------------
 
@@ -70,13 +83,11 @@ export function resolveGuidance(filePath: string, projectDir: string): GuidanceF
 
 		// Depth 0: skip AGENTS/CLAUDE — Pi's loader handles <cwd> already.
 		if (depth > 0) {
-			candidates.push({ relative: join(subPath, "AGENTS.md"), kind: "agents" });
-			candidates.push({ relative: join(subPath, "CLAUDE.md"), kind: "claude" });
+			candidates.push({ relative: join(subPath, AGENTS_MD), kind: "agents" });
+			candidates.push({ relative: join(subPath, CLAUDE_MD), kind: "claude" });
 		}
 		candidates.push({
-			relative: subPath
-				? join(".rpiv", "guidance", subPath, "architecture.md")
-				: join(".rpiv", "guidance", "architecture.md"),
+			relative: join(RPIV_DIR, GUIDANCE_SUBDIR, ...(subPath ? [subPath] : []), ARCHITECTURE_MD),
 			kind: "architecture",
 		});
 
@@ -121,7 +132,7 @@ export function clearInjectionState() {
  * won't re-inject it later.
  */
 export function injectRootGuidance(cwd: string, pi: ExtensionAPI): void {
-	const relativePath = ".rpiv/guidance/architecture.md";
+	const relativePath = ROOT_GUIDANCE_KEY;
 
 	if (injectedGuidance.has(relativePath)) return;
 
@@ -140,11 +151,7 @@ export function injectRootGuidance(cwd: string, pi: ExtensionAPI): void {
 	injectedGuidance.add(relativePath);
 
 	const file: GuidanceFile = { relativePath, absolutePath, content, kind: "architecture" };
-	pi.sendMessage({
-		customType: MSG_TYPE_GUIDANCE,
-		content: wrapGuidance(formatLabel(file), content, "auto-loaded at session start"),
-		display: !!pi.getFlag(FLAG_DEBUG),
-	});
+	sendGuidanceMessage(pi, wrapGuidance(formatLabel(file), content, "auto-loaded at session start"));
 }
 
 // ---------------------------------------------------------------------------
@@ -160,7 +167,7 @@ export function handleToolCallGuidance(
 	ctx: { cwd: string },
 	pi: ExtensionAPI,
 ): void {
-	if (!["read", "edit", "write"].includes(event.toolName)) return;
+	if (!(FILE_WRITE_TOOLS as readonly string[]).includes(event.toolName)) return;
 
 	const filePath = (event.input as any).file_path ?? (event.input as any).path;
 	if (!filePath) return;
@@ -179,11 +186,7 @@ export function handleToolCallGuidance(
 	const trigger = `auto-loaded because ${event.toolName} touched ${shortenPath(filePath, ctx.cwd)}`;
 	const contextParts = newFiles.map((g) => wrapGuidance(formatLabel(g), g.content, trigger));
 
-	pi.sendMessage({
-		customType: MSG_TYPE_GUIDANCE,
-		content: contextParts.join("\n\n---\n\n"),
-		display: !!pi.getFlag(FLAG_DEBUG),
-	});
+	sendGuidanceMessage(pi, contextParts.join("\n\n---\n\n"));
 }
 
 /**
@@ -222,6 +225,14 @@ function shortenPath(filePath: string, cwd: string): string {
  *   .rpiv/guidance/scripts/architecture.md  → "scripts (architecture.md)"
  *   .rpiv/guidance/architecture.md          → "root (architecture.md)"
  */
+function sendGuidanceMessage(pi: ExtensionAPI, content: string): void {
+	pi.sendMessage({
+		customType: MSG_TYPE_GUIDANCE,
+		content,
+		display: !!pi.getFlag(FLAG_DEBUG),
+	});
+}
+
 function formatLabel(g: GuidanceFile): string {
 	if (g.kind === "architecture") {
 		const stripped = g.relativePath.replace(/^\.rpiv\/guidance\//, "");

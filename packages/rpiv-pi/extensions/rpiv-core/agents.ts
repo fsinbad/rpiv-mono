@@ -15,6 +15,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isPlainObject, toErrorMessage } from "./utils.js";
 
 // ---------------------------------------------------------------------------
 // Package-root resolution
@@ -36,9 +37,22 @@ export const BUNDLED_AGENTS_DIR = join(PACKAGE_ROOT, "agents");
 // Types
 // ---------------------------------------------------------------------------
 
+/** Named constants for sync operation identifiers. */
+export const SYNC_OP = {
+	READ_SRC: "read-src",
+	READ_DEST: "read-dest",
+	COPY: "copy",
+	REMOVE: "remove",
+	MANIFEST_WRITE: "manifest-write",
+	MKDIR: "mkdir",
+} as const;
+
+/** String union derived from SYNC_OP. */
+export type SyncOp = (typeof SYNC_OP)[keyof typeof SYNC_OP];
+
 export interface SyncError {
 	file?: string;
-	op: "read-src" | "read-dest" | "copy" | "remove" | "manifest-read" | "manifest-write" | "mkdir";
+	op: SyncOp;
 	message: string;
 }
 
@@ -177,10 +191,10 @@ function readManifest(targetDir: string): Manifest {
 			for (const e of parsed) if (typeof e === "string" && isManagedAgentName(e)) out[e] = "";
 			return out;
 		}
-		if (parsed && typeof parsed === "object") {
+		if (isPlainObject(parsed)) {
 			const out: Manifest = {};
-			for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-				if (typeof k === "string" && typeof v === "string" && isManagedAgentName(k)) out[k] = v;
+			for (const [k, v] of Object.entries(parsed)) {
+				if (typeof v === "string" && isManagedAgentName(k)) out[k] = v;
 			}
 			return out;
 		}
@@ -204,14 +218,205 @@ function writeManifest(targetDir: string, manifest: Manifest, result: SyncResult
 		writeFileSync(manifestPath, `${JSON.stringify(ordered, null, 2)}\n`, "utf-8");
 	} catch (e) {
 		result.errors.push({
-			op: "manifest-write",
-			message: e instanceof Error ? e.message : String(e),
+			op: SYNC_OP.MANIFEST_WRITE,
+			message: toErrorMessage(e),
 		});
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Agent Sync Engine
+// Predicate consolidation
+// ---------------------------------------------------------------------------
+
+/**
+ * Unified safety gate for destructive operations (update + remove).
+ * Returns true when the operation is safe to auto-apply without user consent:
+ *   - Smart gate: recorded hash matches destination (user hasn't edited)
+ *   - Legacy gate: no v2 marker and no recorded hash (pre-migration)
+ */
+function isSafeDestructiveOp(opts: { hasV2Data: boolean; knownHash: string; destHash: string }): boolean {
+	const { hasV2Data, knownHash, destHash } = opts;
+	const safeSmart = knownHash !== "" && destHash === knownHash;
+	const safeLegacy = !hasV2Data && knownHash === "";
+	return safeSmart || safeLegacy;
+}
+
+// ---------------------------------------------------------------------------
+// Agent Sync Engine — extracted helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Step 1: Enumerate source .md files from the bundled agents directory.
+ * Returns null (with error pushed) on failure.
+ */
+function enumerateSourceFiles(result: SyncResult): string[] | null {
+	try {
+		return readdirSync(BUNDLED_AGENTS_DIR).filter((f) => f.endsWith(".md"));
+	} catch {
+		result.errors.push({ op: SYNC_OP.READ_SRC, message: "Failed to read bundled agents directory" });
+		return null;
+	}
+}
+
+/**
+ * Step 2: Process each source file — copy new, record unchanged, update or gate.
+ * Returns the new manifest built from source entries.
+ */
+function processSourceEntries(
+	sourceEntries: string[],
+	targetDir: string,
+	manifest: Manifest,
+	hasV2Data: boolean,
+	apply: boolean,
+	result: SyncResult,
+): Manifest {
+	const newManifest: Manifest = {};
+
+	for (const entry of sourceEntries) {
+		const src = join(BUNDLED_AGENTS_DIR, entry);
+		const dest = safeJoin(targetDir, entry);
+		const knownHash = manifest[entry] ?? "";
+		if (dest === null) {
+			result.errors.push({ file: entry, op: SYNC_OP.COPY, message: "rejected unsafe path" });
+			newManifest[entry] = knownHash;
+			continue;
+		}
+
+		let srcContent: Buffer;
+		try {
+			srcContent = readFileSync(src);
+		} catch (e) {
+			result.errors.push({ file: entry, op: SYNC_OP.READ_SRC, message: toErrorMessage(e) });
+			newManifest[entry] = knownHash;
+			continue;
+		}
+		const srcHash = sha256(srcContent);
+
+		if (!existsSync(dest)) {
+			try {
+				copyFileSync(src, dest);
+				result.added.push(entry);
+				newManifest[entry] = srcHash;
+			} catch (e) {
+				result.errors.push({ file: entry, op: SYNC_OP.COPY, message: toErrorMessage(e) });
+				newManifest[entry] = knownHash;
+			}
+			continue;
+		}
+
+		let destContent: Buffer;
+		try {
+			destContent = readFileSync(dest);
+		} catch (e) {
+			result.errors.push({ file: entry, op: SYNC_OP.READ_DEST, message: toErrorMessage(e) });
+			newManifest[entry] = knownHash;
+			continue;
+		}
+		const destHash = sha256(destContent);
+
+		if (srcHash === destHash) {
+			result.unchanged.push(entry);
+			newManifest[entry] = srcHash;
+			continue;
+		}
+
+		if (apply || isSafeDestructiveOp({ hasV2Data, knownHash, destHash })) {
+			try {
+				copyFileSync(src, dest);
+				result.updated.push(entry);
+				newManifest[entry] = srcHash;
+			} catch (e) {
+				result.errors.push({ file: entry, op: SYNC_OP.COPY, message: toErrorMessage(e) });
+				newManifest[entry] = knownHash;
+			}
+		} else {
+			result.pendingUpdate.push(entry);
+			newManifest[entry] = knownHash;
+		}
+	}
+
+	return newManifest;
+}
+
+/**
+ * Step 3A: Classify stale entries (in manifest but absent from source).
+ * Returns entries to unlink; pushes pendingRemove for gated entries.
+ */
+function classifyStaleEntries(
+	manifest: Manifest,
+	sourceNames: Set<string>,
+	targetDir: string,
+	hasV2Data: boolean,
+	apply: boolean,
+	newManifest: Manifest,
+	result: SyncResult,
+): { name: string; destPath: string }[] {
+	const toUnlink: { name: string; destPath: string }[] = [];
+
+	for (const name of Object.keys(manifest)) {
+		if (sourceNames.has(name)) continue;
+
+		const knownHash = manifest[name];
+		const destPath = safeJoin(targetDir, name);
+		if (destPath === null) {
+			result.errors.push({ file: name, op: SYNC_OP.REMOVE, message: "rejected unsafe path" });
+			continue;
+		}
+		if (!existsSync(destPath)) {
+			// Vanished tracked file: tidy from manifest AND surface as removed (Q5).
+			result.removed.push(name);
+			continue;
+		}
+
+		let destContent: Buffer;
+		try {
+			destContent = readFileSync(destPath);
+		} catch (e) {
+			result.errors.push({ file: name, op: SYNC_OP.READ_DEST, message: toErrorMessage(e) });
+			newManifest[name] = knownHash;
+			continue;
+		}
+		const destHash = sha256(destContent);
+
+		if (apply || isSafeDestructiveOp({ hasV2Data, knownHash, destHash })) {
+			toUnlink.push({ name, destPath });
+		} else {
+			result.pendingRemove.push(name);
+			newManifest[name] = knownHash;
+		}
+	}
+
+	return toUnlink;
+}
+
+/**
+ * Step 3C: Commit unlink operations after the manifest is durable.
+ * Re-introduces failed entries into newManifest so a future run retries.
+ */
+function commitStaleUnlinks(
+	toUnlink: { name: string; destPath: string }[],
+	manifest: Manifest,
+	newManifest: Manifest,
+	targetDir: string,
+	result: SyncResult,
+): void {
+	for (const { name, destPath } of toUnlink) {
+		try {
+			unlinkSync(destPath);
+			result.removed.push(name);
+		} catch (e) {
+			result.errors.push({ file: name, op: SYNC_OP.REMOVE, message: toErrorMessage(e) });
+			// Re-introduce the entry into the manifest on disk so a future run retries.
+			newManifest[name] = manifest[name];
+		}
+	}
+	if (result.errors.some((e) => e.op === SYNC_OP.REMOVE)) {
+		writeManifest(targetDir, newManifest, result);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Agent Sync Engine — orchestrator
 // ---------------------------------------------------------------------------
 
 /**
@@ -252,189 +457,34 @@ export function syncBundledAgents(cwd: string, apply: boolean): SyncResult {
 		mkdirSync(targetDir, { recursive: true });
 	} catch (e) {
 		result.errors.push({
-			op: "mkdir",
-			message: e instanceof Error ? e.message : "Failed to create target directory",
+			op: SYNC_OP.MKDIR,
+			message: toErrorMessage(e, "Failed to create target directory"),
 		});
 		return result;
 	}
 
 	// 1. Enumerate source files
-	let sourceEntries: string[];
-	try {
-		sourceEntries = readdirSync(BUNDLED_AGENTS_DIR).filter((f) => f.endsWith(".md"));
-	} catch {
-		result.errors.push({ op: "read-src", message: "Failed to read bundled agents directory" });
-		return result;
-	}
+	const sourceEntries = enumerateSourceFiles(result);
+	if (sourceEntries === null) return result;
 
 	const sourceNames = new Set(sourceEntries);
 	const manifest = readManifest(targetDir);
-	// hasV2Data: derives from the .rpiv-managed.v2 sidecar marker file, NOT from
-	// manifest content. The marker is created on the first successful write and
-	// survives JSON corruption, partial truncation, and empty-hash collapse —
-	// making the legacy-migration "package wins" branch deterministically
-	// one-shot per project.
 	const hasV2Data = hasV2Marker(targetDir);
-	const newManifest: Manifest = {};
 
-	// 2. Process each source file (always carry forward knownHash on transient I/O — Q2/Q3/Q4)
-	for (const entry of sourceEntries) {
-		const src = join(BUNDLED_AGENTS_DIR, entry);
-		const dest = safeJoin(targetDir, entry);
-		const knownHash = manifest[entry] ?? "";
-		if (dest === null) {
-			// Defence-in-depth: sourceEntries are basenames from readdirSync, but if a
-			// future change widens that input safeJoin still blocks the traversal.
-			result.errors.push({ file: entry, op: "copy", message: "rejected unsafe path" });
-			newManifest[entry] = knownHash;
-			continue;
-		}
-
-		let srcContent: Buffer;
-		try {
-			srcContent = readFileSync(src);
-		} catch (e) {
-			result.errors.push({
-				file: entry,
-				op: "read-src",
-				message: e instanceof Error ? e.message : String(e),
-			});
-			newManifest[entry] = knownHash;
-			continue;
-		}
-		const srcHash = sha256(srcContent);
-
-		if (!existsSync(dest)) {
-			try {
-				copyFileSync(src, dest);
-				result.added.push(entry);
-				newManifest[entry] = srcHash;
-			} catch (e) {
-				result.errors.push({
-					file: entry,
-					op: "copy",
-					message: e instanceof Error ? e.message : String(e),
-				});
-				newManifest[entry] = knownHash;
-			}
-			continue;
-		}
-
-		let destContent: Buffer;
-		try {
-			destContent = readFileSync(dest);
-		} catch (e) {
-			result.errors.push({
-				file: entry,
-				op: "read-dest",
-				message: e instanceof Error ? e.message : String(e),
-			});
-			newManifest[entry] = knownHash;
-			continue;
-		}
-		const destHash = sha256(destContent);
-
-		if (srcHash === destHash) {
-			result.unchanged.push(entry);
-			newManifest[entry] = srcHash;
-			continue;
-		}
-
-		const safeSmartUpdate = !apply && knownHash !== "" && destHash === knownHash;
-		const safeLegacyUpdate = !apply && !hasV2Data && knownHash === "";
-		if (apply || safeSmartUpdate || safeLegacyUpdate) {
-			try {
-				copyFileSync(src, dest);
-				result.updated.push(entry);
-				newManifest[entry] = srcHash;
-			} catch (e) {
-				result.errors.push({
-					file: entry,
-					op: "copy",
-					message: e instanceof Error ? e.message : String(e),
-				});
-				newManifest[entry] = knownHash;
-			}
-		} else {
-			result.pendingUpdate.push(entry);
-			newManifest[entry] = knownHash;
-		}
-	}
+	// 2. Process each source file
+	const newManifest = processSourceEntries(sourceEntries, targetDir, manifest, hasV2Data, apply, result);
 
 	// 3. Stale-removal: Pass A (classify) → Pass B (write manifest) → Pass C (commit unlinks).
-	//    A crash between B and C leaves the manifest claiming files-already-removed; on next
-	//    run those entries hit the vanish branch and tidy via result.removed (Q5).
-	const toUnlink: { name: string; destPath: string }[] = [];
-	for (const name of Object.keys(manifest)) {
-		if (sourceNames.has(name)) continue;
-
-		const knownHash = manifest[name];
-		const destPath = safeJoin(targetDir, name);
-		if (destPath === null) {
-			// Defence-in-depth: readManifest already filters via isManagedAgentName,
-			// but a future code path that injects entries past readManifest still gets blocked.
-			result.errors.push({ file: name, op: "remove", message: "rejected unsafe path" });
-			continue;
-		}
-		if (!existsSync(destPath)) {
-			// Vanished tracked file: tidy from manifest AND surface as removed (Q5).
-			result.removed.push(name);
-			continue;
-		}
-
-		let destContent: Buffer;
-		try {
-			destContent = readFileSync(destPath);
-		} catch (e) {
-			result.errors.push({
-				file: name,
-				op: "read-dest",
-				message: e instanceof Error ? e.message : String(e),
-			});
-			newManifest[name] = knownHash;
-			continue;
-		}
-		const destHash = sha256(destContent);
-		const safeSmartRemove = !apply && knownHash !== "" && destHash === knownHash;
-		const safeLegacyRemove = !apply && !hasV2Data && knownHash === "";
-
-		if (apply || safeSmartRemove || safeLegacyRemove) {
-			toUnlink.push({ name, destPath });
-		} else {
-			result.pendingRemove.push(name);
-			newManifest[name] = knownHash;
-		}
-	}
+	const toUnlink = classifyStaleEntries(manifest, sourceNames, targetDir, hasV2Data, apply, newManifest, result);
 
 	// Pass B — persist manifest before destructive ops.
 	writeManifest(targetDir, newManifest, result);
-	// First-ever successful write commits the v2 marker (one-shot per project).
-	// Intentional: even if every copyFileSync failed (disk full, EACCES, ...),
-	// the manifest is `{}` and the marker still commits. Next run treats every
-	// source entry as new (knownHash === "") with hasV2Data=true → routed to
-	// pendingUpdate, never auto-overwritten. /rpiv-update-agents recovers.
-	if (!hasV2Data && !result.errors.some((e) => e.op === "manifest-write")) {
+	if (!hasV2Data && !result.errors.some((e) => e.op === SYNC_OP.MANIFEST_WRITE)) {
 		writeV2Marker(targetDir);
 	}
 
 	// Pass C — commit unlinks after the manifest is durable.
-	for (const { name, destPath } of toUnlink) {
-		try {
-			unlinkSync(destPath);
-			result.removed.push(name);
-		} catch (e) {
-			result.errors.push({
-				file: name,
-				op: "remove",
-				message: e instanceof Error ? e.message : String(e),
-			});
-			// Re-introduce the entry into the manifest on disk so a future run retries.
-			newManifest[name] = manifest[name];
-		}
-	}
-	if (result.errors.some((e) => e.op === "remove")) {
-		writeManifest(targetDir, newManifest, result);
-	}
+	commitStaleUnlinks(toUnlink, manifest, newManifest, targetDir, result);
 
 	return result;
 }

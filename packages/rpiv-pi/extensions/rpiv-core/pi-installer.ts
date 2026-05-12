@@ -8,6 +8,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { EXIT_TIMEOUT, SIGKILL_GRACE_MS } from "./constants.js";
 
 export interface PiInstallResult {
 	code: number;
@@ -45,8 +46,8 @@ export function spawnPiInstall(pkg: string, timeoutMs: number): Promise<PiInstal
 			proc.kill("SIGTERM");
 			setTimeout(() => {
 				if (!proc.killed) proc.kill("SIGKILL");
-			}, 5000);
-			settle({ code: 124, stdout, stderr: `${stderr}\n[timed out after ${timeoutMs}ms]` });
+			}, SIGKILL_GRACE_MS);
+			settle({ code: EXIT_TIMEOUT, stdout, stderr: `${stderr}\n[timed out after ${timeoutMs}ms]` });
 		}, timeoutMs);
 
 		proc.on("error", (err) => {

@@ -9,6 +9,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { GIT_EXEC_TIMEOUT_MS } from "./constants.js";
 
 type GitContext = { branch: string; commit: string; user: string };
 
@@ -33,8 +34,8 @@ export function clearGitContextCache(): void {
 async function loadGitContext(pi: ExtensionAPI): Promise<GitContext | null> {
 	try {
 		const [branchRes, commitRes] = await Promise.all([
-			pi.exec("git", ["rev-parse", "--abbrev-ref", "HEAD"], { timeout: 5000 }),
-			pi.exec("git", ["rev-parse", "--short", "HEAD"], { timeout: 5000 }),
+			pi.exec("git", ["rev-parse", "--abbrev-ref", "HEAD"], { timeout: GIT_EXEC_TIMEOUT_MS }),
+			pi.exec("git", ["rev-parse", "--short", "HEAD"], { timeout: GIT_EXEC_TIMEOUT_MS }),
 		]);
 		const rawBranch = branchRes.stdout.trim();
 		const commit = commitRes.stdout.trim();
@@ -42,7 +43,7 @@ async function loadGitContext(pi: ExtensionAPI): Promise<GitContext | null> {
 		const branch = rawBranch === "HEAD" ? "detached" : rawBranch;
 		let user = "";
 		try {
-			const r2 = await pi.exec("git", ["config", "user.name"], { timeout: 5000 });
+			const r2 = await pi.exec("git", ["config", "user.name"], { timeout: GIT_EXEC_TIMEOUT_MS });
 			user = r2.stdout.trim();
 		} catch {
 			// fall through to env fallback

@@ -21,35 +21,13 @@
  * before the user has consented to /rpiv-setup mutating settings.json.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { writeFileSync } from "node:fs";
 import { LEGACY_SIBLINGS } from "./siblings.js";
-
-const PI_AGENT_SETTINGS = join(homedir(), ".pi", "agent", "settings.json");
+import { PI_AGENT_SETTINGS, readPiAgentSettings } from "./utils.js";
 
 export interface PruneLegacySiblingsResult {
 	/** settings.json `packages[]` entries that were removed (empty = no-op). */
 	pruned: string[];
-}
-
-interface ParsedSettings {
-	settings: Record<string, unknown>;
-	packages: unknown[];
-}
-
-function readSettings(): ParsedSettings | undefined {
-	if (!existsSync(PI_AGENT_SETTINGS)) return undefined;
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(readFileSync(PI_AGENT_SETTINGS, "utf-8"));
-	} catch {
-		return undefined;
-	}
-	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return undefined;
-	const settings = parsed as Record<string, unknown>;
-	if (!Array.isArray(settings.packages)) return undefined;
-	return { settings, packages: settings.packages as unknown[] };
 }
 
 function partitionPackages(packages: unknown[]): { legacy: string[]; kept: unknown[] } {
@@ -69,7 +47,7 @@ function partitionPackages(packages: unknown[]): { legacy: string[]; kept: unkno
  * Safe to call before any user confirmation.
  */
 export function findLegacySiblings(): string[] {
-	const parsed = readSettings();
+	const parsed = readPiAgentSettings();
 	if (!parsed) return [];
 	return partitionPackages(parsed.packages).legacy;
 }
@@ -80,7 +58,7 @@ export function findLegacySiblings(): string[] {
  * Never throws. Call AFTER the user has confirmed the cleanup.
  */
 export function pruneLegacySiblings(): PruneLegacySiblingsResult {
-	const parsed = readSettings();
+	const parsed = readPiAgentSettings();
 	if (!parsed) return { pruned: [] };
 	const { legacy, kept } = partitionPackages(parsed.packages);
 	if (legacy.length === 0) return { pruned: [] };

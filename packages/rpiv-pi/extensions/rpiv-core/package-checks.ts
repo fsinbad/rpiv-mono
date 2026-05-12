@@ -3,24 +3,8 @@
  * Pure utility — no ExtensionAPI.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { SIBLINGS, type SiblingPlugin } from "./siblings.js";
-
-const PI_AGENT_SETTINGS = join(homedir(), ".pi", "agent", "settings.json");
-
-function readInstalledPackages(): string[] {
-	if (!existsSync(PI_AGENT_SETTINGS)) return [];
-	try {
-		const raw = readFileSync(PI_AGENT_SETTINGS, "utf-8");
-		const settings = JSON.parse(raw) as { packages?: unknown };
-		if (!Array.isArray(settings.packages)) return [];
-		return settings.packages.filter((e): e is string => typeof e === "string");
-	} catch {
-		return [];
-	}
-}
+import { readPiAgentSettings } from "./utils.js";
 
 /**
  * Return the SIBLINGS not currently installed.
@@ -28,6 +12,8 @@ function readInstalledPackages(): string[] {
  * full snapshot and the missing subset should call this once and filter.
  */
 export function findMissingSiblings(): SiblingPlugin[] {
-	const installed = readInstalledPackages();
+	const result = readPiAgentSettings();
+	if (!result) return [...SIBLINGS];
+	const installed = result.packages.filter((e): e is string => typeof e === "string");
 	return SIBLINGS.filter((s) => !installed.some((entry) => s.matches.test(entry)));
 }

@@ -13,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BUNDLED_AGENTS_DIR, syncBundledAgents } from "./agents.js";
+import { BUNDLED_AGENTS_DIR, SYNC_OP, syncBundledAgents } from "./agents.js";
 
 const sha256 = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 
@@ -645,7 +645,7 @@ describe("syncBundledAgents — error paths", () => {
 		chmodSync(targetDir, 0o500);
 		try {
 			const r = syncBundledAgents(cwd, false);
-			const errorTripped = r.errors.some((e) => e.op === "copy") || r.added.length < bundled.length;
+			const errorTripped = r.errors.some((e) => e.op === SYNC_OP.COPY) || r.added.length < bundled.length;
 			expect(errorTripped).toBe(true);
 		} finally {
 			chmodSync(targetDir, 0o700);
@@ -680,7 +680,7 @@ describe("syncBundledAgents — error paths", () => {
 
 		try {
 			const r = syncBundledAgents(cwd, true);
-			expect(r.errors.some((e) => e.op === "manifest-write")).toBe(true);
+			expect(r.errors.some((e) => e.op === SYNC_OP.MANIFEST_WRITE)).toBe(true);
 		} finally {
 			chmodSync(manifestPath, 0o600);
 		}
@@ -695,8 +695,8 @@ describe("syncBundledAgents — error paths", () => {
 
 		const r = syncBundledAgents(cwd, false);
 
-		expect(r.errors.some((e) => e.op === "mkdir")).toBe(true);
-		expect(r.errors.some((e) => e.op === "manifest-write")).toBe(false);
+		expect(r.errors.some((e) => e.op === SYNC_OP.MKDIR)).toBe(true);
+		expect(r.errors.some((e) => e.op === SYNC_OP.MANIFEST_WRITE)).toBe(false);
 	});
 
 	it("Q5: pushes to result.removed when a tracked file has already vanished from disk (v2 active)", () => {
@@ -733,7 +733,7 @@ describe("syncBundledAgents — error paths", () => {
 			chmodSync(srcPath, 0o000);
 			try {
 				const r = syncBundledAgents(cwd, false);
-				expect(r.errors.some((e) => e.op === "read-src" && e.file === target)).toBe(true);
+				expect(r.errors.some((e) => e.op === SYNC_OP.READ_SRC && e.file === target)).toBe(true);
 				expect(r.pendingUpdate).not.toContain(target);
 				const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
 				expect(manifest[target]).toBe(priorHash);
@@ -753,7 +753,7 @@ describe("syncBundledAgents — error paths", () => {
 
 		try {
 			const r = syncBundledAgents(cwd, false);
-			expect(r.errors.some((e) => e.op === "read-dest" && e.file === "stale.md")).toBe(true);
+			expect(r.errors.some((e) => e.op === SYNC_OP.READ_DEST && e.file === "stale.md")).toBe(true);
 		} finally {
 			chmodSync(stalePath, 0o600);
 		}

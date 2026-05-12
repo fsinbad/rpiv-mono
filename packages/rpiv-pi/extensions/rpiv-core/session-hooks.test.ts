@@ -22,7 +22,7 @@ vi.mock("./agents.js", async (importOriginal) => {
 });
 
 import type { SyncResult } from "./agents.js";
-import { syncBundledAgents } from "./agents.js";
+import { SYNC_OP, syncBundledAgents } from "./agents.js";
 import { clearGitContextCache, getGitContext, resetInjectedMarker, takeGitContextIfChanged } from "./git-context.js";
 import { clearInjectionState } from "./guidance.js";
 import { findMissingSiblings } from "./package-checks.js";
@@ -164,7 +164,7 @@ describe("session_start hook — notifications", () => {
 	it("I3: emits a 'sync errors' warning when result.errors > 0", async () => {
 		vi.mocked(syncBundledAgents).mockReturnValueOnce({
 			...emptySync,
-			errors: [{ op: "manifest-write", message: "EACCES" }],
+			errors: [{ op: SYNC_OP.MANIFEST_WRITE, message: "EACCES" }],
 		});
 		vi.mocked(findMissingSiblings).mockReturnValueOnce([]);
 		const { pi, captured } = createMockPi({ exec: stubGitExec({}) as never });

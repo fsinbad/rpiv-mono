@@ -2,10 +2,18 @@ import { createMockCtx, createMockPi } from "@juicesharp/rpiv-test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./agents.js", () => ({
+	SYNC_OP: {
+		READ_SRC: "read-src",
+		READ_DEST: "read-dest",
+		COPY: "copy",
+		REMOVE: "remove",
+		MANIFEST_WRITE: "manifest-write",
+		MKDIR: "mkdir",
+	},
 	syncBundledAgents: vi.fn(),
 }));
 
-import { syncBundledAgents } from "./agents.js";
+import { SYNC_OP, syncBundledAgents } from "./agents.js";
 import { registerUpdateAgentsCommand } from "./update-agents-command.js";
 
 beforeEach(() => {
@@ -53,7 +61,7 @@ describe("/rpiv-update-agents", () => {
 
 	it("errors-only report uses 'warning' severity", async () => {
 		vi.mocked(syncBundledAgents).mockReturnValue(
-			empty({ errors: [{ op: "copy", message: "EACCES", file: "a.md" }] }),
+			empty({ errors: [{ op: SYNC_OP.COPY, message: "EACCES", file: "a.md" }] }),
 		);
 		const { pi, captured } = createMockPi();
 		registerUpdateAgentsCommand(pi);

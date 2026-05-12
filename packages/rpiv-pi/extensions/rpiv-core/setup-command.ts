@@ -13,6 +13,7 @@ import { findMissingSiblings } from "./package-checks.js";
 import { spawnPiInstall } from "./pi-installer.js";
 import { findLegacySiblings, pruneLegacySiblings } from "./prune-legacy-siblings.js";
 import type { SiblingPlugin } from "./siblings.js";
+import { toErrorMessage } from "./utils.js";
 
 const INSTALL_TIMEOUT_MS = 120_000;
 const STDERR_SNIPPET_CHARS = 300;
@@ -54,38 +55,40 @@ function buildConfirmBody(missing: SiblingPlugin[], legacyEntries: string[]): st
 export function registerSetupCommand(pi: ExtensionAPI): void {
 	pi.registerCommand("rpiv-setup", {
 		description: "Install rpiv-pi's sibling extension plugins",
-		handler: async (_args, ctx) => {
-			if (!ctx.hasUI) {
-				ctx.ui.notify(MSG_INTERACTIVE_ONLY, "error");
-				return;
-			}
-
-			const missing = findMissingSiblings();
-			const legacyEntries = findLegacySiblings();
-			if (missing.length === 0 && legacyEntries.length === 0) {
-				ctx.ui.notify(MSG_NOTHING_TO_DO, "info");
-				return;
-			}
-
-			const confirmed = await ctx.ui.confirm(MSG_CONFIRM_TITLE, buildConfirmBody(missing, legacyEntries));
-			if (!confirmed) {
-				ctx.ui.notify(MSG_CANCELLED, "info");
-				return;
-			}
-
-			if (legacyEntries.length > 0) {
-				const prune = pruneLegacySiblings();
-				if (prune.pruned.length > 0) {
-					ctx.ui.notify(msgLegacyPruned(prune.pruned), "info");
-				}
-			}
-
-			if (missing.length === 0) return;
-
-			const { succeeded, failed } = await installMissing(ctx.ui, missing);
-			ctx.ui.notify(buildReport(succeeded, failed), failed.length > 0 ? "warning" : "info");
-		},
+		handler: handleSetupCommand,
 	});
+}
+
+async function handleSetupCommand(_args: string, ctx: { hasUI: boolean; ui: UI }): Promise<void> {
+	if (!ctx.hasUI) {
+		ctx.ui.notify(MSG_INTERACTIVE_ONLY, "error");
+		return;
+	}
+
+	const missing = findMissingSiblings();
+	const legacyEntries = findLegacySiblings();
+	if (missing.length === 0 && legacyEntries.length === 0) {
+		ctx.ui.notify(MSG_NOTHING_TO_DO, "info");
+		return;
+	}
+
+	const confirmed = await ctx.ui.confirm(MSG_CONFIRM_TITLE, buildConfirmBody(missing, legacyEntries));
+	if (!confirmed) {
+		ctx.ui.notify(MSG_CANCELLED, "info");
+		return;
+	}
+
+	if (legacyEntries.length > 0) {
+		const prune = pruneLegacySiblings();
+		if (prune.pruned.length > 0) {
+			ctx.ui.notify(msgLegacyPruned(prune.pruned), "info");
+		}
+	}
+
+	if (missing.length === 0) return;
+
+	const { succeeded, failed } = await installMissing(ctx.ui, missing);
+	ctx.ui.notify(buildReport(succeeded, failed), failed.length > 0 ? "warning" : "info");
 }
 
 async function installMissing(
@@ -107,7 +110,7 @@ async function installMissing(
 				});
 			}
 		} catch (err) {
-			failed.push({ pkg, error: err instanceof Error ? err.message : String(err) });
+			failed.push({ pkg, error: toErrorMessage(err) });
 		}
 	}
 	return { succeeded, failed };
