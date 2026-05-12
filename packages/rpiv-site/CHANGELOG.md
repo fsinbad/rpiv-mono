@@ -7,6 +7,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Blog section with post listing, detail pages, serif prose typography, and RSS feed.
+
+### Changed
+- Navigation restructured into a two-tier grid layout with grouped utility links.
+- RSS feed emits `<atom:updated>` for posts with an updated date.
+- Footer link indentation normalized.
+
 ## [1.4.2] - 2026-05-11
 
 ## [1.4.1] - 2026-05-11

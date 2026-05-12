@@ -9,9 +9,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - `blueprint` skill now uses a dedicated adversarial verifier for per-slice micro-checkpoints, improving output quality.
+- Renamed `plan-reviewer` agent to `artifact-reviewer` with generalized vocabulary for any phased artifact.
 
 ### Fixed
 - `web-search-researcher` agent now runs with a fresh context on each invocation.
+- Blueprint skill's slice verification passes the current slice code to avoid false-positive emptiness violations.
 
 ## [1.4.2] - 2026-05-11
 
