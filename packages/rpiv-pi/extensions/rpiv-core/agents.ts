@@ -234,7 +234,7 @@ function writeManifest(targetDir: string, manifest: Manifest, result: SyncResult
  *   - Smart gate: recorded hash matches destination (user hasn't edited)
  *   - Legacy gate: no v2 marker and no recorded hash (pre-migration)
  */
-function isSafeDestructiveOp(opts: { hasV2Data: boolean; knownHash: string; destHash: string }): boolean {
+export function isSafeDestructiveOp(opts: { hasV2Data: boolean; knownHash: string; destHash: string }): boolean {
 	const { hasV2Data, knownHash, destHash } = opts;
 	const safeSmart = knownHash !== "" && destHash === knownHash;
 	const safeLegacy = !hasV2Data && knownHash === "";

@@ -13,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BUNDLED_AGENTS_DIR, SYNC_OP, syncBundledAgents } from "./agents.js";
+import { BUNDLED_AGENTS_DIR, isSafeDestructiveOp, SYNC_OP, syncBundledAgents } from "./agents.js";
 
 const sha256 = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 
@@ -757,5 +757,37 @@ describe("syncBundledAgents — error paths", () => {
 		} finally {
 			chmodSync(stalePath, 0o600);
 		}
+	});
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Unified safety predicate — exercised indirectly through syncBundledAgents,
+// pinned here directly so the three branches stay regression-checked.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("isSafeDestructiveOp", () => {
+	const HASH_A = "a".repeat(64);
+	const HASH_B = "b".repeat(64);
+
+	it("safeSmart: known hash matches dest → true regardless of v2 marker", () => {
+		expect(isSafeDestructiveOp({ hasV2Data: true, knownHash: HASH_A, destHash: HASH_A })).toBe(true);
+		expect(isSafeDestructiveOp({ hasV2Data: false, knownHash: HASH_A, destHash: HASH_A })).toBe(true);
+	});
+
+	it("safeLegacy: no v2 marker AND empty known hash → true (pre-migration, package wins)", () => {
+		expect(isSafeDestructiveOp({ hasV2Data: false, knownHash: "", destHash: HASH_A })).toBe(true);
+		expect(isSafeDestructiveOp({ hasV2Data: false, knownHash: "", destHash: "" })).toBe(true);
+	});
+
+	it("rejects: v2 marker present + known hash differs from dest → false (user edited)", () => {
+		expect(isSafeDestructiveOp({ hasV2Data: true, knownHash: HASH_A, destHash: HASH_B })).toBe(false);
+	});
+
+	it("rejects: v2 marker present + empty known hash → false (no baseline, no consent)", () => {
+		expect(isSafeDestructiveOp({ hasV2Data: true, knownHash: "", destHash: HASH_A })).toBe(false);
+	});
+
+	it("rejects: v2 marker absent + known hash differs from dest → false (smart gate trumps legacy)", () => {
+		expect(isSafeDestructiveOp({ hasV2Data: false, knownHash: HASH_A, destHash: HASH_B })).toBe(false);
 	});
 });

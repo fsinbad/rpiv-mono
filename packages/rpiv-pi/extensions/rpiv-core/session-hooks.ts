@@ -7,7 +7,12 @@
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { type ExtensionAPI, isToolCallEventType, type ToolCallEvent } from "@earendil-works/pi-coding-agent";
+import {
+	type ExtensionAPI,
+	type ExtensionContext,
+	isToolCallEventType,
+	type ToolCallEvent,
+} from "@earendil-works/pi-coding-agent";
 import { type SyncResult, syncBundledAgents } from "./agents.js";
 import { FLAG_DEBUG, MSG_TYPE_GIT_CONTEXT } from "./constants.js";
 import {
@@ -95,9 +100,9 @@ async function onSessionShutdown(): Promise<void> {
 	resetInjectedMarker();
 }
 
-async function onToolCall(event: ToolCallEvent, _ctx: unknown, pi: ExtensionAPI): Promise<void> {
-	handleToolCallGuidance(event, _ctx as { cwd: string }, pi);
-	if (isToolCallEventType("bash", event) && isGitMutatingCommand(event.input.command ?? "")) {
+async function onToolCall(event: ToolCallEvent, ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+	handleToolCallGuidance(event, ctx, pi);
+	if (isToolCallEventType("bash", event) && isGitMutatingCommand(event.input.command)) {
 		clearGitContextCache();
 	}
 }
