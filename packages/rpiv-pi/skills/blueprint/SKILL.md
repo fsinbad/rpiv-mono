@@ -260,18 +260,14 @@ No pseudocode, no TODOs, no placeholders — the code must be copy-pasteable by 
 
 **Context grounding** (after slice 2): Before generating, re-read the artifact's prior `## Phase N` sections for files this slice touches (a file may appear in earlier phases; if so, this phase extends or revisits it). The artifact is the source of truth — generate code that extends what's already emitted, not what you remember from conversation.
 
-### 7.2. Self-verify slice
+### 7.2. Verify slice
 
-Before presenting to the developer, cross-check this slice and produce a structured summary:
+Dispatch the `slice-verifier` agent with:
+- `artifact_path`: the Step-6 Write `file_path`
+- `slice_id`: `Phase N`
+- `target_files`: files this slice modifies, plus key files prior phases introduced
 
-```
-Self-verify Slice N:
-- Decisions: {OK / VIOLATION: decision X — fix applied}
-- Cross-slice: {OK / CONFLICT: file X has inconsistent types — fix applied}
-- Research: {OK / WARNING: constraint Y not satisfied — fix applied}
-```
-
-If violations found: fix in-place before presenting. Include the self-verify summary in the 7.3 checkpoint presentation.
+The agent emits a 3-row summary (`Decisions / Cross-slice / Research`). If any VIOLATION: fix slice in-place per the citation, re-dispatch until OK. Include the OK summary in the 7.3 checkpoint presentation.
 
 ### 7.3. Developer micro-checkpoint
 
@@ -316,7 +312,7 @@ Use the `ask_user_question` tool to confirm. Question: "Slice {N/M}: {slice name
 6. Decrement frontmatter `unresolved_phase_count` by 1
 - Proceed to next slice
 
-**Revise**: Update code per developer feedback. Re-run self-verify (7.2). Re-present the same slice (7.3). The artifact is NOT touched — only "Approve" writes to the artifact.
+**Revise**: Update code per developer feedback. Re-run verify (7.2). Re-present the same slice (7.3). The artifact is NOT touched — only "Approve" writes to the artifact.
 
 **Rethink**: Developer spotted a design issue. If a previously approved slice is affected, flag the conflict and offer cascade revision — developer decides whether to reopen (if yes, Edit the affected `## Phase N` entry).
 Update decomposition (add/remove/reorder remaining slices) and confirm before continuing.
@@ -360,13 +356,13 @@ criticism > generation asymmetry plus fresh-context isolation. Inherits the
 orchestrator's model (no model upgrade required); the value comes from the
 fresh dispatch, not from a stronger model.
 
-### 10.1. Dispatch the plan-reviewer subagent
+### 10.1. Dispatch the artifact-reviewer subagent
 
 Reuse the exact `file_path` string passed to `Write` at Step 6 — the runtime already resolved it for this platform; do not rebuild it from `pwd`. `ls` to verify it still exists; abort dispatch on miss.
 
 ```
 Agent({
-  subagent_type: "plan-reviewer",
+  subagent_type: "artifact-reviewer",
   description: "post-finalization plan review",
   prompt: `Plan artifact: {Step-6 Write file_path, ls-verified}
 
@@ -381,7 +377,7 @@ The agent returns a markdown table with columns `plan-loc | codebase-loc | sever
 ```markdown
 ## Plan Review (Step 10)
 
-_Independent post-finalization review by plan-reviewer subagent. Findings triaged at Step 11._
+_Independent post-finalization review by artifact-reviewer subagent. Findings triaged at Step 11._
 
 | plan-loc          | codebase-loc                | severity   | dimension      | finding | recommendation | resolution |
 | ----------------- | --------------------------- | ---------- | -------------- | ------- | -------------- | ---------- |
@@ -390,7 +386,7 @@ _Independent post-finalization review by plan-reviewer subagent. Findings triage
 | ...
 ```
 
-If the agent emits zero rows, still emit the section with a single line: `_No findings — plan-reviewer cleared the artifact._`. Persistence is mandatory regardless of finding count — the section is the durable audit trail.
+If the agent emits zero rows, still emit the section with a single line: `_No findings — artifact-reviewer cleared the artifact._`. Persistence is mandatory regardless of finding count — the section is the durable audit trail.
 
 ### 10.3. Tally findings for Step 11's prompt
 
@@ -404,17 +400,17 @@ Do NOT auto-apply any finding. The orchestrator never makes the apply / defer / 
 
 ### 10.4. Failure handling
 
-If plan-reviewer errors out (subprocess crash, malformed output, timeout):
+If artifact-reviewer errors out (subprocess crash, malformed output, timeout):
 - Skip Step 10's findings; do not block on the failure.
 - Append `_Step 10 review failed: {one-line cause}._` under the `## Plan Review (Step 10)` heading instead of the row table.
-- Record the fallback in `## Developer Context`: `Step 10 review unavailable; proceeded to developer review without plan-reviewer findings.`
+- Record the fallback in `## Developer Context`: `Step 10 review unavailable; proceeded to developer review without artifact-reviewer findings.`
 - Proceed to Step 11.
 
 The developer review path at Step 11 absorbs the cost — that is how planning worked before this step existed.
 
 ## Step 11: Review & Iterate
 
-1. **Triage plan-reviewer findings first** (skip if Step 10 returned no findings):
+1. **Triage artifact-reviewer findings first** (skip if Step 10 returned no findings):
 
    Present the Plan Review table from Step 10 to the developer with severity-grouped framing:
 
@@ -487,7 +483,8 @@ The developer review path at Step 11 absorbs the cost — that is how planning w
 | Novel work (new library/pattern) | + web-search-researcher |
 | Step 5 correction path (developer flags missed area) | targeted codebase-analyzer (max 1-2) |
 | Step 7.1 mid-generation gap (specific anchor unclear) | targeted codebase-analyzer (max 1) |
-| Step 10 post-finalization review (mandatory) | plan-reviewer (fresh-context, inherited model) |
+| Step 7.2 per-slice verify (mandatory) | slice-verifier |
+| Step 10 post-finalization review (mandatory) | artifact-reviewer |
 
 Spawn multiple agents in parallel when they're searching for different things. Each agent runs in isolation — provide complete context in the prompt, including specific directory paths when the feature targets a known module. Don't write detailed prompts about HOW to search — just tell it what you're looking for and where.
 
@@ -504,8 +501,8 @@ Spawn multiple agents in parallel when they're searching for different things. E
   - NEVER leave Phase code fences or Success Criteria empty after their slice is approved — fill both via Edit in Step 7.4 (criteria are filled while phase scope is freshest, not deferred to Step 9)
   - NEVER fill empty Phase content at Step 9 — empty at finalize time = return to Step 7 (preserves the 7.3 micro-checkpoint)
   - Step 8 is internal-only — no developer round-trip; cross-phase summary inlines into the final 7.3 question
-  - ALWAYS dispatch plan-reviewer at Step 10 after Step 9 finalize, BEFORE the developer review at Step 11
-  - NEVER auto-apply a plan-reviewer finding at Step 10; triage is the developer's call at Step 11
+  - ALWAYS dispatch artifact-reviewer at Step 10 after Step 9 finalize, BEFORE the developer review at Step 11
+  - NEVER auto-apply an artifact-reviewer finding at Step 10; triage is the developer's call at Step 11
   - ALWAYS hold `status: in-review` from Step 9 through Step 11; flip to `ready` only after every row has a `resolution` (or the table is empty)
   - Step 7.3 → Step 5 exists for late-discovered decision errors; revisit rather than force a wrong shape through remaining slices
 - NEVER skip the developer checkpoint — developer input on architectural decisions is the highest-value signal in the planning process
