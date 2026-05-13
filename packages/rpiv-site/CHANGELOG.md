@@ -7,6 +7,12 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- v1.5.0 release notes blog post.
+
+### Fixed
+- Blog post ordering tie-break using explicit timestamps.
+
 ## [1.5.0] - 2026-05-12
 
 ### Added

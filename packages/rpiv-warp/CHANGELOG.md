@@ -7,6 +7,13 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Idle prompt emission after agent turns complete, carrying the assistant summary.
+- Configurable heartbeat re-emitting `prompt_submit` during active work (default 15 s, set `heartbeatMs` in config to override, `0` to disable).
+- `session_shutdown` handler clearing all timers and spinner state.
+- Blocking tool input capture attached to `tool_complete` payloads.
+- `before_agent_start` handler capturing the user's query for accurate `prompt_submit` events.
+
 ## [1.5.0] - 2026-05-12
 
 ## [1.4.2] - 2026-05-11
