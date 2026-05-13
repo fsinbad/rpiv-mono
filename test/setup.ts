@@ -62,6 +62,9 @@ beforeEach(async () => {
 	const titleSpinner = await import("../packages/rpiv-warp/title-spinner.js");
 	titleSpinner.__resetState();
 
+	const warpIndex = await import("../packages/rpiv-warp/index.js");
+	warpIndex.__resetState();
+
 	const i18n = await import("../packages/rpiv-i18n/i18n.js");
 	i18n.__resetState();
 

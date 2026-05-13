@@ -7,9 +7,11 @@ export const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 
 export interface RpivWarpConfig {
 	readonly blockingTools?: readonly string[];
+	readonly heartbeatMs?: number;
 }
 
 export const DEFAULT_BLOCKING_TOOLS: readonly string[] = ["ask_user_question"];
+export const DEFAULT_HEARTBEAT_MS = 15000;
 
 export function loadConfig(): RpivWarpConfig {
 	if (!existsSync(CONFIG_PATH)) return {};
@@ -20,6 +22,14 @@ export function loadConfig(): RpivWarpConfig {
 	} catch {
 		return {};
 	}
+}
+
+export function getHeartbeatMs(): number {
+	const config = loadConfig();
+	const ms = config.heartbeatMs;
+	if (ms === 0) return 0; // explicitly disabled
+	if (typeof ms !== "number" || ms <= 0) return DEFAULT_HEARTBEAT_MS;
+	return ms;
 }
 
 export function getBlockingTools(): ReadonlySet<string> {

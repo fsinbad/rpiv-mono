@@ -4,6 +4,7 @@ import {
 	AGENT_ID,
 	baseEnvelope,
 	buildIdlePromptPayload,
+	buildPromptSubmitPayload,
 	buildSessionStartPayload,
 	buildStopPayload,
 	buildToolCompletePayload,
@@ -138,6 +139,27 @@ describe("build*Payload", () => {
 		const p = buildToolCompletePayload(createMockCtx(), "bash");
 		expect(p.event).toBe("tool_complete");
 		expect(p.tool_name).toBe("bash");
+	});
+	it("buildPromptSubmitPayload carries the query", () => {
+		const p = buildPromptSubmitPayload(createMockCtx(), "how do I deploy?");
+		expect(p.event).toBe("prompt_submit");
+		expect(p.query).toBe("how do I deploy?");
+	});
+	it("buildPromptSubmitPayload defaults query to empty string", () => {
+		const p = buildPromptSubmitPayload(createMockCtx());
+		expect(p.query).toBe("");
+	});
+	it("buildToolCompletePayload carries tool_input when provided", () => {
+		const p = buildToolCompletePayload(createMockCtx(), "bash", { command: "npm test" });
+		expect(p.event).toBe("tool_complete");
+		expect(p.tool_name).toBe("bash");
+		expect(p.tool_input).toEqual({ command: "npm test" });
+	});
+	it("buildToolCompletePayload omits tool_input when not provided", () => {
+		const p = buildToolCompletePayload(createMockCtx(), "bash");
+		expect(p.event).toBe("tool_complete");
+		expect(p.tool_name).toBe("bash");
+		expect(p.tool_input).toBeUndefined();
 	});
 });
 

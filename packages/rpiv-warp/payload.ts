@@ -16,24 +16,8 @@ import { negotiateProtocolVersion, type WarpEvent } from "./protocol.js";
 // ---------------------------------------------------------------------------
 
 /**
- * Warp's `CLIAgent` enum recognizes 12 IDs (warpdotdev/warp:
- * `app/src/terminal/cli_agent.rs`), and `"pi"` is one of them — semantically
- * correct identity for this extension. However, the session listener at
- * `app/src/terminal/cli_agent_sessions/listener/mod.rs:48-57` currently routes
- * only `Claude | OpenCode | Gemini | Auggie | Codex` to a notification handler
- * and drops every other variant (including `Pi` and `Unknown`). So `"pi"`
- * parses correctly but produces no toast in current Warp builds.
- *
- * Workaround options, all bad:
- *   - `agent: "claude"` → toasts render, but tab gets the Claude Code icon &
- *     "Claude" label via `SessionType::CliAgent(CLIAgent::Claude)`. Identity-
- *     misrepresenting; user-visibly wrong.
- *   - any non-allowlisted ID → no toast.
- *
- * Real fix is upstream: PR `warpdotdev/warp` moving `CLIAgent::Pi` into the
- * `DefaultSessionListener` arm + adding `icon()` / `brand_color()` cases
- * (template: `specs/APP-4067/TECH.md` did this for Gemini). Until that ships,
- * we keep the correct identity and accept that Warp won't render the toast.
+ * Warp's `CLIAgent::Pi` is routed to `DefaultSessionListener` since Warp's
+ * open-source release (warpdotdev/warp `listener/mod.rs:93-99`).
  */
 export const AGENT_ID = "pi";
 export const TRUNCATE_LIMIT = 200;
@@ -58,11 +42,16 @@ export interface StopExtras {
 export interface IdlePromptExtras {
 	readonly summary: string;
 }
+export interface PromptSubmitExtras {
+	readonly query: string;
+}
 export interface ToolCompleteExtras {
 	readonly tool_name: string;
+	readonly tool_input?: Record<string, unknown>;
 }
 
-export type WarpPayload = WarpPayloadBase & Partial<StopExtras & IdlePromptExtras & ToolCompleteExtras>;
+export type WarpPayload = WarpPayloadBase &
+	Partial<StopExtras & IdlePromptExtras & PromptSubmitExtras & ToolCompleteExtras>;
 
 // ---------------------------------------------------------------------------
 // Text helpers — small, single-purpose, composable
@@ -141,8 +130,11 @@ export function buildSessionStartPayload(ctx: ExtensionContext): WarpPayload {
 	return baseEnvelope("session_start", ctx);
 }
 
-export function buildPromptSubmitPayload(ctx: ExtensionContext): WarpPayload {
-	return baseEnvelope("prompt_submit", ctx);
+export function buildPromptSubmitPayload(ctx: ExtensionContext, query: string = ""): WarpPayload {
+	return {
+		...baseEnvelope("prompt_submit", ctx),
+		query,
+	};
 }
 
 export function buildQuestionAskedPayload(ctx: ExtensionContext): WarpPayload {
@@ -164,10 +156,15 @@ export function buildIdlePromptPayload(ctx: ExtensionContext, summary: string): 
 	};
 }
 
-export function buildToolCompletePayload(ctx: ExtensionContext, toolName: string): WarpPayload {
+export function buildToolCompletePayload(
+	ctx: ExtensionContext,
+	toolName: string,
+	toolInput?: Record<string, unknown>,
+): WarpPayload {
 	return {
 		...baseEnvelope("tool_complete", ctx),
 		tool_name: toolName,
+		...(toolInput !== undefined ? { tool_input: toolInput } : {}),
 	};
 }
 

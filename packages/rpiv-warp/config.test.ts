@@ -2,7 +2,14 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { CONFIG_PATH, DEFAULT_BLOCKING_TOOLS, getBlockingTools, loadConfig } from "./config.js";
+import {
+	CONFIG_PATH,
+	DEFAULT_BLOCKING_TOOLS,
+	DEFAULT_HEARTBEAT_MS,
+	getBlockingTools,
+	getHeartbeatMs,
+	loadConfig,
+} from "./config.js";
 
 function writeConfigFile(contents: string): void {
 	mkdirSync(dirname(CONFIG_PATH), { recursive: true });
@@ -54,5 +61,27 @@ describe("getBlockingTools", () => {
 	it("falls back to defaults when blockingTools is not an array", () => {
 		writeConfigFile(JSON.stringify({ blockingTools: "ask_user_question" }));
 		expect([...getBlockingTools()]).toEqual([...DEFAULT_BLOCKING_TOOLS]);
+	});
+});
+
+describe("getHeartbeatMs", () => {
+	it("returns the default when no config is present", () => {
+		expect(getHeartbeatMs()).toBe(DEFAULT_HEARTBEAT_MS);
+	});
+	it("returns 0 when explicitly disabled", () => {
+		writeConfigFile(JSON.stringify({ heartbeatMs: 0 }));
+		expect(getHeartbeatMs()).toBe(0);
+	});
+	it("returns the default for negative values", () => {
+		writeConfigFile(JSON.stringify({ heartbeatMs: -100 }));
+		expect(getHeartbeatMs()).toBe(DEFAULT_HEARTBEAT_MS);
+	});
+	it("returns the default for non-number values", () => {
+		writeConfigFile(JSON.stringify({ heartbeatMs: "fast" }));
+		expect(getHeartbeatMs()).toBe(DEFAULT_HEARTBEAT_MS);
+	});
+	it("returns the configured value for positive numbers", () => {
+		writeConfigFile(JSON.stringify({ heartbeatMs: 5000 }));
+		expect(getHeartbeatMs()).toBe(5000);
 	});
 });
